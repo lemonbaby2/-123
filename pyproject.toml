@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lizipeng-embodied-portfolio"
+version = "1.0.0"
+description = "Clean-room runnable demos for an embodied AI and robotics portfolio"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Zipeng Li"}]
+dependencies = []
+
+[project.scripts]
+portfolio-demo = "portfolio_demos.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

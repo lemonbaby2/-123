@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use the clean-room demonstrations, cite this repository and the original papers listed in docs/references.bib."
+title: "Embodied AI and Robotics Systems Portfolio"
+type: software
+authors:
+  - family-names: Li
+    given-names: Zipeng
+version: 1.0.0
+date-released: 2026-08-03
+repository-code: "https://github.com/lemonbaby2/-123"
+license: MIT

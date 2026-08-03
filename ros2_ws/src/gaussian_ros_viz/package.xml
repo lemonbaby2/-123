@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gaussian_ros_viz</name>
+  <version>1.0.0</version>
+  <description>Synthetic Gaussian marker publisher for portfolio demonstration.</description>
+  <maintainer email="maintainer@example.invalid">Portfolio Maintainer</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>visualization_msgs</depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

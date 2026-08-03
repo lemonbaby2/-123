@@ -1,0 +1,9 @@
+tasks:
+  - {name: sample, period_ms: 10.0, worst_case_ms: 0.2, priority: 5}
+  - {name: estimate, period_ms: 100.0, worst_case_ms: 1.4, priority: 4}
+  - {name: balance, period_ms: 100.0, worst_case_ms: 0.3, priority: 3}
+  - {name: telemetry, period_ms: 50.0, worst_case_ms: 0.5, priority: 2}
+safety:
+  utilization_budget: 0.70
+  balance_max_temperature_c: 50.0
+  balance_soc_delta: 0.01
