@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 ARCHIVE = DIST / "lizipeng-embodied-ai-portfolio.zip"
 EXTERNAL_CHECKSUM = DIST / "lizipeng-embodied-ai-portfolio.zip.sha256"
-EXCLUDED_PARTS = {".git", "__pycache__", ".pytest_cache", ".venv", "build", "install", "log"}
+EXCLUDED_PARTS = {".git", "__pycache__", ".pytest_cache", ".venv", "build", "install", "log", "work"}
 
 
 def source_files() -> list[Path]:
@@ -33,13 +33,13 @@ def build() -> tuple[Path, Path]:
         for path in files:
             relative = path.relative_to(ROOT).as_posix()
             content = path.read_bytes()
-            info = zipfile.ZipInfo(f"lizipeng-embodied-ai-portfolio/{relative}", date_time=(2026, 8, 3, 0, 0, 0))
+            info = zipfile.ZipInfo(f"lizipeng-embodied-ai-portfolio/{relative}", date_time=(2026, 8, 4, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             bundle.writestr(info, content)
             manifest_lines.append(f"{sha256(content).hexdigest()}  {relative}")
         manifest = ("\n".join(manifest_lines) + "\n").encode("utf-8")
-        info = zipfile.ZipInfo("lizipeng-embodied-ai-portfolio/SHA256SUMS.txt", date_time=(2026, 8, 3, 0, 0, 0))
+        info = zipfile.ZipInfo("lizipeng-embodied-ai-portfolio/SHA256SUMS.txt", date_time=(2026, 8, 4, 0, 0, 0))
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o644 << 16
         bundle.writestr(info, manifest)

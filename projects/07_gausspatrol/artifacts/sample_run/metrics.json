@@ -1,0 +1,119 @@
+{
+  "disclaimer": "shifted is a deterministic stress simulation, not measured real-robot performance",
+  "nominal": {
+    "avoidance_attempts": 4,
+    "avoidance_success_rate": 1.0,
+    "avoidance_successes": 4,
+    "checkpoints_reached": 5,
+    "checkpoints_total": 5,
+    "collisions": 0,
+    "completed": true,
+    "gait_switches": 8,
+    "gaussian_count": 56,
+    "map_completeness": 0.8947368421052632,
+    "modelled_mission_time_s": 74.35194352013606,
+    "perception": {
+      "ap50_11point": 1.0,
+      "detections": 3,
+      "false_negative": 0,
+      "false_positive": 0,
+      "ground_truth_defects": 3,
+      "miss_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_positive": 3
+    },
+    "perception_latency_ms": {
+      "max": 0.05,
+      "mean": 0.024780000000000003,
+      "p95": 0.05,
+      "samples": 5
+    },
+    "planning_latency_ms": {
+      "max": 15.7595,
+      "mean": 7.380455555555555,
+      "p95": 15.7595,
+      "samples": 9
+    },
+    "replans": 4,
+    "route_completion_rate": 1.0,
+    "route_distance_m": 56.72869786449113,
+    "scenario": "nominal",
+    "steps": 111,
+    "terrain_distance_m": {
+      "gravel": 5.1441228056353685,
+      "paved": 33.03088629839002,
+      "ramp": 4.288245611270737,
+      "rubble": 7.058336368008465,
+      "wet": 7.207106781186548
+    },
+    "trajectory": {
+      "ate_rmse_m": 0.01867838755285636,
+      "max_position_error_m": 0.04556705988074584,
+      "rpe_rmse_m": 0.0072562630300927414
+    },
+    "wall_runtime_s": 0.16150420001940802
+  },
+  "shifted": {
+    "avoidance_attempts": 4,
+    "avoidance_success_rate": 1.0,
+    "avoidance_successes": 4,
+    "checkpoints_reached": 5,
+    "checkpoints_total": 5,
+    "collisions": 0,
+    "completed": true,
+    "gait_switches": 8,
+    "gaussian_count": 56,
+    "map_completeness": 0.8947368421052632,
+    "modelled_mission_time_s": 90.45358965870257,
+    "perception": {
+      "ap50_11point": 0.6363636363636365,
+      "detections": 3,
+      "false_negative": 1,
+      "false_positive": 1,
+      "ground_truth_defects": 3,
+      "miss_rate": 0.3333333333333333,
+      "precision": 0.6666666666666666,
+      "recall": 0.6666666666666666,
+      "true_positive": 2
+    },
+    "perception_latency_ms": {
+      "max": 0.0562,
+      "mean": 0.025840000000000002,
+      "p95": 0.0562,
+      "samples": 5
+    },
+    "planning_latency_ms": {
+      "max": 11.1062,
+      "mean": 6.902344444444444,
+      "p95": 11.1062,
+      "samples": 9
+    },
+    "replans": 4,
+    "route_completion_rate": 1.0,
+    "route_distance_m": 56.72869786449113,
+    "scenario": "shifted",
+    "steps": 111,
+    "terrain_distance_m": {
+      "gravel": 5.1441228056353685,
+      "paved": 33.03088629839002,
+      "ramp": 4.288245611270737,
+      "rubble": 7.058336368008465,
+      "wet": 7.207106781186548
+    },
+    "trajectory": {
+      "ate_rmse_m": 0.11251389863506692,
+      "max_position_error_m": 0.1918064453390473,
+      "rpe_rmse_m": 0.026665492425473582
+    },
+    "wall_runtime_s": 0.14695989998290315
+  },
+  "sim_to_real_proxy": {
+    "ap50_change": -0.36363636363636354,
+    "ate_relative_change_percent": 502.3747944873375,
+    "ate_rmse_change_m": 0.09383551108221055,
+    "map_completeness_change_pp": 0.0,
+    "modelled_time_change_s": 16.101646138566508,
+    "route_completion_change_pp": 0.0
+  }
+}

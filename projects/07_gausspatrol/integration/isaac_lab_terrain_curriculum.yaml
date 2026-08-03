@@ -1,0 +1,34 @@
+status: design_only_not_executed
+task: gausspatrol_s10_terrain_adaptation
+robot_asset: vendor_or_team_supplied_s10_urdf_required
+terrain_levels:
+  - {name: flat, slope_deg: 0, friction: [0.7, 1.0], obstacle_height_m: 0.0}
+  - {name: ramp, slope_deg: [5, 15], friction: [0.6, 1.0], obstacle_height_m: 0.05}
+  - {name: gravel_proxy, slope_deg: [0, 10], friction: [0.45, 0.9], obstacle_height_m: [0.03, 0.12]}
+  - {name: wet_proxy, slope_deg: [0, 8], friction: [0.25, 0.55], obstacle_height_m: [0.0, 0.05]}
+observations:
+  - base_angular_velocity
+  - projected_gravity
+  - joint_position_velocity
+  - foot_contact_or_wheel_contact
+  - terrain_height_samples
+actions:
+  - joint_or_wheel_targets_to_be_confirmed_with_sdk
+rewards:
+  forward_velocity: 1.0
+  heading_tracking: 0.5
+  stability: 0.8
+  energy_penalty: -0.02
+  slip_penalty: -0.5
+  collision_penalty: -2.0
+domain_randomization:
+  mass_percent: [-10, 10]
+  friction: [0.25, 1.1]
+  sensor_latency_ms: [0, 80]
+  action_latency_ms: [0, 50]
+  push_velocity_mps: [0, 0.8]
+acceptance:
+  falls_per_100m_max: 0
+  route_completion_min: 0.95
+  speed_tracking_rmse_mps_max: 0.15
+  sim_to_real_speed_drop_percent_max: 20

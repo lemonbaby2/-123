@@ -1,0 +1,48 @@
+{"data": {}, "kind": "mission_started", "message": "scenario=nominal", "scenario": "nominal", "step": 0}
+{"data": {"terrain": "gravel"}, "kind": "gait_switch", "message": "trot->high_step", "scenario": "nominal", "step": 14}
+{"data": {"x_m": 3.0, "y_m": 11.0}, "kind": "checkpoint_reached", "message": "checkpoint=1", "scenario": "nominal", "step": 20}
+{"data": {"detections": 1}, "kind": "equipment_inspected", "message": "pump-A", "scenario": "nominal", "step": 20}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "high_step->trot", "scenario": "nominal", "step": 24}
+{"data": {"terrain": "ramp"}, "kind": "gait_switch", "message": "trot->crawl", "scenario": "nominal", "step": 28}
+{"data": {"target": 2}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "nominal", "step": 32}
+{"data": {"x_m": 9.5, "y_m": 12.0}, "kind": "checkpoint_reached", "message": "checkpoint=2", "scenario": "nominal", "step": 34}
+{"data": {"detections": 0}, "kind": "equipment_inspected", "message": "panel-B", "scenario": "nominal", "step": 34}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "crawl->trot", "scenario": "nominal", "step": 36}
+{"data": {"terrain": "wet"}, "kind": "gait_switch", "message": "trot->careful", "scenario": "nominal", "step": 42}
+{"data": {"x_m": 18.0, "y_m": 12.0}, "kind": "checkpoint_reached", "message": "checkpoint=3", "scenario": "nominal", "step": 51}
+{"data": {"detections": 1}, "kind": "equipment_inspected", "message": "valve-C", "scenario": "nominal", "step": 51}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "careful->trot", "scenario": "nominal", "step": 57}
+{"data": {"terrain": "rubble"}, "kind": "gait_switch", "message": "trot->high_step", "scenario": "nominal", "step": 68}
+{"data": {"x_m": 18.0, "y_m": 2.0}, "kind": "checkpoint_reached", "message": "checkpoint=4", "scenario": "nominal", "step": 71}
+{"data": {"detections": 1}, "kind": "equipment_inspected", "message": "cabinet-D", "scenario": "nominal", "step": 71}
+{"data": {"target": 5}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "nominal", "step": 76}
+{"data": {"target": 5}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "nominal", "step": 78}
+{"data": {"target": 5}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "nominal", "step": 79}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "high_step->trot", "scenario": "nominal", "step": 84}
+{"data": {"x_m": 1.0, "y_m": 1.0}, "kind": "checkpoint_reached", "message": "checkpoint=5", "scenario": "nominal", "step": 111}
+{"data": {"detections": 0}, "kind": "equipment_inspected", "message": "charger", "scenario": "nominal", "step": 111}
+{"data": {"checkpoints_reached": 5}, "kind": "mission_finished", "message": "completed=True", "scenario": "nominal", "step": 111}
+{"data": {}, "kind": "mission_started", "message": "scenario=shifted", "scenario": "shifted", "step": 0}
+{"data": {"terrain": "gravel"}, "kind": "gait_switch", "message": "trot->high_step", "scenario": "shifted", "step": 14}
+{"data": {"x_m": 3.0, "y_m": 11.0}, "kind": "checkpoint_reached", "message": "checkpoint=1", "scenario": "shifted", "step": 20}
+{"data": {"detections": 1}, "kind": "equipment_inspected", "message": "pump-A", "scenario": "shifted", "step": 20}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "high_step->trot", "scenario": "shifted", "step": 24}
+{"data": {"terrain": "ramp"}, "kind": "gait_switch", "message": "trot->crawl", "scenario": "shifted", "step": 28}
+{"data": {"target": 2}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "shifted", "step": 32}
+{"data": {"x_m": 9.5, "y_m": 12.0}, "kind": "checkpoint_reached", "message": "checkpoint=2", "scenario": "shifted", "step": 34}
+{"data": {"detections": 0}, "kind": "equipment_inspected", "message": "panel-B", "scenario": "shifted", "step": 34}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "crawl->trot", "scenario": "shifted", "step": 36}
+{"data": {"terrain": "wet"}, "kind": "gait_switch", "message": "trot->careful", "scenario": "shifted", "step": 42}
+{"data": {"x_m": 18.0, "y_m": 12.0}, "kind": "checkpoint_reached", "message": "checkpoint=3", "scenario": "shifted", "step": 51}
+{"data": {"detections": 2}, "kind": "equipment_inspected", "message": "valve-C", "scenario": "shifted", "step": 51}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "careful->trot", "scenario": "shifted", "step": 57}
+{"data": {"terrain": "rubble"}, "kind": "gait_switch", "message": "trot->high_step", "scenario": "shifted", "step": 68}
+{"data": {"x_m": 18.0, "y_m": 2.0}, "kind": "checkpoint_reached", "message": "checkpoint=4", "scenario": "shifted", "step": 71}
+{"data": {"detections": 0}, "kind": "equipment_inspected", "message": "cabinet-D", "scenario": "shifted", "step": 71}
+{"data": {"target": 5}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "shifted", "step": 76}
+{"data": {"target": 5}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "shifted", "step": 78}
+{"data": {"target": 5}, "kind": "dynamic_avoidance", "message": "dynamic obstacle caused replan", "scenario": "shifted", "step": 79}
+{"data": {"terrain": "paved"}, "kind": "gait_switch", "message": "high_step->trot", "scenario": "shifted", "step": 84}
+{"data": {"x_m": 1.0, "y_m": 1.0}, "kind": "checkpoint_reached", "message": "checkpoint=5", "scenario": "shifted", "step": 111}
+{"data": {"detections": 0}, "kind": "equipment_inspected", "message": "charger", "scenario": "shifted", "step": 111}
+{"data": {"checkpoints_reached": 5}, "kind": "mission_finished", "message": "completed=True", "scenario": "shifted", "step": 111}

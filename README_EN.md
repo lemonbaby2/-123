@@ -2,7 +2,7 @@
 
 [中文](README.md) · [Research index](docs/RESEARCH.md) · [Evidence matrix](docs/RESUME_EVIDENCE_MATRIX.md) · [Offline bundle](dist/lizipeng-embodied-ai-portfolio.zip)
 
-This public portfolio reconstructs six resume projects as clean-room, runnable demonstrations: quadruped SLAM, a Ginger service-robot control plane, GeoScan Pro sensor fusion, industrial vision, ROS2/3DGS visualization, and an embedded BMS estimator.
+This public portfolio contains seven clean-room, runnable projects: six resume reconstructions plus GaussPatrol, a GOAI embodied-patrol competition baseline with source-backed simulation results and submission documentation.
 
 It is **not** production source code from any employer. It contains no customer data, credentials, proprietary maps, model weights, or unpublished patent/paper content. Resume metrics are explicitly treated as reported historical results; repository tests validate only the included synthetic demos.
 
@@ -31,12 +31,13 @@ python projects/01_quadruped_slam/tests/test_quadruped_slam.py -v
 | [Industrial vision](projects/04_industrial_vision/README.md) | Python and independent tests | small defects and edge inference |
 | [ROS2 + 3DGS](projects/05_ros2_3dgs/README.md) | Python, tests, sample data, ROS2 workspace | frame/topic/timestamp correctness |
 | [BMS](projects/06_bms/README.md) | Python, tests, config, standalone C++17 demo | MCU-oriented state estimation |
+| [GaussPatrol](projects/07_gausspatrol/README.md) | patrol simulation, tests, SVG/PLY results, technical and submission docs | embodied competition system closure |
 
 See each design under [`projects/`](projects/), the research trail in [`docs/RESEARCH.md`](docs/RESEARCH.md), and the exact resume-to-artifact boundary in [`docs/RESUME_EVIDENCE_MATRIX.md`](docs/RESUME_EVIDENCE_MATRIX.md).
 
 ## Verification contract
 
-CI parses all Python files, runs the six independent test programs on Python 3.10 and 3.12, executes all demos as separate processes, validates the repository layout and local README links, builds the two C++17 projects, and regenerates the deterministic source bundle. Synthetic tests demonstrate code behavior only; they do not reproduce the resume's hardware metrics.
+CI parses all Python files, runs the seven independent test programs on Python 3.10 and 3.12, executes all demos as separate processes, validates the repository layout and local README links, builds the two C++17 projects, and regenerates the deterministic source bundle. Synthetic tests demonstrate code behavior only; they do not reproduce hardware metrics.
 
 The README structure follows the practical overview/dependencies/run/data/troubleshooting/citation flow used by [LIO-SAM](https://github.com/TixiaoShan/LIO-SAM), [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite), [GraphDeCo's 3D Gaussian Splatting](https://github.com/graphdeco-inria/gaussian-splatting), and [Ultralytics](https://github.com/ultralytics/ultralytics). No restricted upstream code is copied here.
 

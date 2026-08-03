@@ -1,0 +1,29 @@
+frames:
+  global: map
+  local: odom
+  base: base_link
+  lidar: lidar_link
+  camera: camera_link
+
+inputs:
+  lidar: /points_raw              # sensor_msgs/msg/PointCloud2
+  imu: /imu/data                  # sensor_msgs/msg/Imu
+  rgb: /camera/color/image_raw    # sensor_msgs/msg/Image
+  depth: /camera/depth/image_raw  # sensor_msgs/msg/Image
+  camera_info: /camera/color/camera_info
+  robot_state: /s10/robot_state   # vendor message: confirm after SDK access
+
+outputs:
+  localization: /gausspatrol/odometry
+  map: /gausspatrol/map_points
+  defects: /gausspatrol/defects
+  mission_state: /gausspatrol/mission_state
+  velocity_command: /cmd_vel
+  gait_command: /s10/gait_command # vendor message: confirm after SDK access
+
+safety:
+  command_timeout_ms: 200
+  max_linear_speed_mps: 1.0
+  max_yaw_rate_radps: 0.8
+  localization_timeout_ms: 250
+  obstacle_stop_distance_m: 0.65

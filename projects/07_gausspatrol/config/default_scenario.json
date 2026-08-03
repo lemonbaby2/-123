@@ -1,0 +1,59 @@
+{
+  "base": {
+    "width_m": 20.0,
+    "height_m": 14.0,
+    "resolution_m": 0.5,
+    "robot_radius_m": 0.28,
+    "max_lidar_range_m": 6.0,
+    "nominal_speed_mps": 1.0,
+    "random_seed": 20260804,
+    "checkpoints": [
+      {"x_m": 1.0, "y_m": 1.0},
+      {"x_m": 3.0, "y_m": 11.0},
+      {"x_m": 9.5, "y_m": 12.0},
+      {"x_m": 18.0, "y_m": 12.0},
+      {"x_m": 18.0, "y_m": 2.0},
+      {"x_m": 1.0, "y_m": 1.0}
+    ],
+    "static_obstacles": [
+      {"x_min_m": 5.0, "y_min_m": 1.5, "x_max_m": 7.0, "y_max_m": 5.5},
+      {"x_min_m": 10.5, "y_min_m": 7.0, "x_max_m": 13.5, "y_max_m": 10.0},
+      {"x_min_m": 15.0, "y_min_m": 4.0, "x_max_m": 17.0, "y_max_m": 6.0},
+      {"x_min_m": 8.0, "y_min_m": 8.5, "x_max_m": 8.5, "y_max_m": 11.0}
+    ],
+    "terrain": [
+      {"name": "gravel", "bounds": {"x_min_m": 0.0, "y_min_m": 8.0, "x_max_m": 5.0, "y_max_m": 14.0}, "speed_scale": 0.72, "gait_mode": "high_step"},
+      {"name": "ramp", "bounds": {"x_min_m": 7.0, "y_min_m": 10.5, "x_max_m": 10.5, "y_max_m": 14.0}, "speed_scale": 0.60, "gait_mode": "crawl"},
+      {"name": "wet", "bounds": {"x_min_m": 13.5, "y_min_m": 9.5, "x_max_m": 20.0, "y_max_m": 14.0}, "speed_scale": 0.52, "gait_mode": "careful"},
+      {"name": "rubble", "bounds": {"x_min_m": 15.0, "y_min_m": 0.0, "x_max_m": 20.0, "y_max_m": 4.0}, "speed_scale": 0.58, "gait_mode": "high_step"}
+    ],
+    "equipment": [
+      {"equipment_id": "pump-A", "x_m": 3.0, "y_m": 11.0, "defect_class": "seal_leak"},
+      {"equipment_id": "panel-B", "x_m": 9.5, "y_m": 12.0, "defect_class": null},
+      {"equipment_id": "valve-C", "x_m": 18.0, "y_m": 12.0, "defect_class": "corrosion"},
+      {"equipment_id": "cabinet-D", "x_m": 18.0, "y_m": 2.0, "defect_class": "indicator_fault"},
+      {"equipment_id": "charger", "x_m": 1.0, "y_m": 1.0, "defect_class": null}
+    ],
+    "dynamic_obstacles": [
+      {"obstacle_id": "worker-01", "path": [[7.5, 6.5], [12.5, 6.5], [12.5, 11.5], [7.5, 11.5]], "radius_m": 0.35, "period_steps": 48},
+      {"obstacle_id": "forklift-01", "path": [[14.0, 2.0], [18.5, 2.0], [18.5, 8.0], [14.0, 8.0]], "radius_m": 0.50, "period_steps": 72}
+    ],
+    "odometry_noise_std_m": 0.004,
+    "odometry_bias_per_m": 0.001,
+    "landmark_correction_gain": 0.80,
+    "detection_probability": 0.98,
+    "false_positive_probability": 0.04
+  },
+  "variants": {
+    "nominal": {},
+    "shifted": {
+      "random_seed": 20260805,
+      "odometry_noise_std_m": 0.014,
+      "odometry_bias_per_m": 0.004,
+      "landmark_correction_gain": 0.55,
+      "detection_probability": 0.68,
+      "false_positive_probability": 0.22,
+      "nominal_speed_mps": 0.82
+    }
+  }
+}

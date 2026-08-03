@@ -16,5 +16,7 @@ ros2_ws/log/
 *.pth
 *.pcd
 *.ply
-!projects/05_ros2_3dgs/sample_gaussians.ply
+!projects/05_ros2_3dgs/data/sample_gaussians.ply
+!projects/07_gausspatrol/artifacts/sample_run/*.ply
 data/private/
+work/

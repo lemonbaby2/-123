@@ -1,7 +1,7 @@
 [project]
 name = "lizipeng-embodied-portfolio"
-version = "2.0.0"
-description = "Six self-contained clean-room robotics and embodied-AI demonstrations"
+version = "3.0.0"
+description = "Seven self-contained clean-room robotics, embodied-AI and competition projects"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
