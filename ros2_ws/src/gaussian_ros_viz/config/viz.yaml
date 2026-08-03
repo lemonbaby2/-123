@@ -1,3 +1,0 @@
-gaussian_marker_node:
-  ros__parameters:
-    frame_id: map

@@ -1,0 +1,18 @@
+ply
+format ascii 1.0
+comment synthetic portfolio sample - no third-party asset
+element vertex 5
+property float x
+property float y
+property float z
+property float scale
+property float opacity
+property uchar red
+property uchar green
+property uchar blue
+end_header
+0.00 0.00 0.00 0.06 0.95 220 40 40
+0.15 0.00 0.02 0.05 0.90 240 160 30
+0.30 0.05 0.04 0.05 0.88 60 180 80
+0.45 0.10 0.08 0.06 0.92 40 120 230
+0.60 0.15 0.12 0.07 0.85 150 70 220

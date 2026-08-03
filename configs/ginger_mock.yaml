@@ -1,9 +1,0 @@
-transport:
-  rosbridge_url: ws://127.0.0.1:9090
-  connect_timeout_s: 3
-safety:
-  localization_confidence_min: 0.75
-  command_rate_limit_hz: 5
-  emergency_stop_required: true
-maps:
-  allowed_root: /maps

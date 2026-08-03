@@ -1,122 +1,165 @@
-# 李梓鹏｜具身智能与机器人系统作品集
+# 李梓鹏｜具身智能、机器人系统与边缘 AI 作品集
 
-[English](README_EN.md) · [研究资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
+[![CI](https://github.com/lemonbaby2/-123/actions/workflows/ci.yml/badge.svg)](https://github.com/lemonbaby2/-123/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)](https://isocpp.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-这是依据个人简历整理的公开作品集，覆盖机器人系统、SLAM、多传感器融合、3D Gaussian Splatting、机器视觉、边缘部署与嵌入式 BMS。仓库提供可直接运行的最小实现、系统设计、测试、复现实验入口及论文/官方资料索引。
+[English](README_EN.md) · [研究与开源资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [复现清单](docs/REPRODUCTION_CHECKLIST.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
 
-> 重要说明：本仓库是面向求职展示与技术交流的**重新实现（clean-room demo）**，不是任职单位的生产源码，也不包含客户数据、模型权重、地图、设备凭据或未公开专利/论文正文。简历中的性能数字均标为“简历报告值”；只有本仓库测试产生的数据才属于可复现结果。
+这是依据个人简历重新整理的公开技术作品集，覆盖机器人 SLAM、多传感器融合、服务机器人控制、工业视觉、ROS2/3DGS 可视化与嵌入式 BMS。仓库不是把六个演示塞进一个共享 Python 包：**每个项目都有自己的源码、测试、配置和运行说明，可以单独阅读、单独运行、单独迁移。**
 
-## 作品集导航
+> 真实性边界：本仓库代码是为公开展示而编写的 clean-room 最小实现，不含任职单位生产源码、客户数据、设备凭据、未公开模型权重、地图或专利正文。简历中的实机成绩统一标记为“历史报告值”；只有由本仓库测试直接生成的结果才称为“仓库实测”。合成输入用于检查算法接口和异常处理，不冒充真实设备基准。
 
-| # | 方向 | 对应经历 | 本仓库交付 | 简历报告结果 |
-|---|---|---|---|---|
-| 01 | 四足机器人 SLAM 与任务决策 | 人工智能讲师；四足机器人 C++ 轻量化 | IMU 预积分、体素滤波、2D ICP、回环门控、任务决策器 | 10 Hz；回环延迟 -63%；误差 ±3 cm；连续运行 100 h |
-| 02 | Ginger 服务机器人控制 | 机器人系统开发项目负责人 | CCU 分层诊断状态机、rosbridge JSON 构造、地图加载、导航安全门控、Mock Web API | 175 ms → 48 ms；mAP 损失 <1.2%；本地控制链路 |
-| 03 | GeoScan Pro 手持测绘 | 算法/项目负责人 | 多传感器因子图演示、RTK/IMU/LiDAR 质量门控、USB-CDC 帧协议、动态点过滤 | RTK 航向 <0.2°；链路带宽余量约 94% |
-| 04 | 工业缺陷检测与故障预测 | 机器视觉工程师 | P2 小目标配置检查、检测指标计算、时序故障评分、INT8 量化误差模拟 | 小目标 AP +12%；漏检 15% → 9%；42 ms → 18 ms |
-| 05 | ROS2 + 3DGS 可视化 | Lego 场景可视化项目 | ASCII PLY 解析、Gaussian→MarkerArray 转换、frame/topic/timestamp 校验 | 完成 12 秒 H.264 演示闭环 |
-| 06 | STM32-FreeRTOS 主动均衡 BMS | 嵌入式 BMS 项目 | 二阶 Thevenin 电池模型、轻量 AEKF、主动均衡策略、任务调度预算检查 | SOC 误差 <2% |
+## 项目导航
 
-详细边界、输入输出和验收条件见 [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md)。
+| 项目 | 独立交付内容 | 可直接验证 | 生产/实机部分的边界 |
+|---|---|---|---|
+| [01 四足机器人 SLAM](projects/01_quadruped_slam/README.md) | Python SLAM 算子、C++17 体素滤波、配置、独立测试 | 体素降采样、2D ICP、IMU 积分、回环门控、决策安全接口 | 未附 CUDA、真实 ROS bag、Vicon 真值或整机控制器 |
+| [02 Ginger 服务机器人](projects/02_ginger_robot/README.md) | rosbridge 消息构造、分层恢复状态机、地图路径校验、独立测试 | 链路故障定位、导航门控、路径穿越拒绝 | 仅 mock 协议，不连接真实机器人或厂商 CCU |
+| [03 GeoScan Pro](projects/03_geoscan_pro/README.md) | USB-CDC 帧协议、CRC、传感器质量门控、小型因子图、独立测试 | 编解码、CRC 故障、相对/绝对约束融合 | 不是 GTSAM/iSAM2 的性能替代，也没有实测 RTK 数据 |
+| [04 工业视觉](projects/04_industrial_vision/README.md) | 检测指标、P2 采样检查、INT8 量化误差、时序异常评分、独立测试 | TP/FP/FN、IoU、量化误差界、特征层检查 | 不含产线图像、YOLO 权重、TensorRT engine |
+| [05 ROS2 + 3DGS](projects/05_ros2_3dgs/README.md) | ASCII PLY 解析器、MarkerArray 转换、ROS2 包骨架、自制样例、独立测试 | PLY schema、frame、时间戳单调性、ROS2 构建入口 | 示例只有 5 个自制点，不分发原项目 Lego 资产 |
+| [06 STM32-FreeRTOS BMS](projects/06_bms/README.md) | Thevenin 电芯模型、AEKF、均衡逻辑、调度预算、C++17 参考实现、独立测试 | EKF 收敛趋势、温度门控、任务利用率 | 不是功能安全产品，不可直接控制电池包 |
 
-## 30 秒运行
+## 一分钟验证
 
-只需要 Python 3.10+，核心演示不依赖 GPU、ROS2 或第三方 Python 包：
+核心 Python 演示只使用标准库，要求 Python 3.10+，无需 GPU、ROS2 或下载模型：
 
 ```bash
+git clone https://github.com/lemonbaby2/-123.git
+cd -- -123
+python scripts/verify_layout.py
+python scripts/run_tests.py
 python scripts/run_all_demos.py
-python -m pip install -e .
-python -m unittest discover -s tests -v
 ```
 
-安装为可编辑包：
+Windows PowerShell 进入以连字符开头的目录时也可以使用：
+
+```powershell
+Set-Location -LiteralPath .\-123
+python scripts\run_tests.py
+python scripts\run_all_demos.py
+```
+
+单独运行某一个项目不需要安装根包：
 
 ```bash
-python -m pip install -e .
-portfolio-demo all
+python projects/01_quadruped_slam/src/quadruped_slam.py
+python projects/01_quadruped_slam/tests/test_quadruped_slam.py -v
+
+python projects/06_bms/src/bms.py
+python projects/06_bms/tests/test_bms.py -v
 ```
 
-单独运行：
+构建两个独立 C++17 演示：
 
 ```bash
-portfolio-demo quadruped
-portfolio-demo ginger
-portfolio-demo geoscan
-portfolio-demo vision
-portfolio-demo gaussian
-portfolio-demo bms
+cmake -S projects/01_quadruped_slam/cpp -B build/quadruped
+cmake --build build/quadruped
+ctest --test-dir build/quadruped --output-on-failure
+
+cmake -S projects/06_bms/cpp -B build/bms
+cmake --build build/bms
+ctest --test-dir build/bms --output-on-failure
 ```
 
-输出是合成数据上的确定性演示，用于验证算法接口、异常处理和数据流，不冒充实机性能基准。
-
-## 总体架构
-
-```mermaid
-flowchart LR
-  S["Sensors: Camera / LiDAR / IMU / RTK / BMS"] --> Q["Quality gates & time sync"]
-  Q --> P["Perception: defect / dynamic-object filtering"]
-  Q --> L["Localization: preintegration / ICP / factor graph"]
-  P --> L
-  L --> D["Decision & safety gate"]
-  D --> C["ROS2 / rosbridge / MCU control"]
-  L --> V["RViz2 / 3DGS visualization"]
-  C --> O["Telemetry & reproducible evaluation"]
-  V --> O
-```
-
-## 目录
+## 仓库结构
 
 ```text
 .
-├── src/portfolio_demos/       # 六组纯 Python 可运行演示
-├── cpp/                       # C++17 算子与嵌入式参考实现
-├── ros2_ws/src/               # ROS2 包骨架、launch/config/消息约定
-├── configs/                   # 传感器、阈值、部署配置样例
-├── projects/                  # 每个项目的详细技术说明与复现步骤
-├── docs/                      # 研究资料、证据映射、系统设计与引用
-├── tests/                     # 单元测试
-├── scripts/                   # 全量演示与确定性打包工具
-└── dist/                      # 可离线下载的完整压缩包
+├── projects/
+│   ├── 01_quadruped_slam/      # src + tests + config + cpp
+│   ├── 02_ginger_robot/        # src + tests + config
+│   ├── 03_geoscan_pro/         # src + tests
+│   ├── 04_industrial_vision/   # src + tests
+│   ├── 05_ros2_3dgs/           # src + tests + data + ros2_ws
+│   └── 06_bms/                  # src + tests + config + cpp
+├── scripts/
+│   ├── run_all_demos.py         # 逐进程运行六个独立演示
+│   ├── run_tests.py             # 验证每个项目自己的测试
+│   ├── verify_layout.py         # 检查目录完整性与 README 本地链接
+│   └── build_bundle.py          # 生成确定性离线源码包和 SHA-256
+├── docs/                        # 证据边界、研究索引、复现协议、引用
+├── dist/                        # GitHub 可直接下载的离线包
+└── .github/workflows/ci.yml     # Python 3.10/3.12 + 两套 C++ 构建
 ```
 
-## 设计原则
+## 系统能力地图
 
-- **可验证**：每一模块都提供合成输入、预期输出和单元测试。
-- **边缘优先**：以有界内存、确定性执行、降级模式和运行时监控为默认约束。
-- **安全门控**：导航与控制命令在链路、定位和地图状态不健康时会被拒绝。
-- **来源透明**：论文、官方文档、参考开源仓库与许可证单独列出，不复制受限源码。
-- **隐私与知识产权**：不提交个人电话、邮箱、证件照、公司内部接口、原始数据或未公开材料。
+```mermaid
+flowchart LR
+  S["Camera / LiDAR / IMU / RTK / BMS"] --> Q["时间、协方差、CRC 与有限值门控"]
+  Q --> P["视觉检测 / 动态点过滤"]
+  Q --> L["预积分 / ICP / 因子图"]
+  P --> L
+  L --> D["任务决策与安全状态机"]
+  D --> C["ROS2 / rosbridge / MCU 控制接口"]
+  L --> V["RViz2 / 3DGS 可视化"]
+  C --> E["日志、指标与故障注入"]
+  V --> E
+```
 
-## 项目详情
+## 代码验收方式
 
-1. [四足机器人 SLAM 与任务决策](projects/01_quadruped_slam/README.md)
-2. [Ginger 服务机器人本地控制](projects/02_ginger_robot/README.md)
-3. [GeoScan Pro 多传感器测绘](projects/03_geoscan_pro/README.md)
-4. [工业视觉缺陷检测与电机预测](projects/04_industrial_vision/README.md)
-5. [ROS2 + 3D Gaussian Splatting](projects/05_ros2_3dgs/README.md)
-6. [STM32-FreeRTOS 主动均衡 BMS](projects/06_bms/README.md)
-7. [专利、论文与竞赛成果边界](docs/PUBLICATIONS_AND_IP.md)
+仓库用四层检查避免“能展示但不能复现”：
 
-## 复现实验与指标口径
+1. `compileall` 检查所有 Python 文件可解析；
+2. 六个测试入口分别启动，避免依赖根目录共享包或偶然的 `PYTHONPATH`；
+3. 六个 demo 以子进程运行，输出必须是可解析 JSON；
+4. 四个 CI job 分别覆盖 Python 3.10、Python 3.12、四足 C++ 与 BMS C++。
 
-简历中的 10 Hz、±3 cm、48 ms、18 ms、AP 提升、SOC <2% 等结果依赖原始硬件、数据集、标注、模型权重和测试条件。本仓库不会用随机合成数据“复现”这些生产数字。建议实机复现时固定：
+测试覆盖的是公开实现本身，例如 CRC 损坏拒绝、路径穿越拒绝、时间戳倒退拒绝、温度过高禁止均衡、ICP 位姿恢复和 INT8 误差界。它们不能证明真实硬件在所有工况下安全；实机迁移仍需 HIL、长稳、温度/功耗和失效注入。
 
-1. 数据集版本、传感器标定、时间同步方式与随机种子；
-2. Jetson 型号、功耗模式、CUDA/cuDNN/TensorRT 版本与时钟策略；
-3. 精度指标定义（ATE/RPE、AP50 或 AP50-95、SOC MAE/RMSE）；
-4. 预热次数、样本量、P50/P95/P99 延迟与置信区间；
-5. 与未优化基线采用同一输入、同一预处理和同一评测脚本。
+## 指标口径：拒绝把历史成绩包装成当前实测
 
-验收模板见 [系统复现清单](docs/REPRODUCTION_CHECKLIST.md)。
+| 类型 | 可以怎样表述 | 本仓库做法 |
+|---|---|---|
+| 仓库实测 | 可由公开命令在 CI 重跑 | 只报告单元测试、JSON 演示、C++ 构建和压缩包哈希 |
+| 简历历史报告值 | 来自原项目环境，但公开仓库缺少等价数据/硬件 | 在项目 README 明确标注，不声称由合成 demo 复现 |
+| 设计目标 | 尚待数据或设备验证 | 写成验收条件，不写成已完成结果 |
+| 参考文献结果 | 来自论文或上游项目 | 链接原始来源，不归为个人成绩 |
 
-## 研究与开源引用
+简历中的 10 Hz、±3 cm、回环延迟下降 63%、175 ms→48 ms、AP 提升、18 ms 和 SOC 误差 <2% 等，均需要原始数据、硬件、模型版本和统计脚本才能严格复现。完整字段见[简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md)与[复现清单](docs/REPRODUCTION_CHECKLIST.md)。
 
-研究入口集中在 [docs/RESEARCH.md](docs/RESEARCH.md)，BibTeX 在 [docs/references.bib](docs/references.bib)。重点包括 LOAM、LIO-SAM、iSAM2/GTSAM、IMU 预积分、SuperPoint/SuperGlue、ORB-SLAM3、3D Gaussian Splatting、Faster R-CNN、知识蒸馏、TensorRT、Nav2、rosbridge 与 FreeRTOS。
+## 实机复现的最低记录项
 
-本仓库原创演示代码采用 [MIT License](LICENSE)。外部项目仍受各自许可证约束；特别是原始 3D Gaussian Splatting 参考实现含非商业研究限制，Ultralytics 采用 AGPL-3.0/商业双许可，使用前必须自行核对。
+- 数据：数据集版本、采集时间、传感器固件、标定文件、时间同步方案、隐私处理；
+- 软件：commit、容器/系统镜像、CUDA/cuDNN/TensorRT/ROS2 版本、编译选项；
+- 硬件：设备型号、功耗模式、时钟、散热、外设拓扑；
+- 评测：指标公式、样本数、预热、P50/P95/P99、随机种子、置信区间；
+- 故障：丢帧、时间跳变、传感器断开、地图失败、热降频、brown-out；
+- 安全：急停、看门狗、最大速度/电流、降级条件、人工接管。
 
-## 联系与说明
+## README 与工程结构参考
 
-GitHub：[@lemonbaby2](https://github.com/lemonbaby2)
+信息架构参考了成熟项目常用的“概览→依赖→运行→数据→故障排查→引用”顺序：
 
-如需面试演示，推荐顺序：先运行 `portfolio-demo all`，再选择目标项目说明架构、故障注入、指标口径与实机迁移步骤。
+- [LIO-SAM](https://github.com/TixiaoShan/LIO-SAM)：传感器准备、依赖、数据集与运行步骤的组织方式；
+- [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite)：ROS-Web 协议项目的包结构和文档入口；
+- [3D Gaussian Splatting](https://github.com/graphdeco-inria/gaussian-splatting)：环境、数据、训练/渲染和许可边界；
+- [Ultralytics](https://github.com/ultralytics/ultralytics)：快速开始、任务导航、集成和许可证说明。
+
+本仓库没有复制这些项目的受限代码。算法论文、官方文档、参考实现与许可证提醒集中在[研究资料](docs/RESEARCH.md)、[BibTeX](docs/references.bib)和[第三方说明](docs/THIRD_PARTY_NOTICES.md)。
+
+## 下载、校验与离线使用
+
+```bash
+python scripts/build_bundle.py
+python -c "import hashlib,pathlib; p=pathlib.Path('dist/lizipeng-embodied-ai-portfolio.zip'); print(hashlib.sha256(p.read_bytes()).hexdigest())"
+```
+
+压缩包只收录源码、文档、配置和自制样例；排除 `.git`、构建目录、缓存和编译产物。包内附逐文件 `SHA256SUMS.txt`，包外提供 `.zip.sha256`。
+
+## 安全、许可与贡献
+
+- 原创公开演示代码使用 [MIT License](LICENSE)；引用的上游项目仍受各自许可证约束。
+- 3DGS 官方参考实现与 Ultralytics 等项目存在不同的商业/研究使用条款，采用前必须单独核对。
+- 不要把 mock 导航、教学 ICP、简化 AEKF 或 ROS Marker 演示直接部署到安全关键设备。
+- 安全问题请参阅 [SECURITY.md](SECURITY.md)，贡献流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 作者
+
+李梓鹏 · [GitHub @lemonbaby2](https://github.com/lemonbaby2)
+
+面试演示建议顺序：先执行 `python scripts/run_tests.py` 与 `python scripts/run_all_demos.py`，再进入目标项目，说明实现、边界、失败路径和实机复现方案。

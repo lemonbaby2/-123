@@ -10,6 +10,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 ARCHIVE = DIST / "lizipeng-embodied-ai-portfolio.zip"
+EXTERNAL_CHECKSUM = DIST / "lizipeng-embodied-ai-portfolio.zip.sha256"
 EXCLUDED_PARTS = {".git", "__pycache__", ".pytest_cache", ".venv", "build", "install", "log"}
 
 
@@ -18,7 +19,7 @@ def source_files() -> list[Path]:
     for path in ROOT.rglob("*"):
         if not path.is_file() or any(part in EXCLUDED_PARTS for part in path.relative_to(ROOT).parts):
             continue
-        if path == ARCHIVE or path.name.endswith((".pyc", ".pyo")) or path.name == "SHA256SUMS.txt":
+        if path in {ARCHIVE, EXTERNAL_CHECKSUM} or path.name.endswith((".pyc", ".pyo")) or path.name == "SHA256SUMS.txt":
             continue
         files.append(path)
     return sorted(files, key=lambda item: item.as_posix())
@@ -42,9 +43,8 @@ def build() -> tuple[Path, Path]:
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o644 << 16
         bundle.writestr(info, manifest)
-    checksum_path = DIST / "lizipeng-embodied-ai-portfolio.zip.sha256"
-    checksum_path.write_text(f"{sha256(ARCHIVE.read_bytes()).hexdigest()}  {ARCHIVE.name}\n", encoding="utf-8")
-    return ARCHIVE, checksum_path
+    EXTERNAL_CHECKSUM.write_text(f"{sha256(ARCHIVE.read_bytes()).hexdigest()}  {ARCHIVE.name}\n", encoding="utf-8")
+    return ARCHIVE, EXTERNAL_CHECKSUM
 
 
 if __name__ == "__main__":
