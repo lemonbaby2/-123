@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -23,6 +24,7 @@ DEMOS = {
 
 def run_all() -> dict[str, object]:
     results: dict[str, object] = {}
+    child_env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     for name, script in DEMOS.items():
         completed = subprocess.run(
             [sys.executable, str(script)],
@@ -31,6 +33,7 @@ def run_all() -> dict[str, object]:
             capture_output=True,
             text=True,
             encoding="utf-8",
+            env=child_env,
         )
         results[name] = json.loads(completed.stdout)
     return results
