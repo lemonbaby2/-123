@@ -1,0 +1,11 @@
+repo,institution_or_group,topic,license_spdx,default_branch,integration_mode,url,notes
+hku-mars/GS-SDF,HKU-MARS,LiDAR-augmented Gaussian Splatting and Neural SDF,GPL-2.0,master,reference/submodule-only,https://github.com/hku-mars/GS-SDF,Useful for geometry-consistent rendering and reconstruction
+hku-mars/FAST-LIVO2,HKU-MARS,Fast direct lidar-inertial-visual odometry,GPL-2.0,main,reference/submodule-only,https://github.com/hku-mars/FAST-LIVO2,Primary odometry reference for live scanner front end
+hku-mars/FAST_LIO,HKU-MARS,Lidar-inertial odometry,GPL-2.0,main,reference/submodule-only,https://github.com/hku-mars/FAST_LIO,Robust baseline LIO implementation
+hku-mars/r3live,HKU-MARS,RGB-colored lidar-inertial-visual mapping,GPL-2.0,master,reference/submodule-only,https://github.com/hku-mars/r3live,Useful for colorized mapping and sensor fusion architecture
+HKUST-Aerial-Robotics/GS-LIVO,HKUST Aerial Robotics,Gaussian Splatting with LIVO,NOASSERTION,main,reference/submodule-only,https://github.com/HKUST-Aerial-Robotics/GS-LIVO,Review license before any code reuse
+graphdeco-inria/gaussian-splatting,INRIA / GraphDeco,Original 3D Gaussian Splatting implementation,NOASSERTION,main,reference-only,https://github.com/graphdeco-inria/gaussian-splatting,Check upstream license and viewer dependencies
+spla-tam/SplaTAM,SplaTAM authors,Dense RGB-D SLAM with 3D Gaussians,BSD-3-Clause,main,reference/submodule candidate,https://github.com/spla-tam/SplaTAM,Good RGB-D SLAM reference
+nerfstudio-project/gsplat,Nerfstudio project,CUDA rasterization library for Gaussian Splatting,Apache-2.0,main,dependency candidate,https://github.com/nerfstudio-project/gsplat,Useful low-level 3DGS backend
+isl-org/Open3D,Open3D / Intel ISL,3D data processing and visualization,NOASSERTION,main,dependency candidate,https://github.com/isl-org/Open3D,Point cloud processing and viewer tools
+KwanWaiPang/Awesome-3DGS-SLAM,Community survey,3DGS SLAM paper and repo index,NOASSERTION,main,reference-only,https://github.com/KwanWaiPang/Awesome-3DGS-SLAM,Use as survey tracker for new papers

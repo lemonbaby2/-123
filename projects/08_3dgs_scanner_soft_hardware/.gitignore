@@ -1,0 +1,36 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Logs/temp
+*.log
+tmp/
+temp/
+.cache/
+
+# CAD tool transients
+*.SchDocPreview
+*.PcbDocPreview
+*.PrjPcbStructure
+*.DsnWrk
+History/
+Project Logs for */
+
+# Do keep released PDFs/DOCX/XLSX in this engineering archive.
+!*.pdf
+!*.docx
+!*.xlsx

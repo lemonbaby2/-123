@@ -1,0 +1,26 @@
+* text=auto
+
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.xls binary
+*.zip binary
+*.7z binary
+*.rar binary
+
+*.PcbDoc binary
+*.SchDoc binary
+*.PrjPcb text
+*.IntLib binary
+*.SchLib binary
+*.PcbLib binary
+*.OutJob text
+
+*.gbr text eol=crlf
+*.ger text eol=crlf
+*.drl text eol=crlf
+*.bom text eol=crlf
+*.csv text eol=crlf
+*.md text eol=lf
+*.json text eol=lf
+*.ps1 text eol=crlf

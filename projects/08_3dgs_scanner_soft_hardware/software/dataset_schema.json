@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.1.0",
+  "project": "3dgs-scanner-soft-hardware",
+  "scan_id": "scan_YYYYMMDD_scene_name",
+  "created_at": "2026-08-10T00:00:00+08:00",
+  "hardware": {
+    "main_controller_revision": "unknown",
+    "bms_revision": "unknown",
+    "sensor_rig_revision": "unknown"
+  },
+  "sensors": {
+    "cameras": [],
+    "lidars": [],
+    "imus": [],
+    "gnss": []
+  },
+  "synchronization": {
+    "clock_source": "pps_or_internal",
+    "time_unit": "nanoseconds",
+    "trigger_mode": "unknown"
+  },
+  "calibration": {
+    "camera_intrinsics": "calibration/camera_intrinsics.yaml",
+    "extrinsics": "calibration/extrinsics.yaml",
+    "time_offsets": "calibration/time_offsets.yaml"
+  },
+  "outputs": {
+    "raw_data": "camera/ lidar/ imu/ gnss/",
+    "trajectory": "trajectories/trajectory.tum",
+    "point_cloud": "reconstruction/map.ply",
+    "gaussian_model": "reconstruction/gaussians/",
+    "logs": "logs/"
+  },
+  "safety": {
+    "battery_source": "bench_supply_or_pack",
+    "current_limit_a": null,
+    "operator": ""
+  }
+}
