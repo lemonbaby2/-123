@@ -17,6 +17,7 @@ DEMOS = {
     "05_ros2_3dgs": ROOT / "projects/05_ros2_3dgs/src/gaussian_ros_viz.py",
     "06_bms": ROOT / "projects/06_bms/src/bms.py",
     "07_gausspatrol": ROOT / "projects/07_gausspatrol/run_demo.py",
+    "08_3dgs_scanner_soft_hardware": ROOT / "projects/08_3dgs_scanner_soft_hardware/src/project_manifest.py",
 }
 
 
