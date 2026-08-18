@@ -1,0 +1,11 @@
+{
+  "robot": "so101_follower",
+  "leader_port": "/dev/ttyACM1",
+  "follower_port": "/dev/ttyACM0",
+  "camera_names": ["front", "wrist"],
+  "action_dim": 6,
+  "action_limits": [[-1.0, 1.0], [-1.0, 1.0], [-1.0, 1.0], [-1.0, 1.0], [-1.0, 1.0], [-1.0, 1.0]],
+  "max_step_delta": 0.25,
+  "min_perception_confidence": 0.55,
+  "dry_run": true
+}

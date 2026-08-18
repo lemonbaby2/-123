@@ -1,0 +1,11 @@
+{
+  "camera_intrinsics": {"fx": 615.0, "fy": 615.0, "cx": 320.0, "cy": 240.0},
+  "T_base_camera": {
+    "R": [[1,0,0],[0,1,0],[0,0,1]],
+    "t_m": [0.42, -0.18, 0.76]
+  },
+  "depth_min_m": 0.15,
+  "depth_max_m": 2.5,
+  "semantic_confidence_min": 0.6,
+  "dry_run": true
+}
