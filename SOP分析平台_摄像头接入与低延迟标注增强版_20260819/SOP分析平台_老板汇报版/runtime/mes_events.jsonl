@@ -1,0 +1,2 @@
+{"recorded_at": "2026-08-16 17:43:19", "event_id": "MES-1786873399617", "ack": "SIMULATED_OK", "station_id": "NB-IP-SOP-01", "product_sn": "SYSTEM-CHECK-20260816", "final_result": "HOLD", "visual_sequence": "PASS"}
+{"recorded_at": "2026-08-18 13:48:26", "event_id": "MES-1787060906902", "ack": "SIMULATED_OK", "product_sn": "NB202608160001", "station_id": "NB-IP-SOP-01", "visual_sequence": "PASS", "final_result": "HOLD"}

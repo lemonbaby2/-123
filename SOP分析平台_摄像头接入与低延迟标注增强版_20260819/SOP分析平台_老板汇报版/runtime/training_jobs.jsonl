@@ -1,0 +1,5 @@
+{"recorded_at": "2026-08-16 18:51:58", "job_id": "TRAIN-20260816-185158", "status": "待审核", "dataset": "仪表板装配V1", "model": "YOLOv8s", "device": "RTX 4060"}
+{"recorded_at": "2026-08-18 13:52:50", "job_id": "TRAIN-20260818-135250", "status": "待审核", "dataset": "新增两视频_YOLOE26_SAHI细粒度预标注_待人工复核", "model": "YOLO26N", "device": "RTX 4060", "gate": "人工复核完成后重新训练并用冻结测试集验收"}
+{"recorded_at": "2026-08-18 13:52:54", "job_id": "TRAIN-20260818-135254", "status": "待审核", "dataset": "新增两视频_YOLOE26_SAHI细粒度预标注_待人工复核", "model": "YOLO26N", "device": "RTX 4060", "gate": "人工复核完成后重新训练并用冻结测试集验收"}
+{"recorded_at": "2026-08-18 13:52:56", "job_id": "TRAIN-20260818-135256", "status": "待审核", "dataset": "新增两视频_YOLOE26_SAHI细粒度预标注_待人工复核", "model": "YOLO26N", "device": "RTX 4060", "gate": "人工复核完成后重新训练并用冻结测试集验收"}
+{"recorded_at": "2026-08-18 13:52:57", "job_id": "TRAIN-20260818-135257", "status": "待审核", "dataset": "新增两视频_YOLOE26_SAHI细粒度预标注_待人工复核", "model": "YOLO26N", "device": "RTX 4060", "gate": "人工复核完成后重新训练并用冻结测试集验收"}

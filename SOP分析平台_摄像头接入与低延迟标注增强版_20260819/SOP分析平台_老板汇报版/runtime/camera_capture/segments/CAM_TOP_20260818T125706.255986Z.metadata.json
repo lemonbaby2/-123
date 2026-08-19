@@ -1,0 +1,9 @@
+{
+  "segment_id": "CAM_TOP_20260818T125706.255986Z",
+  "started_at": "2026-08-18T12:57:06.255+00:00",
+  "finished_at": "2026-08-18T12:57:07.948+00:00",
+  "frames": 32,
+  "detections": 0,
+  "video": "CAM_TOP_20260818T125706.255986Z.mp4",
+  "detections_log": "CAM_TOP_20260818T125706.255986Z.jsonl"
+}
