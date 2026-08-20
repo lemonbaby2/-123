@@ -1,0 +1,8 @@
+**/__pycache__/
+**/*.pyc
+**/*.cache
+**/runtime/*.jsonl
+**/runtime/camera_capture/
+**/runtime/spark_automotive_dataset.yaml
+**/runtime/spark_model_registry.json
+**/runs/spark_batch_calibration/

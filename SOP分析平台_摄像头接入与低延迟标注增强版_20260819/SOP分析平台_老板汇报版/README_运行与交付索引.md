@@ -80,6 +80,8 @@ Python解释器：`D:\Anaconda\envs\dl\python.exe`。
 
 新增脚本 `scripts/camera_capture.py`，用于现场验证。它读取 USB/UVC、GigE/RTSP 或本地视频，使用 Ultralytics 模型画检测框，并且每 300 秒封存一段 MP4，同时写入逐帧 JSONL 和元数据。脚本不会把视觉结果直接当成 MES 放行结果。
 
+当前 DGX Spark 新增 Insta360 Link 2C，稳定路径为 `/dev/v4l/by-id/usb-Insta360_Insta360_Link_2C-video-index0`。推荐实时模式为 MJPEG 1920x1080@30；运行 `python3 scripts/probe_uvc_camera.py --test` 可重新输出能力和采集测试报告。运行 `python3 scripts/sync_models_to_spark.py --apply` 可校验并同步视觉模型到 `/home/xjai/sop-model-store`。
+
 ### 1. 安装环境
 
 ```bash

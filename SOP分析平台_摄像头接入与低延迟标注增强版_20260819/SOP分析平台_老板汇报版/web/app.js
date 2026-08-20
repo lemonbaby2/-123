@@ -12,7 +12,11 @@ const state = {
   recording: false,
   selectedCamera: "0",
   cameraOptions: [],
-  annotationItems: []
+  annotationItems: [],
+  productionLines: [],
+  datasets: [],
+  loaded: { annotations: false, devices: false, quality: false },
+  activeLineId: localStorage.getItem("sop.activeLine") || "pcb"
 };
 
 const fallbackSteps = [
@@ -47,7 +51,13 @@ function switchView(name) {
   if (name === "annotation") {
     fitCanvas();
     loadAnnotations();
+    loadAnnotationStats();
+    loadCvatIntegration();
+    state.loaded.annotations = true;
   }
+  if (name === "monitor" && !state.loaded.devices) { loadDeviceInventory(); state.loaded.devices = true; }
+  if (name === "quality" && !state.loaded.quality) { loadQualityReports(); loadCvatIntegration(); state.loaded.quality = true; }
+  if (name === "training") loadSparkStatus();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -61,7 +71,7 @@ function currentVideoInfo() {
 function renderCameraOptions(cameras = []) {
   const select = document.getElementById("cameraSelect");
   if (!select) return;
-  const fallback = [0, 1, 2].map(camera_id => ({ camera_id, camera_name: `摄像头${camera_id}`, source: `未配置` }));
+  const fallback = [0, 1, 2, 3].map(camera_id => ({ camera_id, camera_name: `摄像头${camera_id}`, source: `未配置` }));
   const items = cameras.length ? cameras : fallback;
   state.cameraOptions = items;
   const current = String(state.selectedCamera ?? items[0]?.camera_id ?? "0");
@@ -452,9 +462,131 @@ document.getElementById("saveAnnotation").addEventListener("click", async () => 
 
 document.getElementById("startTraining").addEventListener("click", async () => {
   try {
-    const result = await request("/api/train/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataset: "新增两视频_YOLOE26_SAHI细粒度预标注_待人工复核", model: "YOLO26N", device: "RTX 4060", gate: "人工复核完成后重新训练并用冻结测试集验收" }) });
+    const result = await request("/api/train/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataset: document.getElementById("trainingDataset")?.value || "automotive-fasteners", algorithm: document.getElementById("trainingAlgorithm")?.value || "YOLO26N", device: document.getElementById("trainingDevice")?.value || "RTX 4060", gate: "人工复核完成后重新训练并用冻结测试集验收" }) });
     showToast("trainingToast", `${result.message}｜${result.job_id}`);
   } catch (error) { showToast("trainingToast", error.message, true); }
+});
+
+async function loadTrainingCatalog() {
+  try {
+    const catalog = await request("/api/training/catalog");
+    state.productionLines = catalog.production_lines || [];
+    state.datasets = catalog.datasets || [];
+    const algorithm = document.getElementById("trainingAlgorithm");
+    const dataset = document.getElementById("trainingDataset");
+    algorithm.innerHTML = (catalog.algorithms || []).map(item => `<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)} · ${escapeHtml(item.role)}</option>`).join("");
+    dataset.innerHTML = state.datasets.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.line)}</option>`).join("");
+    const cvatDataset = document.getElementById("cvatDatasetSelect");
+    cvatDataset.innerHTML = state.datasets.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.line)}</option>`).join("");
+    document.getElementById("trainingCatalogStatus").textContent = `${catalog.algorithms.length} 个算法 · ${catalog.datasets.length} 个产线数据集`;
+    algorithm.addEventListener("change", () => { document.getElementById("selectedAlgorithmLabel").textContent = `${algorithm.value} 训练候选`; });
+    renderProductionLineSelect();
+    applyProductionLine(state.activeLineId);
+    await request("/api/production-lines/select", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line_id: state.activeLineId }) });
+  } catch (error) {
+    document.getElementById("trainingCatalogStatus").textContent = "目录读取失败";
+    document.getElementById("trainingProgress").textContent = error.message;
+  }
+}
+
+function renderProductionLineSelect() {
+  const select = document.getElementById("productionLineSelect");
+  if (!select) return;
+  select.innerHTML = state.productionLines.map(line => `<option value="${escapeHtml(line.id)}">${escapeHtml(line.short_name || line.name)}</option>`).join("");
+  select.value = state.productionLines.some(line => line.id === state.activeLineId) ? state.activeLineId : state.productionLines[0]?.id;
+}
+
+function activeProductionLine() {
+  return state.productionLines.find(line => line.id === state.activeLineId) || null;
+}
+
+function applyProductionLine(lineId) {
+  const line = state.productionLines.find(item => item.id === lineId) || state.productionLines[0];
+  if (!line) return;
+  state.activeLineId = line.id;
+  localStorage.setItem("sop.activeLine", line.id);
+  const selector = document.getElementById("productionLineSelect");
+  if (selector) selector.value = line.id;
+  document.getElementById("lineModelStatus").textContent = `识别模型：${line.primary_model}${line.quality_model ? ` + ${line.quality_model}` : ""}`;
+  document.getElementById("trainingLineName").textContent = line.name;
+  const algorithmSelect = document.getElementById("trainingAlgorithm");
+  if ([...algorithmSelect.options].some(option => option.value === line.primary_model)) algorithmSelect.value = line.primary_model;
+  document.getElementById("selectedAlgorithmLabel").textContent = `${line.primary_model} · ${line.short_name}`;
+  const dataset = document.getElementById("trainingDataset");
+  const available = new Set(line.dataset_ids || []);
+  const lineDatasets = state.datasets.filter(item => available.has(item.id));
+  dataset.innerHTML = lineDatasets.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.status || item.line)}</option>`).join("");
+  const cvatDataset = document.getElementById("cvatDatasetSelect");
+  cvatDataset.innerHTML = lineDatasets.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.status || item.line)}</option>`).join("");
+  const match = [...dataset.options][0];
+  if (match) dataset.value = match.value;
+  if (cvatDataset && match) cvatDataset.value = match.value;
+  const labelSelect = document.getElementById("annotLabel");
+  if (labelSelect) labelSelect.innerHTML = (line.labels || []).map(label => `<option>${escapeHtml(label)}</option>`).join("");
+  const note = document.getElementById("trainingProgress");
+  if (note) note.textContent = `${line.name}：${line.transfer}`;
+  document.getElementById("lineProfileTitle").textContent = line.name;
+  document.getElementById("lineProfileStatus").textContent = line.model_status || "迁移学习候选";
+  document.getElementById("lineProfileModels").textContent = `${line.primary_model}${line.quality_model ? ` + ${line.quality_model}` : ""}；教师：${line.teacher_model}`;
+  document.getElementById("lineProfileInputs").textContent = (line.inputs || []).join("、");
+  document.getElementById("lineProfileChecks").textContent = (line.checks || []).join("、");
+  document.getElementById("lineProfileTransfer").textContent = line.transfer;
+  renderDatasetCatalog(lineDatasets);
+}
+
+function renderDatasetCatalog(items) {
+  const grid = document.getElementById("datasetCatalogGrid");
+  if (!grid) return;
+  document.getElementById("datasetCatalogCount").textContent = `${items.length} 个数据集`;
+  grid.innerHTML = items.map(item => `<article class="dataset-registry-item"><div class="dataset-registry-head"><b>${escapeHtml(item.name)}</b><span class="badge">${escapeHtml(item.status || "来源已登记")}</span></div><small>${escapeHtml(item.task || "")}</small><div class="dataset-sources">${(item.sources || []).map(source => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.name)}</a>`).join("")}</div><p>${escapeHtml(item.download || item.embedding_policy || "下载和许可状态以来源页面为准")}</p></article>`).join("");
+}
+
+document.getElementById("applyLineModel").addEventListener("click", async () => {
+  const previous = state.activeLineId;
+  const selected = document.getElementById("productionLineSelect").value;
+  applyProductionLine(selected);
+  try {
+    const result = await request("/api/production-lines/select", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line_id: state.activeLineId }) });
+    showToast("trainingToast", result.message);
+    await pollCameraStatus();
+  } catch (error) {
+    applyProductionLine(previous);
+    showToast("trainingToast", error.message, true);
+  }
+});
+
+document.getElementById("oneClickTraining").addEventListener("click", async () => {
+  const progress = document.getElementById("trainingProgress");
+  progress.textContent = "正在登记训练 → 推理 → 验证 → 测试流水线…";
+  try {
+    const result = await request("/api/train/one-click", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line_id: state.activeLineId, algorithm: document.getElementById("trainingAlgorithm").value, dataset: document.getElementById("trainingDataset").value, device: document.getElementById("trainingDevice").value }) });
+    progress.textContent = `${result.message} 任务号：${result.job_id}；${result.line_name}；报告图表：${result.report_url}`;
+    showToast("trainingToast", `${result.message}｜${result.job_id}`);
+  } catch (error) { progress.textContent = error.message; showToast("trainingToast", error.message, true); }
+});
+
+async function loadCvatIntegration() {
+  try {
+    const integration = await request("/api/integrations");
+    const cvat = integration.cvat;
+    document.getElementById("openCvat").href = cvat.tasks_url;
+    document.getElementById("labelStudioLink").href = cvat.tasks_url;
+    document.getElementById("labelStudioVideoLink").href = cvat.tasks_url;
+    document.getElementById("cvatStatus").textContent = cvat.available ? "CVAT 在线" : `CVAT 未连接 · ${cvat.url}`;
+    document.getElementById("cvatStatus").classList.toggle("green", cvat.available);
+    document.getElementById("labelStudioStatus").textContent = cvat.available ? "CVAT 服务在线，可创建任务" : `未连接：${cvat.url}`;
+    document.getElementById("cvatMessage").textContent = cvat.token_configured ? "已配置 CVAT_TOKEN，可由平台调用 CVAT API 创建任务。" : "当前为链接模式；设置 CVAT_TOKEN 后可由平台自动创建任务。";
+  } catch (error) { document.getElementById("cvatStatus").textContent = error.message; }
+}
+
+document.getElementById("createCvatTask").addEventListener("click", async () => {
+  const datasetId = document.getElementById("cvatDatasetSelect").value;
+  const labels = activeProductionLine()?.labels || [];
+  try {
+    const result = await request("/api/cvat/task", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: document.getElementById("cvatTaskName").value, dataset_id: datasetId, line_id: state.activeLineId, labels }) });
+    document.getElementById("cvatMessage").textContent = `${result.message}：${result.url}`;
+    window.open(result.url, "_blank", "noopener,noreferrer");
+  } catch (error) { document.getElementById("cvatMessage").textContent = error.message; }
 });
 
 document.getElementById("deployModel").addEventListener("click", async () => {
@@ -490,6 +622,7 @@ function renderCameraStatus(status) {
   document.getElementById("cameraFps").textContent = status.fps ? `${status.fps} FPS` : "--";
   document.getElementById("cameraLatency").textContent = status.inference_ms ? `${status.inference_ms} ms` : "--";
   document.getElementById("cameraDetections").textContent = Number.isFinite(status.detections) ? `${status.detections} 个` : "--";
+  document.getElementById("cameraModelName").textContent = status.model || activeProductionLine()?.primary_model || "产线模型";
   const output = document.getElementById("cameraOutput");
   if (output) output.textContent = status.output_dir || "桌面/sop xjai";
   state.recording = Boolean(status.recording);
@@ -574,9 +707,9 @@ document.getElementById("liveCameraFeed").addEventListener("error", () => {
 async function loadQualityReports() {
   try {
     const integrations = await request("/api/integrations");
-    document.getElementById("labelStudioLink").href = integrations.label_studio.url;
-    document.getElementById("labelStudioVideoLink").href = integrations.label_studio.url;
-    document.getElementById("labelStudioStatus").textContent = integrations.label_studio.available ? "服务在线，可直接创建视频任务" : `未连接：${integrations.label_studio.url}`;
+    document.getElementById("labelStudioLink").href = integrations.cvat.tasks_url;
+    document.getElementById("labelStudioVideoLink").href = integrations.cvat.tasks_url;
+    document.getElementById("labelStudioStatus").textContent = integrations.cvat.available ? "CVAT在线，可直接创建任务" : `未连接：${integrations.cvat.url}`;
   } catch (error) { document.getElementById("labelStudioStatus").textContent = error.message; }
   try {
     const report = await request("/api/model-benchmark");
@@ -588,7 +721,7 @@ async function loadQualityReports() {
     document.getElementById("benchmarkImages").textContent = `${report.models?.[0]?.images || 0} 张`;
     document.getElementById("benchmarkStatus").textContent = `${models.length} 个模型`;
     document.getElementById("benchmarkTruth").textContent = report.truth_boundary;
-    document.getElementById("benchmarkCharts").innerHTML = (report.charts || []).map(name => `<figure class="benchmark-chart"><img src="analysis/model_benchmark/${name}" alt="${name}"><figcaption>${name.replace(/\.(png|jpg)$/i, "")}</figcaption></figure>`).join("");
+    document.getElementById("benchmarkCharts").innerHTML = (report.charts || []).map(name => `<figure class="benchmark-chart"><img loading="lazy" decoding="async" src="analysis/model_benchmark/${name}" alt="${name}"><figcaption>${name.replace(/\.(png|jpg)$/i, "")}</figcaption></figure>`).join("");
   } catch (error) {
     document.getElementById("benchmarkStatus").textContent = "尚未生成";
     document.getElementById("benchmarkTruth").textContent = `请运行 scripts/benchmark_detection_models.py：${error.message}`;
@@ -623,7 +756,20 @@ async function loadQualityReports() {
 function renderDeviceList(elementId, items, emptyText) {
   const element = document.getElementById(elementId);
   if (!element) return;
-  element.innerHTML = items?.length ? items.map(item => `<div class="device-row"><b>${escapeHtml(item.device || item.name || "设备")}</b><span>${escapeHtml(item.name || item.model || "")}</span><small>${escapeHtml(item.stable_path || item.usb_path || item.addresses?.join(", ") || item.note || "无独立网络地址")}</small></div>`).join("") : `<span class="device-empty">${emptyText}</span>`;
+  element.innerHTML = items?.length ? items.map(item => `<div class="device-row"><b>${escapeHtml(item.device || item.name || "设备")}</b><span>${escapeHtml(item.name || item.model || "")}</span><small>${escapeHtml(item.stable_path || item.usb_path || item.addresses?.join(", ") || item.note || "无独立网络地址")}</small>${item.capabilities?.modes?.length ? `<small>${item.capabilities.modes.length} 种分辨率/FPS模式 · ${item.capabilities.controls.length} 个UVC控制项</small>` : ""}</div>`).join("") : `<span class="device-empty">${emptyText}</span>`;
+}
+
+function renderCameraCapabilities(cameras) {
+  const element = document.getElementById("cameraCapabilityRows");
+  const primary = (cameras || []).filter(item => item.video_capture && item.capabilities?.modes?.length);
+  element.innerHTML = primary.map(item => {
+    const formats = [...new Set(item.capabilities.modes.map(mode => mode.pixel_format))].join(" / ");
+    const maxMode = [...item.capabilities.modes].sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0))[0];
+    const controls = item.capabilities.controls.map(control => control.name).join("、");
+    const tested = item.probe_report?.tested_modes?.filter(mode => mode.ok).map(mode => `${mode.pixel_format} ${mode.width}×${mode.height}@${mode.fps}`).join("；") || "尚未执行模式测试";
+    const recommended = item.probe_report?.recommended_sop_mode;
+    return `<article><div><b>${escapeHtml(item.name)}</b><span class="badge green">${escapeHtml(item.stable_path || item.device)}</span></div><dl><dt>格式</dt><dd>${escapeHtml(formats)}</dd><dt>最高模式</dt><dd>${escapeHtml(maxMode ? `${maxMode.size}@${maxMode.fps}FPS` : "--")}</dd><dt>采集测试</dt><dd>${escapeHtml(tested)}</dd><dt>SOP推荐</dt><dd>${escapeHtml(recommended ? `${recommended.pixel_format} ${recommended.width}×${recommended.height}@${recommended.fps}` : "--")}</dd><dt>当前参数</dt><dd>${escapeHtml(item.capabilities.current || "--")}</dd><dt>控制项</dt><dd>${escapeHtml(controls || "--")}</dd></dl></article>`;
+  }).join("");
 }
 
 async function loadDeviceInventory() {
@@ -634,10 +780,40 @@ async function loadDeviceInventory() {
     renderDeviceList("videoDeviceRows", inventory.videos?.filter(item => item.video_capture), "未发现视频采集设备");
     renderDeviceList("serialDeviceRows", inventory.serials, "未发现串口设备");
     renderDeviceList("networkDeviceRows", inventory.network, "未发现网络接口");
+    renderCameraCapabilities(inventory.videos);
   } catch (error) { document.getElementById("deviceNetworkNote").textContent = `设备信息读取失败：${error.message}`; }
 }
 
 document.getElementById("refreshDevices").addEventListener("click", loadDeviceInventory);
+
+async function loadSparkStatus() {
+  try {
+    const spark = await request("/api/spark/status");
+    document.getElementById("sparkStatusBadge").textContent = spark.is_local_spark ? "本机 DGX Spark" : "远程 Spark";
+    document.getElementById("sparkStatusBadge").classList.toggle("green", spark.gpu.available);
+    document.getElementById("sparkGpu").textContent = spark.gpu.name || "未检测";
+    document.getElementById("sparkModelCount").textContent = `${spark.models_available}/${spark.models_registered || spark.models.length}`;
+    document.getElementById("sparkBatch").textContent = spark.batch_profile?.recommended_training?.batch || "待调参";
+    document.getElementById("sparkInference").textContent = spark.inference_available ? "服务在线" : (spark.is_local_spark ? "本机直连" : "未连接");
+    document.getElementById("sparkPolicy").textContent = spark.policy || "训练和主要推理优先在Spark执行。";
+    document.getElementById("sparkStore").textContent = `模型仓库：${spark.model_store}`;
+  } catch (error) { document.getElementById("sparkStatusBadge").textContent = error.message; }
+}
+
+document.getElementById("refreshSparkStatus").addEventListener("click", loadSparkStatus);
+document.getElementById("syncSparkModels").addEventListener("click", async () => {
+  const button = document.getElementById("syncSparkModels");
+  button.disabled = true;
+  button.textContent = "正在校验并同步…";
+  try {
+    const result = await request("/api/spark/sync-models", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    document.getElementById("sparkPolicy").textContent = result.message;
+    await loadSparkStatus();
+  } catch (error) { document.getElementById("sparkPolicy").textContent = error.message; }
+  finally { button.disabled = false; button.textContent = "同步模型到 Spark"; }
+});
+
+document.getElementById("viewDatasetCatalog").addEventListener("click", () => document.getElementById("datasetCatalogSection").scrollIntoView({ behavior: "smooth" }));
 
 async function init() {
   try { state.dashboard = await request("/api/dashboard"); } catch (_) { state.dashboard = null; }
@@ -669,10 +845,8 @@ async function init() {
   video.addEventListener("loadedmetadata", () => updateVideoStatus(video));
   updateVideoStatus(video);
   pollCameraStatus();
-  loadAnnotationStats();
-  loadAnnotations();
-  loadQualityReports();
-  loadDeviceInventory();
+  await loadTrainingCatalog();
+  loadSparkStatus();
   fitCanvas();
   refreshDecision(0, true);
   const initialView = window.location.hash.replace("#", "");
