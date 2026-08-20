@@ -1,0 +1,19 @@
+[Unit]
+Description=Ningbo SOP LAN Collaboration Platform
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xjai
+WorkingDirectory=/opt/sop/SOP分析平台_老板汇报版
+Environment=SOP_HOST=0.0.0.0
+Environment=SOP_PORT=8097
+Environment=SOP_COLLAB_DB=/var/lib/sop/collaboration.sqlite3
+EnvironmentFile=/etc/sop/sop.env
+ExecStart=/usr/bin/python3 server.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

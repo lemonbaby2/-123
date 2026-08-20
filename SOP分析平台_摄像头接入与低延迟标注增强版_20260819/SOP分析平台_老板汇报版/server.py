@@ -8,6 +8,9 @@ import mimetypes
 import os
 import shutil
 import socket
+import sqlite3
+import secrets
+import hashlib
 import subprocess
 import sys
 import threading
@@ -33,6 +36,11 @@ PRODUCTION_LINES_PATH = ROOT / "config" / "production_lines.json"
 SPARK_DEPLOYMENT_PATH = ROOT / "config" / "spark_deployment.json"
 ACTIVE_LINE_ID = os.getenv("SOP_PRODUCTION_LINE", "pcb")
 SPARK_MODEL_ROOT = Path(os.getenv("SOP_SPARK_MODEL_DIR", "/home/xjai/sop-model-store"))
+COLLAB_DB_PATH = Path(os.getenv("SOP_COLLAB_DB", str(RUNTIME_ROOT / "collaboration.sqlite3")))
+COLLAB_SESSION_TTL = int(os.getenv("SOP_COLLAB_SESSION_TTL", str(12 * 3600)))
+COLLAB_DEFAULT_PASSWORD = os.getenv("SOP_DEFAULT_PASSWORD", "change-me-now")
+COLLAB_ROLES = {"admin", "reviewer", "annotator", "viewer"}
+CUSTOM_LABELS_PATH = Path(os.getenv("SOP_CUSTOM_LABELS", str(RUNTIME_ROOT / "custom_labels.json")))
 
 
 def deployed_model(filename: str) -> Path:
@@ -50,6 +58,250 @@ DESKTOP_ROOT = Path(os.getenv("SOP_DESKTOP_DIR", "/home/xjai/Desktop/sop xjai"))
 EVIDENCE_ROOT = DESKTOP_ROOT / "摄像头证据"
 ANNOTATION_IMAGE_ROOT = DESKTOP_ROOT / "标注图片"
 CAMERA_SLOT_COUNT = max(1, int(os.getenv("SOP_CAMERA_COUNT", "4")))
+
+
+def _collab_connection() -> sqlite3.Connection:
+    COLLAB_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(COLLAB_DB_PATH, timeout=10)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA busy_timeout=10000")
+    return connection
+
+
+def _password_hash(password: str, salt: bytes | None = None) -> str:
+    salt = salt or secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 180_000)
+    return f"pbkdf2_sha256$180000${salt.hex()}${digest.hex()}"
+
+
+def _password_matches(password: str, encoded: str) -> bool:
+    try:
+        algorithm, rounds, salt_hex, digest_hex = encoded.split("$", 3)
+        if algorithm != "pbkdf2_sha256":
+            return False
+        candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), int(rounds))
+        return secrets.compare_digest(candidate.hex(), digest_hex)
+    except (ValueError, TypeError):
+        return False
+
+
+def init_collaboration_db() -> None:
+    with _collab_connection() as db:
+        db.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+          username TEXT PRIMARY KEY,
+          display_name TEXT NOT NULL,
+          role TEXT NOT NULL,
+          password_hash TEXT NOT NULL,
+          disabled INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS sessions (
+          token TEXT PRIMARY KEY,
+          username TEXT NOT NULL,
+          expires_at REAL NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS annotation_versions (
+          annotation_id TEXT PRIMARY KEY,
+          video_id TEXT NOT NULL,
+          frame INTEGER NOT NULL,
+          payload TEXT NOT NULL,
+          version INTEGER NOT NULL DEFAULT 1,
+          updated_by TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS annotation_locks (
+          lock_key TEXT PRIMARY KEY,
+          username TEXT NOT NULL,
+          expires_at REAL NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT NOT NULL,
+          action TEXT NOT NULL,
+          object_id TEXT,
+          detail TEXT,
+          recorded_at TEXT NOT NULL
+        );
+        """)
+        if db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
+            now = time.strftime("%Y-%m-%d %H:%M:%S")
+            db.executemany(
+                "INSERT INTO users(username, display_name, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?)",
+                [
+                    ("admin", "平台管理员", "admin", _password_hash(COLLAB_DEFAULT_PASSWORD), now),
+                    ("annotator", "标注员", "annotator", _password_hash(COLLAB_DEFAULT_PASSWORD), now),
+                    ("reviewer", "质量复核员", "reviewer", _password_hash(COLLAB_DEFAULT_PASSWORD), now),
+                ],
+            )
+
+
+def _collab_user_from_token(token: str | None) -> dict[str, object] | None:
+    if not token:
+        return None
+    now = time.time()
+    with _collab_connection() as db:
+        row = db.execute(
+            "SELECT u.username, u.display_name, u.role FROM sessions s JOIN users u ON u.username=s.username "
+            "WHERE s.token=? AND s.expires_at>? AND u.disabled=0", (token, now)
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def _request_token(handler: SimpleHTTPRequestHandler) -> str | None:
+    header = handler.headers.get("Authorization", "")
+    if header.lower().startswith("bearer "):
+        return header[7:].strip()
+    cookie = handler.headers.get("Cookie", "")
+    for item in cookie.split(";"):
+        name, _, value = item.strip().partition("=")
+        if name == "sop_session":
+            return value
+    return None
+
+
+def _collab_user(handler: SimpleHTTPRequestHandler) -> dict[str, object] | None:
+    return _collab_user_from_token(_request_token(handler))
+
+
+def _require_collab_user(handler: SimpleHTTPRequestHandler, roles: set[str] | None = None) -> dict[str, object] | None:
+    user = _collab_user(handler)
+    if not user:
+        handler.send_json({"ok": False, "message": "请先登录协同标注工作区"}, 401)
+        return None
+    if roles and user["role"] not in roles and user["role"] != "admin":
+        handler.send_json({"ok": False, "message": "当前账号没有执行此操作的权限"}, 403)
+        return None
+    return user
+
+
+def _collab_audit(username: str, action: str, object_id: str = "", detail: object = None) -> None:
+    with _collab_connection() as db:
+        db.execute(
+            "INSERT INTO audit_log(username, action, object_id, detail, recorded_at) VALUES (?, ?, ?, ?, ?)",
+            (username, action, object_id, json.dumps(detail, ensure_ascii=False) if detail is not None else "", time.strftime("%Y-%m-%d %H:%M:%S")),
+        )
+
+
+def collab_auth_login(username: str, password: str) -> tuple[dict[str, object] | None, str | None]:
+    with _collab_connection() as db:
+        row = db.execute("SELECT * FROM users WHERE username=? AND disabled=0", (username,)).fetchone()
+        if not row or not _password_matches(password, row["password_hash"]):
+            return None, None
+        token = secrets.token_urlsafe(32)
+        db.execute("INSERT INTO sessions(token, username, expires_at, created_at) VALUES (?, ?, ?, ?)", (token, username, time.time() + COLLAB_SESSION_TTL, time.strftime("%Y-%m-%d %H:%M:%S")))
+        user = {"username": row["username"], "display_name": row["display_name"], "role": row["role"]}
+    _collab_audit(username, "login")
+    return user, token
+
+
+def collab_lock_key(video_id: str, frame: int) -> str:
+    return f"{video_id}:frame:{int(frame)}"
+
+
+def collab_lock_state(video_id: str, frame: int, username: str | None = None) -> dict[str, object]:
+    key = collab_lock_key(video_id, frame)
+    now = time.time()
+    with _collab_connection() as db:
+        db.execute("DELETE FROM annotation_locks WHERE expires_at<=?", (now,))
+        row = db.execute("SELECT lock_key, username, expires_at FROM annotation_locks WHERE lock_key=?", (key,)).fetchone()
+    return {"locked": bool(row), "lock_key": key, "username": row["username"] if row else None, "mine": bool(row and username and row["username"] == username), "expires_at": row["expires_at"] if row else None}
+
+
+def collab_annotations(video_id: str | None = None) -> list[dict]:
+    with _collab_connection() as db:
+        rows = db.execute("SELECT annotation_id, payload, version, updated_by, updated_at FROM annotation_versions ORDER BY updated_at").fetchall()
+    output = []
+    for row in rows:
+        try:
+            item = json.loads(row["payload"])
+        except json.JSONDecodeError:
+            continue
+        if video_id and str(item.get("video_id")) != video_id:
+            continue
+        item["version"] = row["version"]
+        item["updated_by"] = row["updated_by"]
+        item["updated_at"] = row["updated_at"]
+        output.append(item)
+    return output
+
+
+def custom_labels() -> dict[str, list[str]]:
+    value = read_config(CUSTOM_LABELS_PATH, {})
+    return value if isinstance(value, dict) else {}
+
+
+def save_custom_labels(line_id: str, labels: object) -> list[str]:
+    if not isinstance(labels, list):
+        raise ValueError("标签必须是数组")
+    cleaned: list[str] = []
+    for value in labels:
+        label = " ".join(str(value).strip().split())
+        if label and label not in cleaned:
+            if len(label) > 64:
+                raise ValueError("标签名称不能超过64个字符")
+            cleaned.append(label)
+    if not cleaned:
+        raise ValueError("至少需要保留一个标签")
+    labels_map = custom_labels()
+    labels_map[line_id] = cleaned
+    CUSTOM_LABELS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CUSTOM_LABELS_PATH.write_text(json.dumps(labels_map, ensure_ascii=False, indent=2), encoding="utf-8")
+    return cleaned
+
+
+def acquire_collab_lock(video_id: str, frame: int, username: str, ttl: int = 900) -> dict[str, object]:
+    key = collab_lock_key(video_id, frame)
+    now = time.time()
+    expires = now + max(60, min(ttl, 3600))
+    with _collab_connection() as db:
+        db.execute("DELETE FROM annotation_locks WHERE expires_at<=?", (now,))
+        row = db.execute("SELECT username, expires_at FROM annotation_locks WHERE lock_key=?", (key,)).fetchone()
+        if row and row["username"] != username:
+            return {"ok": False, "locked": True, "lock_key": key, "username": row["username"], "mine": False, "expires_at": row["expires_at"], "message": f"此关键帧正在被 {row['username']} 编辑"}
+        db.execute("INSERT OR REPLACE INTO annotation_locks(lock_key, username, expires_at, updated_at) VALUES (?, ?, ?, ?)", (key, username, expires, time.strftime("%Y-%m-%d %H:%M:%S")))
+    _collab_audit(username, "lock", key)
+    return {"ok": True, **collab_lock_state(video_id, frame, username), "message": "已获得关键帧编辑锁，15分钟内自动续期"}
+
+
+def release_collab_lock(video_id: str, frame: int, username: str) -> dict[str, object]:
+    key = collab_lock_key(video_id, frame)
+    with _collab_connection() as db:
+        db.execute("DELETE FROM annotation_locks WHERE lock_key=? AND username=?", (key, username))
+    _collab_audit(username, "unlock", key)
+    return {"ok": True, **collab_lock_state(video_id, frame, username)}
+
+
+def save_collab_annotation(annotation: dict, username: str, expected_version: int | None = None) -> dict[str, object]:
+    annotation_id = str(annotation["annotation_id"])
+    video_id = str(annotation["video_id"])
+    frame = int(annotation["frame"])
+    lock = collab_lock_state(video_id, frame, username)
+    if lock["locked"] and not lock["mine"]:
+        raise PermissionError(f"此关键帧正在被 {lock['username']} 编辑")
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    with _collab_connection() as db:
+        row = db.execute("SELECT version FROM annotation_versions WHERE annotation_id=?", (annotation_id,)).fetchone()
+        current = int(row["version"]) if row else 0
+        if expected_version is not None and current != int(expected_version):
+            raise RuntimeError(f"标注已被其他人员更新，请刷新后再保存（当前版本 {current}）")
+        version = current + 1
+        db.execute(
+            "INSERT INTO annotation_versions(annotation_id, video_id, frame, payload, version, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(annotation_id) DO UPDATE SET payload=excluded.payload, version=excluded.version, updated_by=excluded.updated_by, updated_at=excluded.updated_at",
+            (annotation_id, video_id, frame, json.dumps(annotation, ensure_ascii=False), version, username, now),
+        )
+    annotation["version"] = version
+    annotation["updated_by"] = username
+    annotation["updated_at"] = now
+    _collab_audit(username, "annotation_save", annotation_id, {"version": version, "frame": frame})
+    return annotation
+
+
+init_collaboration_db()
 
 
 def _discover_camera_sources(limit: int = CAMERA_SLOT_COUNT) -> dict[int, str]:
@@ -623,7 +875,10 @@ def cvat_task_create(payload: dict[str, object]) -> dict[str, object]:
 
 def production_lines() -> list[dict[str, object]]:
     value = read_config(PRODUCTION_LINES_PATH, [])
-    return value if isinstance(value, list) else []
+    if not isinstance(value, list):
+        return []
+    labels_map = custom_labels()
+    return [{**line, "labels": labels_map.get(str(line.get("id")), line.get("labels", []))} for line in value]
 
 
 def active_production_line() -> dict[str, object] | None:
@@ -867,7 +1122,8 @@ def frame_annotation_items(video_id: str, requested_time: float) -> list[dict]:
 def manual_annotation_items(video_id: str | None = None) -> list[dict]:
     reviews = annotation_reviews()
     items = []
-    for record in read_jsonl(RUNTIME_ROOT / "annotations.jsonl"):
+    records = read_jsonl(RUNTIME_ROOT / "annotations.jsonl") + collab_annotations(video_id)
+    for record in records:
         record_video_id = str(record.get("video_id") or video_id_for_source(record.get("video")))
         if video_id and record_video_id != video_id:
             continue
@@ -883,13 +1139,17 @@ def manual_annotation_items(video_id: str | None = None) -> list[dict]:
             "box": normalized,
             "box_pixels": pixels,
             "box_format": "normalized_xyxy",
-            "source_kind": "manual",
+            "source_kind": record.get("source_kind", "manual"),
             "source": record.get("source", "平台人工标注"),
             "review_status": review.get("review_status") or record.get("review_status", "human_confirmed"),
             "reviewer": review.get("reviewer") or record.get("reviewer"),
             "reviewed_at": review.get("recorded_at"),
         })
-    return items
+    # A collaborative save supersedes a legacy JSONL record with the same ID.
+    unique: dict[str, dict] = {}
+    for item in items:
+        unique[str(item["annotation_id"])] = item
+    return list(unique.values())
 
 
 def annotation_stats() -> dict:
@@ -956,12 +1216,14 @@ class SOPHandler(SimpleHTTPRequestHandler):
             return f"{content_type}; charset=utf-8"
         return content_type
 
-    def send_json(self, payload: object, status: int = 200) -> None:
+    def send_json(self, payload: object, status: int = 200, headers: dict[str, str] | None = None) -> None:
         body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        for name, value in (headers or {}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 
@@ -980,6 +1242,33 @@ class SOPHandler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
+        if path == "/api/auth/me":
+            user = _collab_user(self)
+            self.send_json({"ok": True, "authenticated": bool(user), "user": user})
+            return
+        if path == "/api/collab/status":
+            user = _collab_user(self)
+            self.send_json({"ok": True, "authenticated": bool(user), "user": user, "db": str(COLLAB_DB_PATH), "multi_user": True, "save_mode": "SQLite WAL + optimistic version lock"})
+            return
+        if path == "/api/collab/users":
+            user = _require_collab_user(self, {"admin"})
+            if not user:
+                return
+            with _collab_connection() as db:
+                rows = db.execute("SELECT username, display_name, role, disabled, created_at FROM users ORDER BY username").fetchall()
+            self.send_json({"ok": True, "users": [dict(row) for row in rows]})
+            return
+        if path == "/api/collab/labels":
+            self.send_json({"ok": True, "labels": custom_labels(), "lines": production_lines()})
+            return
+        if path == "/api/collab/annotations":
+            user = _require_collab_user(self)
+            if not user:
+                return
+            query = parse_qs(parsed.query)
+            video_id = query.get("video", [""])[0] or None
+            self.send_json({"ok": True, "items": collab_annotations(video_id), "total": len(collab_annotations(video_id)), "user": user})
+            return
         if path == "/api/dashboard":
             self.send_json(json.loads((DATA_ROOT / "dashboard.json").read_text(encoding="utf-8")))
             return
@@ -999,9 +1288,9 @@ class SOPHandler(SimpleHTTPRequestHandler):
             items = []
             if source in {"all", "frame", "prelabel", "candidate"}:
                 items.extend(frame_annotation_items(video_id, requested_time))
-            if source in {"all", "manual"}:
+            if source in {"all", "manual", "interpolated"}:
                 items.extend(manual_annotation_items(video_id))
-            if source in {"prelabel", "candidate"}:
+            if source in {"prelabel", "candidate", "manual", "interpolated"}:
                 items = [item for item in items if item.get("source_kind") == source]
             if status != "all":
                 items = [item for item in items if item.get("review_status") == status]
@@ -1018,9 +1307,24 @@ class SOPHandler(SimpleHTTPRequestHandler):
             self.send_json(annotation_stats())
             return
         if path == "/api/annotations/export":
+            user = _require_collab_user(self)
+            if not user:
+                return
             query = parse_qs(parsed.query)
             status = query.get("status", ["human_confirmed"])[0]
+            export_format = query.get("format", ["json"])[0]
             items = exported_annotation_items(status)
+            if export_format == "yolo":
+                classes = sorted({str(item.get("label", "未分类目标")) for item in items})
+                class_ids = {label: index for index, label in enumerate(classes)}
+                files: dict[str, list[str]] = {}
+                for item in items:
+                    x1, y1, x2, y2 = [float(value) for value in item["box"]]
+                    line = f"{class_ids[str(item.get('label', '未分类目标'))]} {(x1 + x2) / 2:.6f} {(y1 + y2) / 2:.6f} {x2 - x1:.6f} {y2 - y1:.6f}"
+                    name = f"{item.get('video_id')}_{int(item.get('frame', 0)):08d}.txt"
+                    files.setdefault(name, []).append(line)
+                self.send_json({"ok": True, "dataset_version": time.strftime("sop-annotations-%Y%m%d"), "format": "yolo", "review_status": status, "classes": classes, "files": {name: "\n".join(lines) for name, lines in files.items()}, "total_annotations": len(items), "total_label_files": len(files), "truth_boundary": "仅导出指定审核状态；正式训练前需连同对应原图冻结版本并计算校验值。"})
+                return
             self.send_json({
                 "ok": True,
                 "dataset_version": time.strftime("sop-annotations-%Y%m%d"),
@@ -1178,7 +1482,101 @@ class SOPHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             payload = self.read_json()
+            if path == "/api/auth/login":
+                user, token = collab_auth_login(str(payload.get("username", "")).strip(), str(payload.get("password", "")))
+                if not user or not token:
+                    self.send_json({"ok": False, "message": "用户名或密码错误"}, 401)
+                    return
+                self.send_json({"ok": True, "user": user, "token": token, "expires_in": COLLAB_SESSION_TTL, "message": "协同工作区登录成功"}, headers={"Set-Cookie": f"sop_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={COLLAB_SESSION_TTL}"})
+                return
+            if path == "/api/auth/logout":
+                token = _request_token(self)
+                if token:
+                    with _collab_connection() as db:
+                        db.execute("DELETE FROM sessions WHERE token=?", (token,))
+                self.send_json({"ok": True, "message": "已退出协同工作区"}, headers={"Set-Cookie": "sop_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"})
+                return
+            if path == "/api/collab/labels":
+                user = _require_collab_user(self, {"annotator", "reviewer"})
+                if not user:
+                    return
+                line_id = str(payload.get("line_id", "")).strip()
+                if not any(str(line.get("id")) == line_id for line in production_lines()):
+                    self.send_json({"ok": False, "message": "产线不存在"}, 404)
+                    return
+                labels = save_custom_labels(line_id, payload.get("labels"))
+                _collab_audit(str(user["username"]), "labels_update", line_id, labels)
+                self.send_json({"ok": True, "line_id": line_id, "labels": labels, "message": "自定义标签体系已保存并对所有标注员生效"})
+                return
+            if path == "/api/collab/users":
+                user = _require_collab_user(self, {"admin"})
+                if not user:
+                    return
+                username = str(payload.get("username", "")).strip()
+                display_name = str(payload.get("display_name", "")).strip()
+                password = str(payload.get("password", ""))
+                role = str(payload.get("role", "annotator"))
+                if not username or not display_name or len(password) < 10 or role not in COLLAB_ROLES:
+                    self.send_json({"ok": False, "message": "账号、姓名、角色必须有效，密码至少10位"}, 400)
+                    return
+                with _collab_connection() as db:
+                    db.execute(
+                        "INSERT INTO users(username, display_name, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?) "
+                        "ON CONFLICT(username) DO UPDATE SET display_name=excluded.display_name, role=excluded.role, password_hash=excluded.password_hash, disabled=0",
+                        (username, display_name, role, _password_hash(password), time.strftime("%Y-%m-%d %H:%M:%S")),
+                    )
+                _collab_audit(str(user["username"]), "user_upsert", username, {"display_name": display_name, "role": role})
+                self.send_json({"ok": True, "message": f"账号 {username} 已保存", "username": username, "role": role})
+                return
+            if path in {"/api/collab/lock", "/api/collab/unlock"}:
+                user = _require_collab_user(self, {"annotator", "reviewer"})
+                if not user:
+                    return
+                video_id = str(payload.get("video_id", "")).strip()
+                frame = int(payload.get("frame", -1))
+                if video_info(video_id) is None or frame < 0:
+                    self.send_json({"ok": False, "message": "视频或帧号无效"}, 400)
+                    return
+                result = acquire_collab_lock(video_id, frame, str(user["username"]), int(payload.get("ttl", 900))) if path.endswith("/lock") else release_collab_lock(video_id, frame, str(user["username"]))
+                self.send_json(result, 200 if result.get("ok") else 409)
+                return
+            if path == "/api/collab/interpolate":
+                user = _require_collab_user(self, {"annotator", "reviewer"})
+                if not user:
+                    return
+                video_id = str(payload.get("video_id", ""))
+                info = video_info(video_id)
+                start, end = payload.get("start"), payload.get("end")
+                if info is None or not isinstance(start, dict) or not isinstance(end, dict):
+                    self.send_json({"ok": False, "message": "关键帧参数不完整"}, 400)
+                    return
+                start_frame, end_frame = int(start.get("frame", -1)), int(end.get("frame", -1))
+                if start_frame < 0 or end_frame <= start_frame:
+                    self.send_json({"ok": False, "message": "结束关键帧必须晚于开始关键帧"}, 400)
+                    return
+                start_box, _ = normalize_box(start.get("box"), video_id)
+                end_box, _ = normalize_box(end.get("box"), video_id)
+                stride = max(1, min(30, int(payload.get("stride", 5))))
+                fps = float(info.get("fps", 30))
+                track_id = str(payload.get("track_id") or f"track-{time.time_ns()}")
+                label = str(payload.get("label", "")).strip()
+                if not label:
+                    self.send_json({"ok": False, "message": "插值候选必须指定标签"}, 400)
+                    return
+                created = []
+                for frame in range(start_frame + stride, end_frame, stride):
+                    ratio = (frame - start_frame) / (end_frame - start_frame)
+                    box = [round(a + (b - a) * ratio, 6) for a, b in zip(start_box, end_box)]
+                    _, pixels = normalize_box(box, video_id)
+                    item = {"annotation_id": f"interpolated:{video_id}:{track_id}:{frame}", "video_id": video_id, "frame": frame, "video_time": round(frame / fps, 3), "label": label, "box": box, "box_pixels": pixels, "box_format": "normalized_xyxy", "source_kind": "interpolated", "source": "关键帧线性插值候选", "track_id": track_id, "keyframe": False, "review_status": "pending", "reviewer": str(user["display_name"]), "auto_generated": True}
+                    created.append(save_collab_annotation(item, str(user["username"])))
+                _collab_audit(str(user["username"]), "interpolate", track_id, {"start": start_frame, "end": end_frame, "stride": stride, "created": len(created)})
+                self.send_json({"ok": True, "track_id": track_id, "created": len(created), "items": created, "message": f"已生成 {len(created)} 个中间帧候选，抽检确认后才能进入真值集"})
+                return
             if path == "/api/annotations":
+                user = _require_collab_user(self, {"annotator", "reviewer"})
+                if not user:
+                    return
                 required = {"video_time", "label", "box"}
                 if not required.issubset(payload):
                     self.send_json({"ok": False, "message": "标注字段不完整"}, 400)
@@ -1202,7 +1600,9 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     "source_kind": "manual",
                     "source": payload.get("source", "平台人工标注"),
                     "review_status": payload.get("review_status", "pending"),
-                    "reviewer": payload.get("reviewer", "本地标注员"),
+                    "reviewer": user["display_name"],
+                    "keyframe": bool(payload.get("keyframe", True)),
+                    "track_id": str(payload.get("track_id", "")).strip() or None,
                 }
                 evidence_data_url = payload.get("evidence_data_url")
                 if evidence_data_url:
@@ -1212,10 +1612,13 @@ class SOPHandler(SimpleHTTPRequestHandler):
                         f"{video_id}_{annotation['frame']}_{time.strftime('%Y%m%d_%H%M%S')}",
                     )
                     annotation["evidence_path"] = str(evidence_path)
-                self.append_event("annotations.jsonl", annotation)
-                self.send_json({"ok": True, "annotation": annotation, "message": "当前帧标注已保存，可进入质量抽检"})
+                annotation = save_collab_annotation(annotation, str(user["username"]), payload.get("expected_version"))
+                self.send_json({"ok": True, "annotation": annotation, "message": "关键帧标注已保存到协同数据库，可进入质量抽检"})
                 return
             if path == "/api/annotations/review":
+                user = _require_collab_user(self, {"reviewer"})
+                if not user:
+                    return
                 annotation_id = str(payload.get("annotation_id", "")).strip()
                 status = str(payload.get("review_status", "")).strip()
                 allowed = {"pending", "human_confirmed", "rejected", "needs_correction"}
@@ -1225,10 +1628,11 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 review = {
                     "annotation_id": annotation_id,
                     "review_status": status,
-                    "reviewer": payload.get("reviewer", "本地质量员"),
+                    "reviewer": user["display_name"],
                     "comment": payload.get("comment", ""),
                 }
                 self.append_event("annotation_reviews.jsonl", review)
+                _collab_audit(str(user["username"]), "annotation_review", annotation_id, review)
                 self.send_json({"ok": True, "review": review, "message": "审核结果已留痕"})
                 return
             if path == "/api/sop/save":
@@ -1333,6 +1737,10 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 self.send_json({"ok": True, "message": "人工复核意见已保存并进入审计记录"})
                 return
             self.send_json({"ok": False, "message": "接口不存在"}, HTTPStatus.NOT_FOUND)
+        except PermissionError as exc:
+            self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.CONFLICT)
+        except RuntimeError as exc:
+            self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.CONFLICT)
         except (ValueError, json.JSONDecodeError) as exc:
             self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.BAD_REQUEST)
         except Exception as exc:

@@ -15,6 +15,10 @@ const state = {
   annotationItems: [],
   productionLines: [],
   datasets: [],
+  user: null,
+  authToken: localStorage.getItem("sop.authToken") || "",
+  startKeyframe: null,
+  loadedAnnotation: null,
   loaded: { annotations: false, devices: false, quality: false },
   activeLineId: localStorage.getItem("sop.activeLine") || "pcb"
 };
@@ -29,10 +33,43 @@ const fallbackSteps = [
 ];
 
 async function request(url, options = {}) {
-  const response = await fetch(url, options);
+  const headers = new Headers(options.headers || {});
+  if (state.authToken) headers.set("Authorization", `Bearer ${state.authToken}`);
+  const response = await fetch(url, { ...options, headers });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.message || "请求失败");
+  if (!response.ok) {
+    const error = new Error(data.message || "请求失败");
+    error.status = response.status;
+    throw error;
+  }
   return data;
+}
+
+function renderCollabUser() {
+  const button = document.getElementById("collabUser");
+  const badge = document.getElementById("collabStatus");
+  if (state.user) {
+    button.textContent = `${state.user.display_name} · 退出`;
+    badge.textContent = `${state.user.display_name} / ${state.user.role}`;
+    badge.classList.add("green");
+  } else {
+    button.textContent = "协同登录";
+    badge.textContent = "未登录";
+    badge.classList.remove("green");
+  }
+  document.getElementById("accountAdmin").hidden = state.user?.role !== "admin";
+}
+
+async function loadAuthState() {
+  try {
+    const result = await request("/api/auth/me");
+    state.user = result.user || null;
+    if (!state.user) {
+      state.authToken = "";
+      localStorage.removeItem("sop.authToken");
+    }
+  } catch (_) { state.user = null; }
+  renderCollabUser();
 }
 
 function showToast(id, message, bad = false) {
@@ -63,6 +100,33 @@ function switchView(name) {
 
 document.querySelectorAll(".nav-item").forEach(button => button.addEventListener("click", () => switchView(button.dataset.view)));
 document.querySelectorAll("[data-jump]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.jump)));
+
+document.getElementById("collabUser").addEventListener("click", async () => {
+  if (!state.user) {
+    document.getElementById("loginDialog").showModal();
+    return;
+  }
+  try { await request("/api/auth/logout", { method: "POST", body: "{}" }); } catch (_) { /* local logout still applies */ }
+  state.user = null;
+  state.authToken = "";
+  localStorage.removeItem("sop.authToken");
+  renderCollabUser();
+});
+
+document.getElementById("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const message = document.getElementById("loginMessage");
+  try {
+    const result = await request("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: document.getElementById("loginUsername").value, password: document.getElementById("loginPassword").value }) });
+    state.user = result.user;
+    state.authToken = result.token;
+    localStorage.setItem("sop.authToken", result.token);
+    renderCollabUser();
+    document.getElementById("loginDialog").close();
+    showToast("annotationToast", result.message);
+  } catch (error) { message.textContent = error.message; }
+});
+document.getElementById("closeLogin").addEventListener("click", () => document.getElementById("loginDialog").close());
 
 function currentVideoInfo() {
   return state.catalog?.videos.find(video => video.id === state.currentVideoId) || null;
@@ -338,14 +402,15 @@ function renderAnnotationRows(items) {
     return;
   }
   const statusNames = { pending: "待复核", human_confirmed: "人工确认", needs_correction: "需要修正", rejected: "已驳回" };
-  const sourceNames = { prelabel: "检测预标注", candidate: "小目标候选", manual: "人工标注" };
+  const sourceNames = { prelabel: "检测预标注", candidate: "小目标候选", manual: "人工关键帧", interpolated: "插值候选" };
+  const reviewActions = item => ["reviewer", "admin"].includes(state.user?.role) ? `<button class="ghost" data-review-annotation="${escapeHtml(item.annotation_id)}" data-review-status="human_confirmed">确认</button><button class="ghost danger-action" data-review-annotation="${escapeHtml(item.annotation_id)}" data-review-status="rejected">驳回</button>` : "";
   rows.innerHTML = items.map(item => `<tr>
     <td><b>${Number(item.video_time).toFixed(3)}s</b><small>第 ${item.frame} 帧</small></td>
     <td>${escapeHtml(item.label)}</td>
     <td><span class="source-tag ${item.source_kind}">${sourceNames[item.source_kind] || escapeHtml(item.source_kind)}</span><small title="${escapeHtml(item.source)}">${escapeHtml(item.source)}</small></td>
     <td>${item.confidence == null ? "--" : `${(Number(item.confidence) * 100).toFixed(1)}%`}</td>
     <td><span class="review-state ${item.review_status}">${statusNames[item.review_status] || escapeHtml(item.review_status)}</span></td>
-    <td><div class="row-actions"><button class="ghost" data-load-annotation="${escapeHtml(item.annotation_id)}">载入框</button><button class="ghost" data-review-annotation="${escapeHtml(item.annotation_id)}" data-review-status="human_confirmed">确认</button><button class="ghost danger-action" data-review-annotation="${escapeHtml(item.annotation_id)}" data-review-status="rejected">驳回</button></div></td>
+    <td><div class="row-actions"><button class="ghost" data-load-annotation="${escapeHtml(item.annotation_id)}">载入框</button>${reviewActions(item)}</div></td>
   </tr>`).join("");
 }
 
@@ -395,6 +460,7 @@ canvas.addEventListener("pointermove", event => {
 canvas.addEventListener("pointerup", () => state.dragging = false);
 document.getElementById("clearBox").addEventListener("click", () => {
   state.box = null;
+  state.loadedAnnotation = null;
   drawBox();
   document.getElementById("boxStatus").textContent = "请在视频上拖动鼠标框选";
 });
@@ -413,11 +479,11 @@ document.getElementById("annotStatusFilter").addEventListener("change", loadAnno
 document.getElementById("refreshAnnotations").addEventListener("click", loadAnnotations);
 document.getElementById("prevFrame").addEventListener("click", () => {
   annotVideo.pause();
-  annotVideo.currentTime = Math.max(0, annotVideo.currentTime - 1 / Number(currentVideoInfo()?.fps || 30));
+  annotVideo.currentTime = Math.max(0, annotVideo.currentTime - Number(document.getElementById("frameStride").value || 1) / Number(currentVideoInfo()?.fps || 30));
 });
 document.getElementById("nextFrame").addEventListener("click", () => {
   annotVideo.pause();
-  annotVideo.currentTime = Math.min(Number(currentVideoInfo()?.duration_s || annotVideo.duration || 0), annotVideo.currentTime + 1 / Number(currentVideoInfo()?.fps || 30));
+  annotVideo.currentTime = Math.min(Number(currentVideoInfo()?.duration_s || annotVideo.duration || 0), annotVideo.currentTime + Number(document.getElementById("frameStride").value || 1) / Number(currentVideoInfo()?.fps || 30));
 });
 
 document.getElementById("annotationRows").addEventListener("click", async event => {
@@ -434,6 +500,8 @@ document.getElementById("annotationRows").addEventListener("click", async event 
     labelSelect.value = item.label;
     if (/^#[0-9a-f]{6}$/i.test(item.color || "") && document.getElementById("annotColor")) document.getElementById("annotColor").value = item.color;
     document.getElementById("boxStatus").textContent = `已载入：${item.label}，可拖框重画后保存`;
+    state.loadedAnnotation = item;
+    if (item.track_id) document.getElementById("trackId").value = item.track_id;
     drawBox();
     return;
   }
@@ -453,11 +521,71 @@ document.getElementById("saveAnnotation").addEventListener("click", async () => 
   }
   const normalized = [state.box.x / canvas.width, state.box.y / canvas.height, (state.box.x + state.box.w) / canvas.width, (state.box.y + state.box.h) / canvas.height].map(value => Number(value.toFixed(5)));
   try {
-    const result = await request("/api/annotations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ video_id: state.currentVideoId, video: currentVideoInfo()?.source_video || "原始测试视频_de02.mp4", video_time: Number(annotVideo.currentTime.toFixed(3)), label: document.getElementById("annotLabel").value, color: document.getElementById("annotColor")?.value || "#39e2bc", box: normalized, evidence_data_url: annotationEvidenceDataUrl(), review_status: "pending", reviewer: "本地标注员", source: "平台人工标注" }) });
+    if (!state.user) {
+      document.getElementById("loginDialog").showModal();
+      throw new Error("请先登录协同标注工作区");
+    }
+    const fps = Number(currentVideoInfo()?.fps || 30);
+    const frame = Math.round(Number(annotVideo.currentTime) * fps);
+    await request("/api/collab/lock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ video_id: state.currentVideoId, frame }) });
+    const editable = state.loadedAnnotation && Number(state.loadedAnnotation.frame) === frame && ["manual", "interpolated"].includes(state.loadedAnnotation.source_kind) ? state.loadedAnnotation : null;
+    const result = await request("/api/annotations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ annotation_id: editable?.annotation_id, expected_version: editable?.version, video_id: state.currentVideoId, video: currentVideoInfo()?.source_video || "原始测试视频_de02.mp4", video_time: Number(annotVideo.currentTime.toFixed(3)), label: document.getElementById("annotLabel").value, color: document.getElementById("annotColor")?.value || "#39e2bc", box: normalized, evidence_data_url: annotationEvidenceDataUrl(), review_status: "pending", source: "平台人工关键帧", source_kind: "manual", keyframe: true, track_id: document.getElementById("trackId").value.trim() }) });
     showToast("annotationToast", result.message);
     state.box = null;
+    state.loadedAnnotation = null;
     await Promise.all([loadAnnotations(), loadAnnotationStats()]);
   } catch (error) { showToast("annotationToast", error.message, true); }
+});
+
+function normalizedCurrentBox() {
+  if (!state.box || state.box.w < 5 || state.box.h < 5) return null;
+  return [state.box.x / canvas.width, state.box.y / canvas.height, (state.box.x + state.box.w) / canvas.width, (state.box.y + state.box.h) / canvas.height].map(value => Number(value.toFixed(6)));
+}
+
+document.getElementById("saveCustomLabels").addEventListener("click", async () => {
+  try {
+    const labels = document.getElementById("customLabels").value.split(/[，,\n]/).map(item => item.trim()).filter(Boolean);
+    const result = await request("/api/collab/labels", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line_id: state.activeLineId, labels }) });
+    const line = state.productionLines.find(item => item.id === state.activeLineId);
+    if (line) line.labels = result.labels;
+    document.getElementById("annotLabel").innerHTML = result.labels.map(label => `<option>${escapeHtml(label)}</option>`).join("");
+    showToast("annotationToast", result.message);
+  } catch (error) {
+    if (error.status === 401) document.getElementById("loginDialog").showModal();
+    showToast("annotationToast", error.message, true);
+  }
+});
+
+document.getElementById("saveUser").addEventListener("click", async () => {
+  try {
+    const result = await request("/api/collab/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: document.getElementById("newUsername").value, display_name: document.getElementById("newDisplayName").value, role: document.getElementById("newUserRole").value, password: document.getElementById("newUserPassword").value }) });
+    document.getElementById("newUserPassword").value = "";
+    showToast("annotationToast", result.message);
+  } catch (error) { showToast("annotationToast", error.message, true); }
+});
+
+document.getElementById("setStartKeyframe").addEventListener("click", () => {
+  const box = normalizedCurrentBox();
+  if (!box) return showToast("annotationToast", "请先在起始关键帧画框并保存", true);
+  const fps = Number(currentVideoInfo()?.fps || 30);
+  state.startKeyframe = { frame: Math.round(Number(annotVideo.currentTime) * fps), box };
+  document.getElementById("keyframeStatus").textContent = `起始关键帧：${state.startKeyframe.frame}。移动到外观或方向明显变化处，画第二个框后生成候选。`;
+});
+
+document.getElementById("interpolateKeyframes").addEventListener("click", async () => {
+  const endBox = normalizedCurrentBox();
+  if (!state.startKeyframe || !endBox) return showToast("annotationToast", "需要起始框和当前结束框", true);
+  const fps = Number(currentVideoInfo()?.fps || 30);
+  const end = { frame: Math.round(Number(annotVideo.currentTime) * fps), box: endBox };
+  try {
+    const result = await request("/api/collab/interpolate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ video_id: state.currentVideoId, label: document.getElementById("annotLabel").value, track_id: document.getElementById("trackId").value.trim(), start: state.startKeyframe, end, stride: Number(document.getElementById("frameStride").value) }) });
+    document.getElementById("keyframeStatus").textContent = result.message;
+    state.startKeyframe = null;
+    await Promise.all([loadAnnotations(), loadAnnotationStats()]);
+  } catch (error) {
+    if (error.status === 401) document.getElementById("loginDialog").showModal();
+    showToast("annotationToast", error.message, true);
+  }
 });
 
 document.getElementById("startTraining").addEventListener("click", async () => {
@@ -523,6 +651,8 @@ function applyProductionLine(lineId) {
   if (cvatDataset && match) cvatDataset.value = match.value;
   const labelSelect = document.getElementById("annotLabel");
   if (labelSelect) labelSelect.innerHTML = (line.labels || []).map(label => `<option>${escapeHtml(label)}</option>`).join("");
+  const customLabels = document.getElementById("customLabels");
+  if (customLabels) customLabels.value = (line.labels || []).join("，");
   const note = document.getElementById("trainingProgress");
   if (note) note.textContent = `${line.name}：${line.transfer}`;
   document.getElementById("lineProfileTitle").textContent = line.name;
@@ -816,6 +946,7 @@ document.getElementById("syncSparkModels").addEventListener("click", async () =>
 document.getElementById("viewDatasetCatalog").addEventListener("click", () => document.getElementById("datasetCatalogSection").scrollIntoView({ behavior: "smooth" }));
 
 async function init() {
+  await loadAuthState();
   try { state.dashboard = await request("/api/dashboard"); } catch (_) { state.dashboard = null; }
   try { state.recipe = await request("/api/recipe"); } catch (_) { state.recipe = { steps: fallbackSteps }; }
   try { state.catalog = await request("/api/videos"); } catch (_) { state.catalog = null; }
