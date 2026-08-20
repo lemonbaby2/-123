@@ -2,6 +2,8 @@
 **/*.pyc
 **/*.cache
 **/runtime/*.jsonl
+**/runtime/*.sqlite3*
+**/runtime/custom_labels.json
 **/runtime/camera_capture/
 **/runtime/spark_automotive_dataset.yaml
 **/runtime/spark_model_registry.json

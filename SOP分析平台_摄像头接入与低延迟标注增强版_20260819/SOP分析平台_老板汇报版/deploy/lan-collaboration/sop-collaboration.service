@@ -11,7 +11,7 @@ Environment=SOP_HOST=0.0.0.0
 Environment=SOP_PORT=8097
 Environment=SOP_COLLAB_DB=/var/lib/sop/collaboration.sqlite3
 EnvironmentFile=/etc/sop/sop.env
-ExecStart=/usr/bin/python3 server.py
+ExecStart=/home/xjai/micromamba/envs/sop/bin/python3.12 server.py
 Restart=on-failure
 RestartSec=3
 

@@ -19,6 +19,8 @@ cd deploy/lan-collaboration
 SOP_DEFAULT_PASSWORD='首次强密码' CVAT_URL='http://192.168.1.129:8081' ./start-lan.sh
 ```
 
+启动脚本优先使用 DGX Spark 已验证的 `/home/xjai/micromamba/envs/sop/bin/python3.12`；其他服务器可设置 `SOP_PYTHON=/path/to/venv/bin/python`。
+
 Windows 浏览器直接打开：
 
 ```text
