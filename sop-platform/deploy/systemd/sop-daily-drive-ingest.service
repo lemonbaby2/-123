@@ -1,0 +1,15 @@
+[Unit]
+Description=Ningbo SOP daily Google Drive ingest
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=xjai
+WorkingDirectory=/opt/ningbo-sop/sop-platform
+EnvironmentFile=/etc/ningbo-sop/drive-ingest.env
+ExecStart=/usr/bin/python3 /opt/ningbo-sop/sop-platform/scripts/daily_drive_ingest.py
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/ningbo-sop/sop-platform/runtime

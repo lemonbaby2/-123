@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Ningbo SOP Google Drive ingest daily at 17:00
+
+[Timer]
+OnCalendar=*-*-* 17:00:00
+Persistent=true
+RandomizedDelaySec=90
+Unit=sop-daily-drive-ingest.service
+
+[Install]
+WantedBy=timers.target

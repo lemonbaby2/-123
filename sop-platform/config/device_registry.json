@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "policy": "设备端保持原厂固件；平台仅按主机侧稳定身份识别，不向相机或存储卡写入脚本。",
+  "devices": [
+    {
+      "id": "uvc-insta360-link-2c",
+      "kind": "uvc",
+      "name": "Insta360 Link 2C",
+      "usb_vendor_id": "2e1a",
+      "usb_product_id": "4c03",
+      "stable_path": "/dev/v4l/by-id/usb-Insta360_Insta360_Link_2C-video-index0",
+      "mode": "live-video"
+    },
+    {
+      "id": "uvc-jieli-composite",
+      "kind": "uvc",
+      "name": "Jieli USB Composite Device",
+      "usb_vendor_id": "4c4a",
+      "usb_product_id": "4a55",
+      "mode": "live-video"
+    },
+    {
+      "id": "uvc-icspring-webcamera",
+      "kind": "uvc",
+      "name": "icSpring WebCamera",
+      "usb_vendor_id": "32e6",
+      "usb_product_id": "9221",
+      "serial": "20240603201703",
+      "mode": "live-video"
+    },
+    {
+      "id": "storage-dji-pocket3",
+      "kind": "removable-storage",
+      "name": "DJI Pocket 3",
+      "usb_vendor_id": "2ca3",
+      "usb_product_id": "0020",
+      "filesystem_uuid": "2A1B-D624",
+      "volume_label": "DJI_POCKET3",
+      "mode": "storage-only",
+      "write_policy": "read-only-import"
+    }
+  ]
+}
