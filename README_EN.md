@@ -2,7 +2,7 @@
 
 [中文](README.md) · [Research index](docs/RESEARCH.md) · [Evidence matrix](docs/RESUME_EVIDENCE_MATRIX.md) · [Offline bundle](dist/lizipeng-embodied-ai-portfolio.zip)
 
-This public portfolio contains eight clean-room, runnable projects: six resume reconstructions, GaussPatrol, and a 3DGS scanner soft-hardware engineering archive.
+This public portfolio contains nine independently verifiable projects: six resume reconstructions, GaussPatrol, a 3DGS scanner archive, and a CVAT/SOP offline deployment overlay.
 
 It is **not** production source code from any employer. It contains no customer data, credentials, proprietary maps, model weights, or unpublished patent/paper content. Resume metrics are explicitly treated as reported historical results; repository tests validate only the included synthetic demos.
 
@@ -33,12 +33,13 @@ python projects/01_quadruped_slam/tests/test_quadruped_slam.py -v
 | [BMS](projects/06_bms/README.md) | Python, tests, config, standalone C++17 demo | MCU-oriented state estimation |
 | [GaussPatrol](projects/07_gausspatrol/README.md) | patrol simulation, tests, SVG/PLY results, technical and submission docs | embodied competition system closure |
 | [3DGS scanner soft-hardware](projects/08_3dgs_scanner_soft_hardware/README.md) | PCB PDFs, SOPs, engineering report, test matrix and research references | BMS/main-controller hardware archive |
+| [CVAT/SOP offline platform](projects/09_cvat_sop_offline/README.md) | localization overlay, multi-architecture Compose, Windows launchers and restore scripts | offline annotation and local SOP deployment |
 
 See each design under [`projects/`](projects/), the research trail in [`docs/RESEARCH.md`](docs/RESEARCH.md), and the exact resume-to-artifact boundary in [`docs/RESUME_EVIDENCE_MATRIX.md`](docs/RESUME_EVIDENCE_MATRIX.md).
 
 ## Verification contract
 
-CI parses all Python files, runs the eight independent test programs on Python 3.10 and 3.12, executes all demos as separate processes, validates the repository layout and local README links, builds the two C++17 projects, and regenerates the deterministic source bundle. Synthetic tests demonstrate code behavior only; they do not reproduce hardware metrics.
+CI parses all Python files, runs the nine independent test programs on Python 3.10 and 3.12, executes all demos as separate processes, validates the repository layout and local README links, builds the two C++17 projects, and regenerates the deterministic source bundle. Synthetic tests demonstrate code behavior only; they do not reproduce hardware metrics.
 
 The README structure follows the practical overview/dependencies/run/data/troubleshooting/citation flow used by [LIO-SAM](https://github.com/TixiaoShan/LIO-SAM), [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite), [GraphDeCo's 3D Gaussian Splatting](https://github.com/graphdeco-inria/gaussian-splatting), and [Ultralytics](https://github.com/ultralytics/ultralytics). No restricted upstream code is copied here.
 

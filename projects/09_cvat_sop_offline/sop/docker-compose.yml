@@ -1,0 +1,17 @@
+services:
+  sop-platform:
+    build: .
+    image: sop/platform:2026.08.22-core
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8096:8096"
+    environment:
+      SOP_HOST: 0.0.0.0
+      SOP_PORT: 8096
+      SOP_ANNOTATION_DB: /app/runtime/sop_annotations.sqlite3
+      SOP_CAMERA_AUTOSTART: "0"
+    volumes:
+      - ./runtime:/app/runtime
+      - ./models:/app/models:ro
+      - ./datasets:/app/datasets:ro
+

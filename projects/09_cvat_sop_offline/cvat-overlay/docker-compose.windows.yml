@@ -1,0 +1,85 @@
+x-offline-logging: &offline-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+x-cvat-offline-amd64: &cvat-offline-amd64
+  image: cvat/server:2.73.1-offline-amd64
+  platform: linux/amd64
+  logging: *offline-logging
+
+services:
+  cvat_db:
+    image: cvat-offline/postgres:15-alpine-amd64
+    platform: linux/amd64
+    logging: *offline-logging
+
+  cvat_redis_inmem:
+    image: cvat-offline/redis:7.2.11-alpine-amd64
+    platform: linux/amd64
+    logging: *offline-logging
+
+  cvat_redis_ondisk:
+    image: cvat-offline/kvrocks:2.15.0-amd64
+    platform: linux/amd64
+    logging: *offline-logging
+
+  cvat_server:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_annotation:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_chunks:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_consensus:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_export:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_import:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_quality_reports:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_utils:
+    <<: *cvat-offline-amd64
+
+  cvat_worker_webhooks:
+    <<: *cvat-offline-amd64
+
+  cvat_ui:
+    image: cvat/ui:2.73.1-zh-cn
+    platform: linux/amd64
+    logging: *offline-logging
+
+  traefik:
+    image: cvat-offline/traefik:v3.6-amd64
+    platform: linux/amd64
+    ports: !override
+      - "8081:8080"
+    logging: *offline-logging
+
+  cvat_opa:
+    image: cvat-offline/opa:1.12.2-amd64
+    platform: linux/amd64
+    logging: *offline-logging
+
+  cvat_clickhouse:
+    image: cvat-offline/clickhouse:23.11-alpine-amd64
+    platform: linux/amd64
+    logging: *offline-logging
+
+  cvat_vector:
+    image: cvat-offline/vector:0.26.0-alpine-amd64
+    platform: linux/amd64
+    logging: *offline-logging
+
+  cvat_grafana:
+    image: cvat-offline/grafana:10.1.2-amd64
+    platform: linux/amd64
+    logging: *offline-logging

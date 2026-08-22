@@ -7,9 +7,9 @@
 
 [English](README_EN.md) · [研究与开源资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [复现清单](docs/REPRODUCTION_CHECKLIST.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
 
-这是依据个人简历、GOAI 具身赛事实战和 3DGS 扫描仪软硬件资料整理的公开技术作品集，覆盖机器人 SLAM、多传感器融合、服务机器人控制、工业视觉、ROS2/3DGS 可视化、嵌入式 BMS、园区自主巡检和 3DGS 扫描仪工程资料。仓库不是把八个项目塞进一个共享 Python 包：**每个项目都有自己的源码、测试、配置和运行说明，可以单独阅读、单独运行、单独迁移。**
+这是依据个人简历、GOAI 具身赛事实战、3DGS 扫描仪资料和本地数据标注交付整理的公开技术作品集，覆盖机器人 SLAM、多传感器融合、服务机器人控制、工业视觉、ROS2/3DGS 可视化、嵌入式 BMS、园区自主巡检、3DGS 扫描仪以及 CVAT/SOP 离线部署。仓库不是把九个项目塞进一个共享 Python 包：**每个项目都有自己的源码、测试、配置和运行说明，可以单独阅读、单独运行、单独迁移。**
 
-> 真实性边界：本仓库代码是为公开展示而编写的 clean-room 最小实现，不含任职单位生产源码、客户数据、设备凭据、未公开模型权重、地图或专利正文。简历中的实机成绩统一标记为“历史报告值”；只有由本仓库测试直接生成的结果才称为“仓库实测”。合成输入用于检查算法接口和异常处理，不冒充真实设备基准。
+> 真实性边界：项目 01-08 是为公开展示编写的 clean-room 最小实现；项目 09 是保留许可证声明的 CVAT MIT 覆盖层和原创部署代码。仓库不含任职单位生产源码、客户数据、设备凭据、未公开模型权重、地图或专利正文。简历中的实机成绩统一标记为“历史报告值”；只有由本仓库测试直接生成的结果才称为“仓库实测”。合成输入用于检查算法接口和异常处理，不冒充真实设备基准。
 
 ## 项目导航
 
@@ -23,6 +23,7 @@
 | [06 STM32-FreeRTOS BMS](projects/06_bms/README.md) | Thevenin 电芯模型、AEKF、均衡逻辑、调度预算、C++17 参考实现、独立测试 | EKF 收敛趋势、温度门控、任务利用率 | 不是功能安全产品，不可直接控制电池包 |
 | [07 GaussPatrol 比赛项目](projects/07_gausspatrol/README.md) | 园区闭环仿真、动态规划、定位/缺陷/地图指标、SVG/PLY、技术方案和比赛材料 | 5/5 点位、动态重规划、ATE/RPE、AP、地图完整度、13 项测试 | 当前为二维仿真；S10/LIO/YOLO/Isaac Lab/真实 3DGS 待接入 |
 | [08 3DGS 扫描仪软硬件](projects/08_3dgs_scanner_soft_hardware/README.md) | BMS/SLAM 主控 PCB PDF、首板 SOP、分析报告、测试矩阵、3DGS 参考索引 | BQ76920 风险、3S2P 接线、打板清单、电源预算、HKU/HKUST/INRIA 资料索引 | 当前为资料工程化归档；缺少 Altium 源文件、Gerber、BOM、固件和实机软件 |
+| [09 CVAT 中文离线标注与 SOP 平台](projects/09_cvat_sop_offline/README.md) | CVAT UI 覆盖层、ARM64/AMD64 Compose、Windows 启动器、SOP 容器模板、恢复脚本 | 344 帧 MP4 矩形轨迹、官方 XML 导出、镜像架构、EXE 哈希与公开交付清单 | 不公开业务视频、数据库、凭据、模型权重和 Docker 镜像；Windows 目标机仍需 Docker/驱动验收 |
 
 ## 一分钟验证
 
@@ -78,9 +79,10 @@ ctest --test-dir build/bms --output-on-failure
 │   ├── 05_ros2_3dgs/           # src + tests + data + ros2_ws
 │   ├── 06_bms/                  # src + tests + config + cpp
 │   ├── 07_gausspatrol/          # src + tests + artifacts + docs + submission
-│   └── 08_3dgs_scanner_soft_hardware/ # hardware docs + engineering archive + references
+│   ├── 08_3dgs_scanner_soft_hardware/ # hardware docs + engineering archive + references
+│   └── 09_cvat_sop_offline/      # CVAT/SOP deployment overlay + launchers + tests
 ├── scripts/
-│   ├── run_all_demos.py         # 逐进程运行八个独立入口
+│   ├── run_all_demos.py         # 逐进程运行九个独立入口
 │   ├── run_tests.py             # 验证每个项目自己的测试
 │   ├── verify_layout.py         # 检查目录完整性与 README 本地链接
 │   └── build_bundle.py          # 生成确定性离线源码包和 SHA-256
@@ -109,8 +111,8 @@ flowchart LR
 仓库用四层检查避免“能展示但不能复现”：
 
 1. `compileall` 检查所有 Python 文件可解析；
-2. 八个测试入口分别启动，避免依赖根目录共享包或偶然的 `PYTHONPATH`；
-3. 八个 demo 以子进程运行，输出必须是可解析 JSON；
+2. 九个测试入口分别启动，避免依赖根目录共享包或偶然的 `PYTHONPATH`；
+3. 九个 demo 以子进程运行，输出必须是可解析 JSON；
 4. 四个 CI job 分别覆盖 Python 3.10、Python 3.12、四足 C++ 与 BMS C++。
 
 测试覆盖的是公开实现本身，例如 CRC 损坏拒绝、路径穿越拒绝、时间戳倒退拒绝、温度过高禁止均衡、ICP 位姿恢复和 INT8 误差界。它们不能证明真实硬件在所有工况下安全；实机迁移仍需 HIL、长稳、温度/功耗和失效注入。

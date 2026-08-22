@@ -1,0 +1,30 @@
+# 验收证据与边界
+
+## CVAT 固定版本验收
+
+- 上游提交：`8a2c233b8561090646f8d4c088b8e7b50ecb7605`
+- 服务端镜像：`cvat/server:2.73.1-arm64`
+- 服务端镜像摘要：`sha256:3adf1b3f7d95eb0bed9adae471a12319e22212cd21e935c3c80007a9edd70def`
+- 测试任务：Task `1293` / Job `1290`
+- 媒体：344 帧，1280x720 MP4
+- 标签：`目标物体`
+- 矩形：`xtl=320, ytl=180, xbr=960, ybr=540`
+- 导出格式：`CVAT for video 1.1`
+- 导出 ZIP SHA-256：`fd8d3673ef55e39e5c941225fbe4421747b62035612be3d209886db7059666ee`
+
+导出文件不进入公开仓库，因为它来自本地业务数据卷。公开记录只保留任务结构、验证方式和内容摘要。
+
+## Windows 工件
+
+- CVAT 启动器：`CVAT中文离线标注平台.exe`
+- CVAT 启动器 SHA-256：`e57282ca96127d1aa037db2cc2e881dd958fc558e796ae0505a326d170c965a2`
+- SOP 启动器：`SOP平台.exe`
+- SOP 启动器 SHA-256：`12919a534c88a90b6990226ad8cc82e77528a5296d032c72e5eff4995a64a9c5`
+- 两个启动器都是 Windows GUI PE；CVAT 启动器依赖 Docker Desktop + WSL2，SOP 启动器依赖同目录 Python 运行时和应用文件。
+
+## 尚未宣称完成的项目
+
+- 目标 Windows 主机上的 Docker Desktop 安装与端到端启动验收。
+- 所有 CVAT 页面逐词 100% 汉化。
+- Windows 上 GPU 推理、摄像头驱动与训练性能验收。
+- 生产数据、模型商业许可与客户授权审计。

@@ -1,0 +1,7 @@
+# Serve the localized AMD64 build from a native ARM64 Nginx runtime on this
+# host. The static browser assets are architecture-independent.
+FROM cvat/nginx-unprivileged:1.31.2-arm64
+
+COPY cvat-ui/react_nginx.conf /etc/nginx/conf.d/default.conf
+COPY cvat-ui/robots.txt /usr/share/nginx/html/
+COPY --from=cvat/ui:2.73.1-zh-cn /usr/share/nginx/html/ /usr/share/nginx/html/

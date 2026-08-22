@@ -1,6 +1,6 @@
 # Third-party references and license notes
 
-No third-party source code, model weights, datasets, resume PDF, or paper PDFs are vendored in this repository. Links in `RESEARCH.md` are references only.
+No third-party model weights, datasets, resume PDF, or paper PDFs are vendored in this repository. Project 09 vendors a small modified CVAT 2.73.1 UI/deployment overlay from upstream commit `8a2c233b8561090646f8d4c088b8e7b50ecb7605`; CVAT is distributed under the MIT License and its file headers are retained. Links in `RESEARCH.md` are references only.
 
 Before incorporating an external implementation, create a software bill of materials containing project URL, exact commit/version, license, notices, modifications, model-weight terms, dataset terms, and commercial-use decision.
 

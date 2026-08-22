@@ -1,0 +1,80 @@
+x-local-logging: &local-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+x-cvat-arm64: &cvat-arm64
+  image: cvat/server:2.73.1-arm64
+  ulimits:
+    core:
+      soft: 0
+      hard: 0
+  logging: *local-logging
+
+services:
+  cvat_db:
+    logging: *local-logging
+
+  cvat_redis_inmem:
+    logging: *local-logging
+
+  cvat_redis_ondisk:
+    logging: *local-logging
+
+  cvat_server:
+    <<: *cvat-arm64
+    labels:
+      traefik.http.routers.cvat.rule: >-
+        (Host(`localhost`) || Host(`${CVAT_HOST:-localhost}`)) &&
+        (PathPrefix(`/api/`) || PathPrefix(`/static/`) || PathPrefix(`/admin`) ||
+        PathPrefix(`/django-rq`))
+
+  cvat_worker_annotation:
+    <<: *cvat-arm64
+
+  cvat_worker_chunks:
+    <<: *cvat-arm64
+
+  cvat_worker_consensus:
+    <<: *cvat-arm64
+
+  cvat_worker_export:
+    <<: *cvat-arm64
+
+  cvat_worker_import:
+    <<: *cvat-arm64
+
+  cvat_worker_quality_reports:
+    <<: *cvat-arm64
+
+  cvat_worker_utils:
+    <<: *cvat-arm64
+
+  cvat_worker_webhooks:
+    <<: *cvat-arm64
+
+  cvat_ui:
+    image: cvat/ui:2.73.1-zh-cn-local
+    logging: *local-logging
+    labels:
+      traefik.http.routers.cvat-ui.rule: >-
+        Host(`localhost`) || Host(`${CVAT_HOST:-localhost}`)
+
+  traefik:
+    ports: !override
+      - "8081:8080"
+      - "8090:8090"
+    logging: *local-logging
+
+  cvat_opa:
+    logging: *local-logging
+
+  cvat_clickhouse:
+    logging: *local-logging
+
+  cvat_vector:
+    logging: *local-logging
+
+  cvat_grafana:
+    logging: *local-logging

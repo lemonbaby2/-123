@@ -12,8 +12,8 @@ PROJECTS = ROOT / "projects"
 
 def main() -> None:
     projects = sorted(path for path in PROJECTS.iterdir() if path.is_dir())
-    if len(projects) != 8:
-        raise RuntimeError(f"expected 8 projects, found {len(projects)}")
+    if len(projects) != 9:
+        raise RuntimeError(f"expected 9 projects, found {len(projects)}")
     for project in projects:
         required = [project / "README.md", project / "src", project / "tests"]
         missing = [path for path in required if not path.exists()]
@@ -27,7 +27,7 @@ def main() -> None:
             clean_target = target.split("#", 1)[0]
             if clean_target and not (document.parent / clean_target).resolve().exists():
                 raise RuntimeError(f"broken link in {document.relative_to(ROOT)}: {target}")
-    print("layout: 8 projects complete; local README links valid")
+    print("layout: 9 projects complete; local README links valid")
 
 
 if __name__ == "__main__":
