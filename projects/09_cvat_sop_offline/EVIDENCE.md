@@ -5,12 +5,15 @@
 - 上游提交：`8a2c233b8561090646f8d4c088b8e7b50ecb7605`
 - 服务端镜像：`cvat/server:2.73.1-arm64`
 - 服务端镜像摘要：`sha256:3adf1b3f7d95eb0bed9adae471a12319e22212cd21e935c3c80007a9edd70def`
+- Windows 中文 UI 镜像摘要：`sha256:8997a19d554052e77c5cb7f8989848b1030c04df00ffd8cfe8f2f8a8ad8e71ce`
 - 测试任务：Task `1293` / Job `1290`
 - 媒体：344 帧，1280x720 MP4
 - 标签：`目标物体`
 - 矩形：`xtl=320, ytl=180, xbr=960, ybr=540`
 - 导出格式：`CVAT for video 1.1`
 - 导出 ZIP SHA-256：`fd8d3673ef55e39e5c941225fbe4421747b62035612be3d209886db7059666ee`
+- 无通知最终截图 SHA-256：`a303c0e28272068cb34d8fc7375deda19d87eac46479b086edf4ce528368ebeb`
+- 浏览器验收 JSON SHA-256：`cb1865e76fcc59f847e9c0ebc62d35d9beea56a75d7e8637a60869fb3bef7431`
 
 导出文件不进入公开仓库，因为它来自本地业务数据卷。公开记录只保留任务结构、验证方式和内容摘要。
 
