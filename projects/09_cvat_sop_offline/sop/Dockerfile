@@ -7,11 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     SOP_DESKTOP_DIR=/app/runtime/desktop
 
 WORKDIR /app
-COPY server.py ./
-COPY web ./web
-COPY config ./config
+COPY source/server.py ./
+COPY source/web ./web
+COPY source/config ./config
 RUN mkdir -p runtime models datasets
 
 EXPOSE 8096
 CMD ["python", "server.py"]
-

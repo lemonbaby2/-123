@@ -13,6 +13,12 @@ class DeliveryLayoutTest(unittest.TestCase):
             ROOT / "RESUME_PROJECT.md",
             ROOT / "sop" / "Dockerfile",
             ROOT / "sop" / "docker-compose.yml",
+            ROOT / "sop" / "source" / "server.py",
+            ROOT / "sop" / "source" / "requirements.txt",
+            ROOT / "sop" / "source" / "web" / "index.html",
+            ROOT / "sop" / "source" / "web" / "app.js",
+            ROOT / "sop" / "source" / "web" / "styles.css",
+            ROOT / "sop" / "source" / "config" / "network_cameras.example.json",
             ROOT / "scripts" / "Restore-CvatVolumes.ps1",
             ROOT / "windows" / "CvatOfflineLauncher.cs",
             ROOT / "cvat-overlay" / "docker-compose.windows.yml",
@@ -27,4 +33,3 @@ class DeliveryLayoutTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

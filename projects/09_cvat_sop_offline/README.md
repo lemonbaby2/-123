@@ -25,7 +25,7 @@
 .
 ├── cvat-overlay/        # CVAT UI 修改、Compose 与 Docker 构建文件
 ├── windows/             # CVAT Windows 启动器源码与已编译 EXE
-├── sop/                 # SOP 本机/容器部署模板与公开源码索引
+├── sop/                 # SOP 脱敏核心源码与本机/容器部署模板
 ├── scripts/             # Windows 恢复与启动脚本
 ├── tests/               # 静态交付检查
 └── EVIDENCE.md          # 验收口径、哈希与限制
@@ -49,7 +49,7 @@ Windows 离线交付目录还需要 `images/cvat-offline-amd64.tar`。启动器�
 http://127.0.0.1:8096
 ```
 
-基础网页、SQLite 标注和审计使用 Python 标准库即可运行；摄像头推理和训练还需要 OpenCV、Ultralytics/PyTorch 及相应权重。SOP 的完整脱敏源码历史已固定在 `lemonbaby2/work` 的提交 `2395071fa51cc68a84897c7e13a2c0bdf9677db9`，本目录只保存部署边界与离线封装文件，避免重复维护两份源码。
+基础网页、SQLite 标注和审计使用 Python 标准库即可运行；摄像头推理和训练还需要 OpenCV、Ultralytics/PyTorch 及相应权重。`sop/source/` 已包含可直接构建的脱敏核心源码快照，来源历史固定在 `lemonbaby2/work` 的提交 `2395071fa51cc68a84897c7e13a2c0bdf9677db9`。生产数据库、账号、业务视频、模型权重和实际摄像头配置仍只存在于受控离线交付包。
 
 ## 恢复与校验
 
@@ -66,4 +66,3 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Restore-CvatVolumes.ps1
 ## 简历表述
 
 可直接使用的项目描述见 [RESUME_PROJECT.md](RESUME_PROJECT.md)。其中把“固定版本已验收”和“仍需目标 Windows 主机验收”分开陈述，避免把本地 Linux 验证扩写成未发生的 Windows 生产验收。
-

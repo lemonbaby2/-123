@@ -170,6 +170,10 @@ namespace SopPlatformLauncher
             };
             info.EnvironmentVariables["SOP_HOST"] = "0.0.0.0";
             info.EnvironmentVariables["SOP_PORT"] = Port.ToString();
+            info.EnvironmentVariables["SOP_DESKTOP_DIR"] = Path.Combine(runtimeRoot, "desktop");
+            info.EnvironmentVariables["SOP_ANNOTATION_DB"] = Path.Combine(runtimeRoot, "sop_annotations.sqlite3");
+            info.EnvironmentVariables["SOP_SPARK_MODEL_DIR"] = Path.Combine(appRoot, "models");
+            info.EnvironmentVariables["SOP_CAMERA_AUTOSTART"] = "0";
             serverProcess = new Process { StartInfo = info, EnableRaisingEvents = true };
             serverProcess.OutputDataReceived += LogLine;
             serverProcess.ErrorDataReceived += LogLine;

@@ -22,7 +22,7 @@
 - CVAT 启动器：`CVAT中文离线标注平台.exe`
 - CVAT 启动器 SHA-256：`e57282ca96127d1aa037db2cc2e881dd958fc558e796ae0505a326d170c965a2`
 - SOP 启动器：`SOP平台.exe`
-- SOP 启动器 SHA-256：`12919a534c88a90b6990226ad8cc82e77528a5296d032c72e5eff4995a64a9c5`
+- SOP 启动器 SHA-256：`193054f55f94304311f3b87b569b27e99e57c3fb8ddc4e46f76cb010048230d6`
 - 两个启动器都是 Windows GUI PE；CVAT 启动器依赖 Docker Desktop + WSL2，SOP 启动器依赖同目录 Python 运行时和应用文件。
 
 ## 尚未宣称完成的项目
