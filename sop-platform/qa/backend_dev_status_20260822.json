@@ -1,0 +1,31 @@
+{
+  "branch": "sop-backend-dev-20260822",
+  "deployment": "isolated-development-only",
+  "dev_url": "http://127.0.0.1:8110",
+  "production_changed": false,
+  "implemented": [
+    "configurable SOP_RUNTIME_DIR",
+    "HMAC-SHA256 CVAT webhook",
+    "asynchronous annotation-only pull",
+    "task to video binding",
+    "content-addressed annotation versions",
+    "frame manifest generation",
+    "accepted review gate",
+    "active job deduplication",
+    "bounded CVAT synchronization concurrency",
+    "annotation response size limit"
+  ],
+  "tests": {
+    "unit": 4,
+    "health_http": 200,
+    "unauthenticated_http": 401,
+    "authenticated_http": 200,
+    "invalid_signature_http": 401,
+    "valid_ignored_event_http": 202
+  },
+  "not_done": [
+    "production CVAT token integration test",
+    "8096 deployment",
+    "automatic training trigger"
+  ]
+}
