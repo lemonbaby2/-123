@@ -7,6 +7,7 @@ import argparse
 import os
 from pathlib import Path
 
+from PIL import Image, ImageDraw
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 
@@ -24,7 +25,15 @@ def sop_manager_credentials(path: Path) -> tuple[str, str]:
 
 
 def screenshot(page: Page, output: Path, name: str) -> None:
-    page.screenshot(path=str(output / name), full_page=False)
+    target = output / name
+    page.screenshot(path=str(target), full_page=False)
+    if name.startswith(("11_", "12_", "13_", "14_", "15_", "16_")):
+        image = Image.open(target).convert("RGB")
+        draw = ImageDraw.Draw(image)
+        # CVAT shows the logged-in username at the upper right; training media must not expose accounts.
+        draw.rectangle((1515, 0, 1600, 70), fill="#d9d9d9")
+        target.unlink()
+        image.save(target, quality=96)
 
 
 def login_sop(page: Page, base_url: str, credentials: Path, output: Path) -> None:
