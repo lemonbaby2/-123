@@ -1,0 +1,80 @@
+{
+  "url": "http://127.0.0.1:8113",
+  "generated_at": "2026-08-23 02:46:10",
+  "views": [
+    {
+      "view": "overview",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/01_overview_desktop.png",
+      "title": "总览"
+    },
+    {
+      "view": "monitor",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/02_monitor_desktop.png",
+      "title": "数据获取与清洗"
+    },
+    {
+      "view": "decision",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/03_decision_desktop.png",
+      "title": "AI 预标注与现场证据处置"
+    },
+    {
+      "view": "annotation",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/04_annotation_desktop.png",
+      "title": "CVAT 人工复核与双向同步"
+    },
+    {
+      "view": "quality",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/05_quality_desktop.png",
+      "title": "数据集构建与质量冻结"
+    },
+    {
+      "view": "training",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/06_training_desktop.png",
+      "title": "六模型训练、验证与部署"
+    },
+    {
+      "view": "mes",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-polished-20260823-8113/sop-platform/qa/release_8113/07_mes_desktop.png",
+      "title": "实时 SOP 与 MES 闭环"
+    }
+  ],
+  "console_errors": [],
+  "http_errors": [],
+  "password_workflow": {
+    "passed": true,
+    "change_password": 200,
+    "forgot_password": 200
+  },
+  "monitor_video": {
+    "readyState": 4,
+    "networkState": 1,
+    "width": 1280,
+    "height": 720,
+    "currentSrc": "http://127.0.0.1:8113/media/local/DJI_20260819151908_0265_D_720p.mp4?release=20260821-annotation-v3"
+  },
+  "annotation_video": {
+    "readyState": 4,
+    "networkState": 1,
+    "width": 1280,
+    "height": 720,
+    "currentSrc": "http://127.0.0.1:8113/media/local/DJI_20260819151908_0265_D_720p.mp4?release=20260821-annotation-v3"
+  },
+  "camera_images": [
+    {
+      "src": "http://127.0.0.1:8113/api/camera/mjpeg?camera=0&ts=1787453192795",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "src": "http://127.0.0.1:8113/api/camera/mjpeg?camera=1&ts=1787453192795",
+      "width": 160,
+      "height": 120
+    },
+    {
+      "src": "http://127.0.0.1:8113/api/camera/mjpeg?camera=2&ts=1787453192795",
+      "width": 960,
+      "height": 540
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-08-22",
+  "release_state": "HOLD",
+  "lan_services": {
+    "main_8096": 200,
+    "index_8099": 200,
+    "variant_8101": 200,
+    "tracking_8102": 200,
+    "collaboration_8103": 200,
+    "web_public_config_8104": 200,
+    "third_camera_8105": 200,
+    "cvat_8081": 200
+  },
+  "public_access": {
+    "stable": false,
+    "reason": "192.168.1.129 is a private LAN address; the temporary 8102 tunnel is not an accepted production endpoint"
+  },
+  "implemented": [
+    "SQLite WAL annotation storage and recovery points",
+    "AI pre-label and manual annotation editing",
+    "track interpolation and interval deletion",
+    "CVAT task creation and annotation push",
+    "manual rclone sync endpoint",
+    "YOLO26 and YOLOE training executor",
+    "real-time camera and SOP side-panel foundation"
+  ],
+  "configured_not_complete": [
+    "RT-DETRv2 training backend",
+    "D-FINE training backend",
+    "Anomalib PatchCore/EfficientAD training backend",
+    "production MES protocol acceptance"
+  ],
+  "pending": [
+    "CVAT webhook and annotation-only pull",
+    "17:00 idempotent Google Drive ingest",
+    "automatic Dataset Builder trigger",
+    "automatic Hard Case feedback loop",
+    "five-model frozen-test-set acceptance"
+  ],
+  "security_boundary": "No passwords, API keys, tokens, production databases, videos, camera credentials or model weights are published to GitHub"
+}
