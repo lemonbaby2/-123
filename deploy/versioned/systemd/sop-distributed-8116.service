@@ -1,0 +1,32 @@
+[Unit]
+Description=Ningbo SOP distributed prelabel console 20260823 on port 8116
+After=network-online.target sop-camera-publishers-8112.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/xjai/Desktop/sop xjai/2026.8.23/sop-distributed-prelabel-20260823-8116
+Environment="SOP_HOST=0.0.0.0"
+Environment="SOP_PORT=8116"
+Environment="SOP_CAMERA_AUTOSTART=0"
+Environment="SOP_RUNTIME_DIR=/home/xjai/Desktop/sop xjai/2026.8.23/runtime/distributed-8116"
+Environment="SOP_DESKTOP_DIR=/home/xjai/Desktop/sop xjai/2026.8.23/runtime/distributed-8116/desktop"
+Environment="SOP_CAMERA_MODEL=/home/xjai/Desktop/sop xjai/SOP分析平台_摄像头接入与低延迟标注增强版_20260819/SOP分析平台_老板汇报版/models/yolo26n_PCB插装0265_50轮_待人工验收.pt"
+Environment="CVAT_API_URL=http://192.168.1.129:8081"
+Environment="CVAT_PUBLIC_URL=http://192.168.1.129:8081"
+Environment="SOP_GOOGLE_SOURCE_URL=https://drive.google.com/drive/u/2/folders/1JdsHu0N_jaVC7u4Dg8XfO8JTF4DN-Ijx"
+Environment="SOP_AUTOMATIC_BACKUP_MIN_INTERVAL=300"
+Environment="NO_PROXY=localhost,127.0.0.1,::1,192.168.1.129,192.168.1.0/24"
+Environment="no_proxy=localhost,127.0.0.1,::1,192.168.1.129,192.168.1.0/24"
+EnvironmentFile=-/home/xjai/.config/ningbo-sop/distributed-8116.env
+EnvironmentFile=-/home/xjai/.config/ningbo-sop/distributed-8116-auth.env
+ExecStart=/home/xjai/micromamba/envs/sop/bin/python sop-platform/server.py
+Restart=on-failure
+RestartSec=5
+CPUWeight=50
+CPUQuota=150%
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

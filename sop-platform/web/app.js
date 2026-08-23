@@ -24,12 +24,15 @@ const state = {
   connectedCameras: [],
   annotationItems: [],
   annotationDisplayItems: [],
-  annotationFilterMeta: { rawTotal: 0, filteredTotal: 0, hiddenLow: 0, hiddenRegion: 0, hiddenOverlap: 0 },
+  annotationHitItems: [],
+  annotationFilterMeta: { rawTotal: 0, filteredTotal: 0, hiddenLow: 0, hiddenRegion: 0, hiddenOverlap: 0, hiddenFinePart: 0 },
   annotationPage: 1,
   annotationPageSize: 25,
   selectedAnnotationId: null,
   selectedAnnotation: null,
   annotationDirty: false,
+  annotationRevision: 0,
+  annotationCheckpointRevision: 0,
   annotationChangedAt: null,
   annotationSavedAt: null,
   loadedAnnotation: null,
@@ -200,9 +203,12 @@ function showToast(id, message, bad = false) {
   window.setTimeout(() => element.classList.remove("show"), 4200);
 }
 
-function markAnnotationDirty(dirty = true) {
+function markAnnotationDirty(dirty = true, bumpRevision = true) {
   state.annotationDirty = dirty;
-  if (dirty) state.annotationChangedAt = Date.now();
+  if (dirty) {
+    state.annotationChangedAt = Date.now();
+    if (bumpRevision) state.annotationRevision += 1;
+  }
   const container = document.getElementById("annotationSaveState");
   const label = document.getElementById("annotationSaveLabel");
   if (!container || !label) return;
@@ -590,17 +596,13 @@ function hitEditableBox(point) {
 }
 
 function hitVisibleAnnotation(point) {
-  const currentTime = Number(annotVideo.currentTime || 0);
-  const fps = Number(currentVideoInfo()?.fps || 30);
-  return playbackAnnotationItems(currentTime, fps)
-    .filter(item => Array.isArray(item.box) && item.box.length === 4)
-    .map(item => {
-      const [x1, y1, x2, y2] = item.box;
-      const box = { x: x1 * canvas.width, y: y1 * canvas.height, w: (x2 - x1) * canvas.width, h: (y2 - y1) * canvas.height };
-      return { item, box, area: Math.max(1, box.w * box.h) };
-    })
-    .filter(({ box }) => point.x >= box.x && point.x <= box.x + box.w && point.y >= box.y && point.y <= box.y + box.h)
-    .sort((left, right) => left.area - right.area)[0]?.item || null;
+  let best = null;
+  for (const candidate of state.annotationHitItems) {
+    const box = candidate.box;
+    if (point.x < box.x || point.x > box.x + box.w || point.y < box.y || point.y > box.y + box.h) continue;
+    if (!best || candidate.area < best.area) best = candidate;
+  }
+  return best?.item || null;
 }
 
 function resizeCursor(handle) {
@@ -671,11 +673,17 @@ function annotationDisplayPriority(item) {
 
 function filteredAnnotationItems(items) {
   const minimumConfidence = Number(document.getElementById("annotConfidenceFilter")?.value || 25) / 100;
+  const labelMode = document.getElementById("annotLabelMode")?.value || "sop";
   const showRegionBoxes = Boolean(document.getElementById("annotShowRegionBoxes")?.checked);
   const suppressOverlap = Boolean(document.getElementById("annotSuppressOverlap")?.checked);
   const displayLimit = Number(document.getElementById("annotDisplayLimit")?.value || 40);
-  const meta = { rawTotal: items.length, filteredTotal: 0, hiddenLow: 0, hiddenRegion: 0, hiddenOverlap: 0 };
+  const finePartPattern = /电阻|resistor|电容|capacitor|电感|inductor|二极管|diode|三极管|transistor|芯片|\bic\b|单颗螺丝|细小焊点|微小元器件/i;
+  const meta = { rawTotal: items.length, filteredTotal: 0, hiddenLow: 0, hiddenRegion: 0, hiddenOverlap: 0, hiddenFinePart: 0 };
   const eligible = items.filter(item => {
+    if (labelMode === "sop" && item.source_kind !== "manual" && finePartPattern.test(String(item.label || ""))) {
+      meta.hiddenFinePart += 1;
+      return false;
+    }
     if (!showRegionBoxes && annotationIsRegionBox(item)) {
       meta.hiddenRegion += 1;
       return false;
@@ -716,6 +724,7 @@ function applyAnnotationDisplayFilters(resetPage = true, readOnly = false) {
     if (result.meta.hiddenLow) hidden.push(`低置信度 ${result.meta.hiddenLow}`);
     if (result.meta.hiddenRegion) hidden.push(`区域框 ${result.meta.hiddenRegion}`);
     if (result.meta.hiddenOverlap) hidden.push(`重叠框 ${result.meta.hiddenOverlap}`);
+    if (result.meta.hiddenFinePart) hidden.push(`细小元件 ${result.meta.hiddenFinePart}`);
     const limited = result.meta.filteredTotal > result.items.length ? `，按上限显示 ${result.items.length}` : "";
     summary.textContent = `原始 ${result.meta.rawTotal} 个，筛选后 ${result.meta.filteredTotal} 个${limited}${hidden.length ? `；已隐藏 ${hidden.join("、")}` : ""}`;
   }
@@ -741,6 +750,13 @@ function drawBox() {
   const currentTime = Number(annotVideo.currentTime || 0);
   const fps = Number(currentVideoInfo()?.fps || 30);
   const drawItems = playbackAnnotationItems(currentTime, fps);
+  state.annotationHitItems = drawItems
+    .filter(item => Array.isArray(item.box) && item.box.length === 4)
+    .map(item => {
+      const [x1, y1, x2, y2] = item.box;
+      const box = { x: x1 * canvas.width, y: y1 * canvas.height, w: (x2 - x1) * canvas.width, h: (y2 - y1) * canvas.height };
+      return { item, box, area: Math.max(1, box.w * box.h) };
+    });
   drawItems.forEach(item => {
     const [x1, y1, x2, y2] = item.box;
     const x = x1 * canvas.width;
@@ -923,7 +939,9 @@ async function loadAnnotationStats() {
     document.getElementById("annotationTruth").textContent = stats.truth_boundary;
     const database = stats.database || {};
     const databaseState = document.getElementById("annotationDatabaseState");
-    databaseState.textContent = database.ok ? `SQLite WAL 正常 · ${database.annotations} 条` : `数据库异常：${database.message || database.integrity || "未知"}`;
+    databaseState.textContent = database.ok
+      ? `人工库 SQLite WAL 正常 · ${database.annotations} 条 · AI 独立库 ${Number(stats.distributed_prelabels || 0).toLocaleString("zh-CN")} 条/${Number(stats.distributed_frames || 0).toLocaleString("zh-CN")} 帧`
+      : `数据库异常：${database.message || database.integrity || "未知"}`;
     databaseState.classList.toggle("bad", !database.ok);
   } catch (error) {
     document.getElementById("annotationTruth").textContent = `标注统计暂不可用：${error.message}`;
@@ -933,7 +951,8 @@ async function loadAnnotationStats() {
 async function loadAiPrelabelStatus() {
   try {
     const job = await request("/api/annotations/prelabel/status");
-    const percent = Number(job.progress || 0);
+    const distributed = job.distributed || {};
+    const percent = Number(job.full_frame_progress || job.progress || 0);
     document.getElementById("aiPrelabelMeter").style.width = `${Math.min(100, Math.max(0, percent))}%`;
     document.getElementById("aiPrelabelProgress").textContent = `${percent.toFixed(2)}%`;
     const statusNames = { not_started: "未启动", queued: "排队中", loading_model: "加载模型", running: "运行中", paused: "已暂停", completed: "已完成", failed: "失败", interrupted: "已中断", catalog_ready: "离线候选已就绪" };
@@ -945,8 +964,15 @@ async function loadAiPrelabelStatus() {
     document.getElementById("aiPrelabelDetail").textContent = catalogFrames
       ? `${statusNames[job.status] || job.status} · 离线目录 ${catalogFrames.toLocaleString("zh-CN")} 个采样帧 · ${catalogObjects.toLocaleString("zh-CN")} 个 AI 框${job.running ? ` · 在线补跑 ${Number(job.sampled_frames_completed || 0).toLocaleString("zh-CN")}/${Number(job.sampled_frames_total || 0).toLocaleString("zh-CN")}` : ""}`
       : `${statusNames[job.status] || job.status} · ${Number(job.sampled_frames_completed || 0).toLocaleString("zh-CN")}/${Number(job.sampled_frames_total || 0).toLocaleString("zh-CN")} 个采样帧 · ${Number(job.detections_total || 0).toLocaleString("zh-CN")} 个候选框${eta > 0 ? ` · 预计剩余 ${Math.ceil(eta / 60)} 分钟` : ""}${missing ? ` · ${missing} 段源文件缺失，网盘拉回后补跑` : ""}`;
-    document.getElementById("startAiPrelabel").disabled = Boolean(job.running);
-    document.getElementById("pauseAiPrelabel").disabled = !job.running;
+    const onlineNodes = (distributed.nodes || []).filter(node => node.online);
+    const temperatures = onlineNodes.map(node => Number(node.gpu_temperature)).filter(Number.isFinite);
+    const jobs = distributed.jobs || {};
+    document.getElementById("distributedNodeCount").textContent = String(onlineNodes.length);
+    document.getElementById("distributedTemperature").textContent = temperatures.length ? `${Math.max(...temperatures).toFixed(0)}°C` : "--";
+    document.getElementById("distributedJobState").textContent = `${Number(jobs.running || 0)}运行 / ${Number(jobs.pending || 0)}待领`;
+    document.getElementById("distributedPrelabelDetail").textContent = `全帧 ${Number(job.full_frames_completed || 0).toLocaleString("zh-CN")}/${Number(job.full_frames_total || 0).toLocaleString("zh-CN")} · ${Number(job.full_frame_detections || 0).toLocaleString("zh-CN")} 个工位级候选 · AI结果一律 pending_review`;
+    document.getElementById("startAiPrelabel").disabled = !Boolean(distributed.queue_paused);
+    document.getElementById("pauseAiPrelabel").disabled = Boolean(distributed.queue_paused);
     window.clearTimeout(state.aiPrelabelTimer);
     state.aiPrelabelTimer = job.running ? window.setTimeout(loadAiPrelabelStatus, 5000) : null;
     if (job.status === "completed") loadAnnotationStats();
@@ -959,7 +985,7 @@ async function controlAiPrelabel(action) {
   const button = action === "pause" ? document.getElementById("pauseAiPrelabel") : document.getElementById("startAiPrelabel");
   button.disabled = true;
   try {
-    const result = await request("/api/annotations/prelabel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
+    const result = await request("/api/prelabel/distributed/control", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
     showToast("annotationToast", result.message);
     await loadAiPrelabelStatus();
   } catch (error) {
@@ -1406,11 +1432,13 @@ document.getElementById("annotConfidenceFilter").addEventListener("input", event
   document.getElementById("annotConfidenceValue").value = `${event.target.value}%`;
   applyAnnotationDisplayFilters(true, Boolean(state.checkpointPreview));
 });
+document.getElementById("annotLabelMode").addEventListener("change", () => applyAnnotationDisplayFilters(true, Boolean(state.checkpointPreview)));
 document.getElementById("annotSuppressOverlap").addEventListener("change", () => applyAnnotationDisplayFilters(true, Boolean(state.checkpointPreview)));
 document.getElementById("annotShowRegionBoxes").addEventListener("change", () => applyAnnotationDisplayFilters(true, Boolean(state.checkpointPreview)));
 document.getElementById("annotDisplayLimit").addEventListener("change", () => applyAnnotationDisplayFilters(true, Boolean(state.checkpointPreview)));
 document.getElementById("resetAnnotationFilters").addEventListener("click", () => {
   document.getElementById("annotConfidenceFilter").value = "25";
+  document.getElementById("annotLabelMode").value = "sop";
   document.getElementById("annotConfidenceValue").value = "25%";
   document.getElementById("annotSuppressOverlap").checked = true;
   document.getElementById("annotShowRegionBoxes").checked = false;
@@ -1668,17 +1696,21 @@ function restoreAnnotationAutosave() {
 
 async function saveAnnotationCheckpoint(options = {}) {
   if (state.annotationAutosaveBusy || !state.currentVideoId) return;
+  if (options.automatic && state.annotationRevision === state.annotationCheckpointRevision) return;
   const fps = Number(currentVideoInfo()?.fps || 30);
   const wasDirty = state.annotationDirty;
+  const checkpointRevision = state.annotationRevision;
   state.annotationAutosaveBusy = true;
   try {
     const result = await request("/api/annotations/checkpoint", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ video_id: state.currentVideoId, current_time: Number(annotVideo.currentTime.toFixed(3)), current_frame: Math.round(Number(annotVideo.currentTime) * fps), operator: state.user?.username || "本地标注员", draft: currentAnnotationDraft(), automatic: Boolean(options.automatic) }) });
     if (options.automatic) {
-      document.getElementById("annotationLastSaved").textContent = `自动缓存：${result.checkpoint.recorded_at} · 数据库 + 视频`;
-      markAnnotationDirty(wasDirty);
+      const backupLabel = result.checkpoint.backup_updated ? "数据库备份已更新" : "复用五分钟内数据库备份";
+      document.getElementById("annotationLastSaved").textContent = `自动缓存：${result.checkpoint.recorded_at} · ${backupLabel}`;
+      markAnnotationDirty(wasDirty, false);
     } else {
       updateLastSaved(result.checkpoint.recorded_at);
     }
+    state.annotationCheckpointRevision = Math.max(state.annotationCheckpointRevision, checkpointRevision);
     const cacheMode = result.checkpoint.video_cache?.mode === "hardlink" ? "视频硬链接缓存" : "视频引用缓存";
     document.getElementById("annotationDatabaseState").textContent = `SQLite WAL 正常 · 已备份 · ${result.checkpoint.annotation_count} 条 · ${cacheMode}`;
     if (!options.silent) showToast("annotationToast", result.message);

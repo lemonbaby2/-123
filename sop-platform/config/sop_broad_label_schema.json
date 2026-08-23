@@ -1,0 +1,33 @@
+{
+  "schema_id": "ningbo-sop-broad-v1",
+  "name": "宁波SOP工位级粗粒度标签",
+  "review_status": "pending_review",
+  "prompts": [
+    {"prompt": "printed circuit board", "label": "PCB板"},
+    {"prompt": "human hand", "label": "操作人员手部"},
+    {"prompt": "factory worker", "label": "操作人员"},
+    {"prompt": "screwdriver", "label": "螺丝刀"},
+    {"prompt": "soldering iron", "label": "电烙铁"},
+    {"prompt": "precision tweezers", "label": "镊子"},
+    {"prompt": "assembly fixture", "label": "治具"},
+    {"prompt": "plastic parts bin", "label": "物料盒"},
+    {"prompt": "electrical connector in hand", "label": "手持关键插件"},
+    {"prompt": "electrical cable", "label": "线缆"},
+    {"prompt": "computer monitor", "label": "测试电脑屏幕"},
+    {"prompt": "barcode label", "label": "标签/条码"},
+    {"prompt": "electronic product housing", "label": "产品/外壳"}
+  ],
+  "excluded_labels": [
+    "电阻",
+    "电容",
+    "电感",
+    "二极管",
+    "三极管",
+    "芯片",
+    "IC",
+    "单颗螺丝",
+    "细小焊点",
+    "板内微小元器件"
+  ],
+  "policy": "优先标注能够判断SOP步骤、人员动作、工位ROI和关键物料状态的目标；微小元器件暂不生成候选框。所有AI结果必须人工复核。"
+}

@@ -83,13 +83,18 @@
         </div>
         <div class="overview-operations">
           <article class="overview-scene"><img src="snapshots/video_nb0819_01/S02_0009秒.jpg" alt="真实 PCB 工位视觉画面"><span class="vision-box pcb-box">PCB / 治具 ROI</span><span class="vision-box hand-box">手部候选</span><footer><div><b>S02 元器件对位候选</b><span>真实工位回放 · 候选框待人工复核</span></div><button data-jump="monitor">查看证据</button></footer></article>
-          <article class="card current-action"><div class="card-title"><div><span class="eyebrow">CURRENT ACTION</span><h2>当前处置</h2></div><span class="badge">HOLD</span></div><dl><dt>正在核对</dt><dd>PCB、物料与手部操作轨迹</dd><dt>证据缺口</dt><dd>小型电容/电感需 ROI 二次检测与人工确认</dd><dt>建议动作</dt><dd>进入 CVAT 复核低置信度框，再冻结训练版本</dd></dl><button class="ghost" data-jump="annotation">进入标注任务</button></article>
+          <article class="card current-action"><div class="card-title"><div><span class="eyebrow">CURRENT ACTION</span><h2>当前处置</h2></div><span class="badge">HOLD</span></div><dl><dt>正在核对</dt><dd>PCB、物料、工具与手部操作轨迹</dd><dt>本轮边界</dt><dd>电阻、电容、电感等板内微小器件暂不打框</dd><dt>建议动作</dt><dd>进入 CVAT 复核工位级候选，再冻结训练版本</dd></dl><button class="ghost" data-jump="annotation">进入标注任务</button></article>
         </div>
         <div class="overview-lower">
           <article class="card quality-trend"><div class="card-title"><div><span class="eyebrow">EVIDENCE TREND</span><h2>近 7 日视觉证据完备度</h2></div><span class="badge green">持续复核</span></div><div class="trend-chart" aria-label="证据完备度趋势"><i style="height:52%"><b>52%</b><span>08/14</span></i><i style="height:61%"><b>61%</b><span>08/15</span></i><i style="height:66%"><b>66%</b><span>08/16</span></i><i style="height:64%"><b>64%</b><span>08/17</span></i><i style="height:72%"><b>72%</b><span>08/18</span></i><i style="height:81%"><b>81%</b><span>08/19</span></i><i style="height:87%"><b>87%</b><span>08/20</span></i></div><p>该指标表示目标、动作、ROI 和审核状态是否齐全，不代表未经真值集验证的模型精度。</p></article>
           <article class="card multimodal-flow"><div class="card-title"><div><span class="eyebrow">MULTIMODAL LOOP</span><h2>多模态协同链路</h2></div></div><div><b>01</b><span>相机视觉<strong>目标 / 动作 / ROI</strong></span></div><div><b>02</b><span>SOP 状态机<strong>阶段 / 顺序 / 超时</strong></span></div><div><b>03</b><span>语音交互<strong>提醒 / 确认 / 查询</strong></span></div><div><b>04</b><span>质量与 MES<strong>复核 / HOLD / 留痕</strong></span></div></article>
           <article class="card overview-nodes"><div class="card-title"><div><span class="eyebrow">EDGE NODES</span><h2>边缘设备</h2></div><button class="ghost" data-jump="monitor">查看全部</button></div><div id="overviewCameraRows"><span><i class="online"></i><b>摄像头设备</b><em>正在读取</em></span></div><div><span><i class="online"></i><b>DGX GPU</b><em>在线</em></span></div><div><span><i id="overviewTaskDot" class="warning"></i><b>CVAT 队列</b><em id="overviewTaskCount">待同步</em></span></div></article>
         </div>
+        <section class="architecture-band" aria-labelledby="architectureTitle">
+          <header><div><span class="eyebrow">FULL DELIVERY MAP</span><h2 id="architectureTitle">宁波 SOP 视觉检测全技术栈</h2><p>从采集、工位级 AI 预标、CVAT Reviewer、数据冻结、分布式训练，到实时 SOP、MES 与 Hard Case 回流。</p></div><span>代码与文档进 GitHub · 大视频/权重/凭据不进公开仓库</span></header>
+          <div class="delivery-pillars"><b>网页平台统一操作</b><b>高质量标注与证据</b><b>训练模型多版本资产</b><b>实时推理服务</b><b>MES 回传与闭环</b><b>报表与审计</b></div>
+          <figure><img loading="lazy" decoding="async" src="assets/architecture/宁波视觉SOP_AI标注_训练部署_MES闭环系统总体架构图.png" alt="宁波视觉 SOP AI 标注训练部署 MES 闭环系统总体架构图"><figcaption>量产放行始终受人工真值、固定测试集、设备回执和 MES ACK 门禁约束。</figcaption></figure>
+        </section>
       </section>
 
       <section class="view" id="view-monitor">
@@ -164,8 +169,8 @@
       </section>
 
       <section class="view" id="view-decision">
-        <div class="page-head"><div><span class="eyebrow">AI PRELABEL / EVIDENCE</span><h1>AI 预标注与现场证据处置</h1><p>先使用工位专用细分类标签生成候选，再由人工检查、驳回或修正；候选不得直接成为训练真值。</p></div><span class="badge green">每秒随视频更新</span></div>
-        <article class="ai-prelabel-console"><div><span class="eyebrow">STATION-SCOPED PRELABEL</span><h2>全部视频 AI 预标注</h2><p id="aiPrelabelMessage">正在读取任务状态</p></div><div class="ai-prelabel-progress"><div><i id="aiPrelabelMeter"></i></div><b id="aiPrelabelProgress">0%</b><span id="aiPrelabelDetail">待启动</span></div><div class="ai-prelabel-actions role-manager"><button class="primary" id="startAiPrelabel">开始/继续</button><button class="ghost" id="pauseAiPrelabel">暂停</button><button class="ghost" id="refreshAiPrelabel">刷新</button></div></article>
+        <div class="page-head"><div><span class="eyebrow">AI PRELABEL / EVIDENCE</span><h1>AI 预标注与现场证据处置</h1><p>先使用工位专用粗粒度标签生成候选，再由人工检查、驳回或修正；电阻、电容、电感等板内微小器件暂不纳入本轮候选。</p></div><span class="badge green">每秒随视频更新</span></div>
+        <article class="ai-prelabel-console"><div><span class="eyebrow">DISTRIBUTED · THERMAL-AWARE</span><h2>全部视频 AI 预标注</h2><p id="aiPrelabelMessage">正在读取任务状态</p><div class="distributed-node-strip"><span><b id="distributedNodeCount">0</b> 在线节点</span><span><b id="distributedTemperature">--</b> GPU温度</span><span><b id="distributedJobState">--</b> 任务</span><span><b>pending_review</b> 真值边界</span></div></div><div class="ai-prelabel-progress"><div><i id="aiPrelabelMeter"></i></div><b id="aiPrelabelProgress">0%</b><span id="aiPrelabelDetail">待启动</span><small id="distributedPrelabelDetail">工位级标签 · 单视频任务租约 · 温控暂停 70°C / 恢复 62°C</small></div><div class="ai-prelabel-actions role-manager"><button class="primary" id="startAiPrelabel">开始/继续</button><button class="ghost" id="pauseAiPrelabel">暂停</button><button class="ghost" id="refreshAiPrelabel">刷新</button></div></article>
         <div class="decision-hero">
           <article class="decision-status"><span>当前处置状态</span><strong id="decisionRelease">HOLD</strong><p id="decisionAction">等待视频播放后生成现场建议</p></article>
           <article class="risk-card"><div class="risk-ring" id="riskRing"><b id="riskScore">--</b><span>风险分</span></div><div><span>证据缺口风险</span><strong id="riskLevel">等待数据</strong><small id="decisionMissing">尚未检查手、PCB/夹具、工具和MES证据</small></div></article>
@@ -208,6 +213,7 @@
           <button class="ghost role-manager" id="pushBaiduAnnotations" disabled>回传标注成片到百度网盘</button>
         </div>
         <div class="annotation-filter-strip" aria-label="候选框显示过滤">
+          <label>标签模式<select id="annotLabelMode"><option value="sop" selected>SOP 工位级</option><option value="all">全部 AI 候选</option></select></label>
           <label>最低置信度<div><input id="annotConfidenceFilter" type="range" min="0" max="95" step="5" value="25"><output id="annotConfidenceValue" for="annotConfidenceFilter">25%</output></div></label>
           <label class="filter-check"><input id="annotSuppressOverlap" type="checkbox" checked>同类重叠框去重</label>
           <label class="filter-check"><input id="annotShowRegionBoxes" type="checkbox">显示固定区域框</label>

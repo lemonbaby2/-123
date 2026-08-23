@@ -73,6 +73,8 @@ ANNOTATION_IMAGE_ROOT = DESKTOP_ROOT / "标注图片"
 NETWORK_CAMERAS_PATH = ROOT / "config" / "network_cameras.json"
 CAMERA_SLOT_COUNT = max(1, int(os.getenv("SOP_CAMERA_COUNT", "8")))
 ANNOTATION_DB_PATH = Path(os.getenv("SOP_ANNOTATION_DB", str(RUNTIME_ROOT / "sop_annotations.sqlite3")))
+AI_ANNOTATION_DB_PATH = Path(os.getenv("SOP_AI_ANNOTATION_DB", str(RUNTIME_ROOT / "ai_annotations.sqlite3")))
+AI_LABEL_SCHEMA_PATH = ROOT / "config" / "sop_broad_label_schema.json"
 ANNOTATION_AUTOSAVE_ROOT = RUNTIME_ROOT / "annotation_autosave"
 ANNOTATION_VIDEO_CACHE_ROOT = RUNTIME_ROOT / "annotation_video_cache"
 CLOUD_INBOX_ROOT = RUNTIME_ROOT / "cloud_inbox"
@@ -83,6 +85,8 @@ DATASET_BUILD_ROOT = RUNTIME_ROOT / "dataset_versions"
 REMOVABLE_IMPORT_ROOT = RUNTIME_ROOT / "removable_imports"
 DEVICE_REGISTRY_PATH = ROOT / "config" / "device_registry.json"
 ANNOTATION_DB_LOCK = threading.RLock()
+AI_ANNOTATION_DB_LOCK = threading.RLock()
+ANNOTATION_CHECKPOINT_LOCK = threading.Lock()
 CVAT_SYNC_LOCK = threading.Lock()
 CVAT_SYNC_GATE = threading.BoundedSemaphore(max(1, int(os.getenv("SOP_CVAT_SYNC_CONCURRENCY", "2"))))
 CAMERA_INFERENCE_GATE = threading.BoundedSemaphore(max(1, int(os.getenv("SOP_CAMERA_GPU_CONCURRENCY", "1"))))
@@ -106,6 +110,9 @@ ANNOTATION_RENDER_LOCK = threading.Lock()
 AI_PRELABEL_STATUS_PATH = RUNTIME_ROOT / "ai_prelabel_status.json"
 AI_PRELABEL_LOCK = threading.Lock()
 AI_PRELABEL_PROCESS: subprocess.Popen | None = None
+PRELABEL_WORKER_TOKEN = os.getenv("SOP_PRELABEL_WORKER_TOKEN", "")
+AUTOMATIC_BACKUP_MIN_INTERVAL = max(60, int(os.getenv("SOP_AUTOMATIC_BACKUP_MIN_INTERVAL", "300")))
+PRELABEL_DISTRIBUTED_CONTROL_PATH = RUNTIME_ROOT / "distributed_prelabel_control.json"
 CAMERA_UPSTREAM_URL = os.getenv("SOP_CAMERA_UPSTREAM_URL", "").strip().rstrip("/")
 CAMERA_UPSTREAM_USER = os.getenv("SOP_CAMERA_UPSTREAM_USER", "").strip()
 CAMERA_UPSTREAM_PASSWORD = os.getenv("SOP_CAMERA_UPSTREAM_PASSWORD", "")
@@ -773,6 +780,11 @@ def latest_annotation_draft(video_id: str) -> dict[str, object] | None:
 
 
 def db_checkpoint(payload: dict) -> dict:
+    with ANNOTATION_CHECKPOINT_LOCK:
+        return _db_checkpoint(payload)
+
+
+def _db_checkpoint(payload: dict) -> dict:
     video_id = str(payload.get("video_id") or "")
     if not video_id:
         raise ValueError("保存进度时必须指定视频")
@@ -790,18 +802,26 @@ def db_checkpoint(payload: dict) -> dict:
             "INSERT INTO annotation_checkpoints VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (checkpoint_id, video_id, payload.get("operator", "本地标注员"), count, int(payload.get("current_frame", 0)), float(payload.get("current_time", 0)), json.dumps(regions, ensure_ascii=False), now),
         )
-    with ANNOTATION_DB_LOCK, annotation_db() as connection:
-        connection.execute("PRAGMA wal_checkpoint(PASSIVE)")
     backup_root = RUNTIME_ROOT / "backups"
     backup_root.mkdir(parents=True, exist_ok=True)
     temporary = backup_root / ".sop_annotations_latest.sqlite3.tmp"
     destination = backup_root / "sop_annotations_latest.sqlite3"
-    with ANNOTATION_DB_LOCK, annotation_db() as source, sqlite3.connect(temporary) as target:
-        source.backup(target)
-    temporary.replace(destination)
+    automatic = bool(payload.get("automatic"))
+    backup_age = time.time() - destination.stat().st_mtime if destination.exists() else float("inf")
+    backup_updated = not automatic or backup_age >= AUTOMATIC_BACKUP_MIN_INTERVAL
+    if backup_updated:
+        with ANNOTATION_DB_LOCK, annotation_db() as connection:
+            connection.execute("PRAGMA wal_checkpoint(PASSIVE)")
+        with ANNOTATION_DB_LOCK, annotation_db() as source, sqlite3.connect(temporary) as target:
+            source.backup(target)
+        temporary.replace(destination)
     video_cache = cache_annotation_video(video_id)
     autosave = save_annotation_draft(payload, checkpoint_id, now, annotations)
-    return {"checkpoint_id": checkpoint_id, "video_id": video_id, "annotation_count": count, "regions": regions, "recorded_at": now, "backup": str(destination), "video_cache": video_cache, "autosave": autosave}
+    return {
+        "checkpoint_id": checkpoint_id, "video_id": video_id, "annotation_count": count,
+        "regions": regions, "recorded_at": now, "backup": str(destination),
+        "backup_updated": backup_updated, "video_cache": video_cache, "autosave": autosave,
+    }
 
 
 def annotation_db_health() -> dict:
@@ -1006,7 +1026,283 @@ def build_dataset_version(annotation_version_id: str, station_id: str, product_f
     return {**record, "manifest_path": str(manifest_path)}
 
 
+def ai_annotation_db() -> sqlite3.Connection:
+    AI_ANNOTATION_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(AI_ANNOTATION_DB_PATH, timeout=60)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA synchronous=NORMAL")
+    connection.execute("PRAGMA busy_timeout=60000")
+    return connection
+
+
+def initialize_ai_annotation_db() -> None:
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS ai_annotations (
+                annotation_id TEXT PRIMARY KEY,
+                video_id TEXT NOT NULL,
+                frame INTEGER NOT NULL,
+                label TEXT NOT NULL,
+                confidence REAL,
+                payload_json TEXT NOT NULL,
+                node_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_ai_annotations_video_frame ON ai_annotations(video_id, frame);
+            CREATE TABLE IF NOT EXISTS ai_frames (
+                video_id TEXT NOT NULL,
+                frame INTEGER NOT NULL,
+                detection_count INTEGER NOT NULL,
+                model_name TEXT NOT NULL,
+                node_id TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY(video_id, frame)
+            );
+            CREATE TABLE IF NOT EXISTS prelabel_jobs (
+                job_id TEXT PRIMARY KEY,
+                video_id TEXT NOT NULL UNIQUE,
+                status TEXT NOT NULL,
+                total_frames INTEGER NOT NULL,
+                completed_frames INTEGER NOT NULL DEFAULT 0,
+                detection_count INTEGER NOT NULL DEFAULT 0,
+                lease_node TEXT,
+                lease_until REAL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                error TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_prelabel_jobs_status ON prelabel_jobs(status, lease_until, created_at);
+            CREATE TABLE IF NOT EXISTS prelabel_nodes (
+                node_id TEXT PRIMARY KEY,
+                hostname TEXT NOT NULL,
+                capabilities_json TEXT NOT NULL,
+                gpu_temperature REAL,
+                status TEXT NOT NULL,
+                current_job_id TEXT,
+                last_seen_at REAL NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            """
+        )
+
+
+def broad_label_schema() -> dict[str, object]:
+    schema = read_config(AI_LABEL_SCHEMA_PATH, {})
+    return dict(schema) if isinstance(schema, dict) else {}
+
+
+def sync_prelabel_jobs() -> None:
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        for video in video_catalog().get("videos", []):
+            video_id = str(video.get("id") or "").strip()
+            if video_id:
+                connection.execute(
+                    """INSERT OR IGNORE INTO prelabel_jobs
+                           (job_id, video_id, status, total_frames, created_at, updated_at)
+                           VALUES (?, ?, 'pending', ?, ?, ?)""",
+                    (f"PRELABEL-{video_id}", video_id, max(0, int(video.get("frames") or 0)), now, now),
+                )
+
+
+def ai_frame_annotations(video_id: str, frame: int) -> list[dict[str, object]]:
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        rows = list(connection.execute(
+            "SELECT payload_json FROM ai_annotations WHERE video_id = ? AND frame = ? ORDER BY confidence DESC, annotation_id",
+            (video_id, frame),
+        ))
+    return [json.loads(row["payload_json"]) for row in rows]
+
+
+def prelabel_worker_authorized(headers: object) -> bool:
+    supplied = str(headers.get("X-SOP-Worker-Token", ""))
+    return bool(PRELABEL_WORKER_TOKEN and supplied and hmac.compare_digest(supplied, PRELABEL_WORKER_TOKEN))
+
+
+def register_prelabel_node(payload: dict[str, object]) -> dict[str, object]:
+    node_id = str(payload.get("node_id") or "").strip()[:80]
+    hostname = str(payload.get("hostname") or node_id).strip()[:120]
+    if not node_id:
+        raise ValueError("worker node_id 不能为空")
+    now_text = time.strftime("%Y-%m-%d %H:%M:%S")
+    now_epoch = time.time()
+    capabilities = payload.get("capabilities") if isinstance(payload.get("capabilities"), dict) else {}
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        connection.execute(
+            """INSERT INTO prelabel_nodes
+                   (node_id, hostname, capabilities_json, gpu_temperature, status, current_job_id, last_seen_at, updated_at)
+                   VALUES (?, ?, ?, ?, 'idle', NULL, ?, ?)
+                   ON CONFLICT(node_id) DO UPDATE SET hostname=excluded.hostname,
+                       capabilities_json=excluded.capabilities_json, last_seen_at=excluded.last_seen_at,
+                       updated_at=excluded.updated_at""",
+            (node_id, hostname, json.dumps(capabilities, ensure_ascii=False), payload.get("gpu_temperature"), now_epoch, now_text),
+        )
+    return {"node_id": node_id, "label_schema": broad_label_schema(), "lease_seconds": 300}
+
+
+def distributed_prelabel_control(action: str, operator: str) -> dict[str, object]:
+    if action not in {"pause", "resume"}:
+        raise ValueError("分布式预标注仅支持 pause 或 resume")
+    control = {
+        "paused": action == "pause",
+        "operator": operator,
+        "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    atomic_write_json(PRELABEL_DISTRIBUTED_CONTROL_PATH, control)
+    return control
+
+
+def distributed_prelabel_is_paused() -> bool:
+    return bool(read_config(PRELABEL_DISTRIBUTED_CONTROL_PATH, {}).get("paused", False))
+
+
+def claim_prelabel_job(payload: dict[str, object]) -> dict[str, object] | None:
+    node_id = str(payload.get("node_id") or "").strip()
+    if not node_id:
+        raise ValueError("worker node_id 不能为空")
+    sync_prelabel_jobs()
+    if distributed_prelabel_is_paused():
+        return None
+    now_epoch = time.time()
+    now_text = time.strftime("%Y-%m-%d %H:%M:%S")
+    preferred_video_id = str(payload.get("video_id") or "").strip()
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        connection.execute(
+            """UPDATE prelabel_jobs SET status=CASE WHEN attempts >= 3 THEN 'failed' ELSE 'pending' END,
+                   lease_node=NULL, lease_until=NULL, error='worker lease expired', updated_at=?
+               WHERE status='running' AND lease_until < ?""",
+            (now_text, now_epoch),
+        )
+        query = """SELECT job_id, video_id, total_frames, completed_frames FROM prelabel_jobs
+                   WHERE status IN ('pending', 'failed', 'paused') AND attempts < 3"""
+        parameters: tuple[object, ...] = ()
+        if preferred_video_id:
+            query += " AND video_id=?"
+            parameters = (preferred_video_id,)
+        row = connection.execute(
+            query + " ORDER BY CASE status WHEN 'paused' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END, attempts, created_at LIMIT 1",
+            parameters,
+        ).fetchone()
+        if row is None:
+            return None
+        lease_until = now_epoch + 300
+        connection.execute(
+            "UPDATE prelabel_jobs SET status='running', lease_node=?, lease_until=?, attempts=attempts+1, updated_at=? WHERE job_id=?",
+            (node_id, lease_until, now_text, row["job_id"]),
+        )
+        connection.execute(
+            "UPDATE prelabel_nodes SET status='running', current_job_id=?, last_seen_at=?, updated_at=? WHERE node_id=?",
+            (row["job_id"], now_epoch, now_text, node_id),
+        )
+    video = video_info(str(row["video_id"])) or {}
+    return {
+        **dict(row), "lease_until": lease_until,
+        "source_path": str(annotation_video_path(str(row["video_id"]))),
+        "fps": float(video.get("fps") or 30), "label_schema": broad_label_schema(),
+    }
+
+
+def submit_prelabel_batch(payload: dict[str, object]) -> dict[str, object]:
+    node_id = str(payload.get("node_id") or "").strip()
+    job_id = str(payload.get("job_id") or "").strip()
+    video_id = str(payload.get("video_id") or "").strip()
+    frames = payload.get("frames") if isinstance(payload.get("frames"), list) else []
+    if not node_id or not job_id or not video_id or not frames:
+        raise ValueError("预标注结果批次字段不完整")
+    now_text = time.strftime("%Y-%m-%d %H:%M:%S")
+    now_epoch = time.time()
+    inserted_frames = 0
+    inserted_detections = 0
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        job = connection.execute(
+            "SELECT lease_node, status FROM prelabel_jobs WHERE job_id=? AND video_id=?", (job_id, video_id)
+        ).fetchone()
+        if job is None or job["status"] != "running" or job["lease_node"] != node_id:
+            raise PermissionError("任务租约无效或已被其他节点接管")
+        for frame_record in frames:
+            frame = int(frame_record.get("frame") or 0)
+            detections = frame_record.get("detections") if isinstance(frame_record.get("detections"), list) else []
+            cursor = connection.execute(
+                "INSERT OR IGNORE INTO ai_frames VALUES (?, ?, ?, ?, ?, ?)",
+                (video_id, frame, len(detections), str(payload.get("model_name") or "unknown"), node_id, now_text),
+            )
+            inserted_frames += max(0, int(cursor.rowcount))
+            for detection in detections:
+                fallback = hashlib.sha256(json.dumps(detection, sort_keys=True).encode()).hexdigest()[:12]
+                annotation_id = str(detection.get("annotation_id") or f"dist:{video_id}:{frame}:{fallback}")
+                normalized = {
+                    **detection, "annotation_id": annotation_id, "video_id": video_id, "frame": frame,
+                    "source_kind": "prelabel", "review_status": "pending",
+                    "source": detection.get("source") or f"分布式工位级AI预标注/{node_id}",
+                }
+                cursor = connection.execute(
+                    """INSERT OR IGNORE INTO ai_annotations
+                           (annotation_id, video_id, frame, label, confidence, payload_json, node_id, created_at, updated_at)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (annotation_id, video_id, frame, str(normalized.get("label") or "未分类目标"),
+                     normalized.get("confidence"), json.dumps(normalized, ensure_ascii=False), node_id, now_text, now_text),
+                )
+                inserted_detections += max(0, int(cursor.rowcount))
+        connection.execute(
+            """UPDATE prelabel_jobs SET completed_frames=completed_frames+?, detection_count=detection_count+?,
+                   lease_until=?, updated_at=? WHERE job_id=?""",
+            (inserted_frames, inserted_detections, now_epoch + 300, now_text, job_id),
+        )
+        connection.execute(
+            "UPDATE prelabel_nodes SET gpu_temperature=?, last_seen_at=?, updated_at=? WHERE node_id=?",
+            (payload.get("gpu_temperature"), now_epoch, now_text, node_id),
+        )
+    return {
+        "accepted_frames": inserted_frames, "accepted_detections": inserted_detections,
+        "lease_until": now_epoch + 300, "pause_requested": distributed_prelabel_is_paused(),
+    }
+
+
+def finish_prelabel_job(payload: dict[str, object]) -> dict[str, object]:
+    node_id = str(payload.get("node_id") or "").strip()
+    job_id = str(payload.get("job_id") or "").strip()
+    requested_status = str(payload.get("status") or "completed")
+    status = requested_status if requested_status in {"completed", "failed", "paused"} else "failed"
+    now_text = time.strftime("%Y-%m-%d %H:%M:%S")
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        job = connection.execute("SELECT lease_node, attempts FROM prelabel_jobs WHERE job_id=?", (job_id,)).fetchone()
+        if job is None or job["lease_node"] != node_id:
+            raise PermissionError("任务租约无效")
+        connection.execute(
+            "UPDATE prelabel_jobs SET status=?, lease_until=NULL, error=?, updated_at=? WHERE job_id=?",
+            (status, str(payload.get("error") or "")[:1000], now_text, job_id),
+        )
+        connection.execute(
+            "UPDATE prelabel_nodes SET status='idle', current_job_id=NULL, last_seen_at=?, updated_at=? WHERE node_id=?",
+            (time.time(), now_text, node_id),
+        )
+    return {"job_id": job_id, "status": status}
+
+
+def distributed_prelabel_status() -> dict[str, object]:
+    sync_prelabel_jobs()
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        counts = {str(row["status"]): int(row["count"]) for row in connection.execute("SELECT status, COUNT(*) count FROM prelabel_jobs GROUP BY status")}
+        totals = dict(connection.execute(
+            "SELECT COALESCE(SUM(total_frames),0) total_frames, COALESCE(SUM(completed_frames),0) completed_frames, COALESCE(SUM(detection_count),0) detections FROM prelabel_jobs"
+        ).fetchone())
+        nodes = [
+            {**dict(row), "capabilities": json.loads(row["capabilities_json"]), "online": time.time() - float(row["last_seen_at"]) < 180}
+            for row in connection.execute("SELECT * FROM prelabel_nodes ORDER BY node_id")
+        ]
+    return {
+        "ok": True, "jobs": counts, **totals, "nodes": nodes,
+        "queue_paused": distributed_prelabel_is_paused(),
+        "label_schema": broad_label_schema(), "database": str(AI_ANNOTATION_DB_PATH),
+    }
+
+
 initialize_annotation_db()
+initialize_ai_annotation_db()
 
 
 def _discover_camera_sources(limit: int = CAMERA_SLOT_COUNT) -> dict[int, str]:
@@ -2037,6 +2333,10 @@ def ai_prelabel_status() -> dict[str, object]:
     catalog_frames = int(inventory_totals.get("sampled_frames") or 0)
     catalog_detections = int(inventory_totals.get("detections") or 0)
     catalog_candidates = int(inventory_totals.get("candidates") or 0)
+    distributed = distributed_prelabel_status()
+    distributed_completed = int(distributed.get("completed_frames") or 0)
+    distributed_total = int(distributed.get("total_frames") or 0)
+    distributed_detections = int(distributed.get("detections") or 0)
     state_name = str(status.get("status") or "not_started")
     running = state_name in {"running", "loading_model", "queued"} and _process_is_running(status.get("pid"))
     if state_name in {"running", "loading_model", "queued"} and not running:
@@ -2061,6 +2361,11 @@ def ai_prelabel_status() -> dict[str, object]:
         "catalog_sampled_frames": catalog_frames,
         "catalog_detections": catalog_detections,
         "catalog_candidates": catalog_candidates,
+        "distributed": distributed,
+        "full_frames_total": distributed_total,
+        "full_frames_completed": distributed_completed,
+        "full_frame_detections": distributed_detections,
+        "full_frame_progress": round(min(100, distributed_completed * 100 / max(1, distributed_total)), 2),
         "progress": round(min(100, completed * 100 / max(1, total)), 2),
         "truth_policy": "AI框均为待人工复核候选；开放词汇不能保证识别未知物体，漏检须人工补框。",
     }
@@ -3583,6 +3888,27 @@ def frame_annotation_items(video_id: str, requested_time: float) -> list[dict]:
                 "reviewer": review.get("reviewer"),
                 "reviewed_at": review.get("recorded_at"),
             })
+    existing_ids = {str(item.get("annotation_id")) for item in items}
+    for generated in ai_frame_annotations(video_id, frame):
+        annotation_id = str(generated.get("annotation_id") or "")
+        if not annotation_id or annotation_id in deleted_ids or annotation_id in existing_ids:
+            continue
+        normalized, pixels = normalize_box(generated.get("box"), video_id)
+        review = reviews.get(annotation_id, {})
+        items.append({
+            **generated,
+            "annotation_id": annotation_id,
+            "video_id": video_id,
+            "frame": frame,
+            "video_time": float(generated.get("video_time", frame / float(info.get("fps", 30)))),
+            "box": normalized,
+            "box_pixels": pixels,
+            "box_format": "normalized_xyxy",
+            "source_kind": "prelabel",
+            "review_status": review.get("review_status") or "pending",
+            "reviewer": review.get("reviewer"),
+            "reviewed_at": review.get("recorded_at"),
+        })
     return items
 
 
@@ -3668,6 +3994,10 @@ def annotation_stats() -> dict:
     inventory_totals = prelabel_inventory().get("totals", {})
     prelabels = int(inventory_totals.get("detections") or 0)
     candidates = int(inventory_totals.get("candidates") or 0)
+    with AI_ANNOTATION_DB_LOCK, ai_annotation_db() as connection:
+        distributed_prelabels = int(connection.execute("SELECT COUNT(*) FROM ai_annotations").fetchone()[0])
+        distributed_frames = int(connection.execute("SELECT COUNT(*) FROM ai_frames").fetchone()[0])
+    prelabels += distributed_prelabels
     stored = manual_annotation_items()
     prelabels += sum(1 for item in stored if item.get("source_kind") == "prelabel")
     candidates += sum(1 for item in stored if item.get("source_kind") == "candidate")
@@ -3683,6 +4013,8 @@ def annotation_stats() -> dict:
         "candidates": candidates,
         "manual": len(manual),
         "reviews": len(reviews),
+        "distributed_prelabels": distributed_prelabels,
+        "distributed_frames": distributed_frames,
         "status_counts": status_counts,
         "database": annotation_db_health(),
         "truth_boundary": "预标注和小目标候选仅用于提高人工标注效率，人工确认前不属于生产真值。",
@@ -4150,6 +4482,9 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     for item in catalog.get("videos", [])
                 ],
             })
+            return
+        if path == "/api/prelabel/distributed/status":
+            self.send_json(distributed_prelabel_status())
             return
         if path == "/api/annotations":
             query = parse_qs(parsed.query)
@@ -4680,6 +5015,39 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.BAD_REQUEST)
                     return
                 self.send_json({"ok": True, "message": "密码修改成功，其他设备会话已退出"})
+                return
+            if path.startswith("/api/prelabel/worker/"):
+                if not prelabel_worker_authorized(self.headers):
+                    self.send_json({"ok": False, "message": "分布式 worker 令牌无效"}, HTTPStatus.UNAUTHORIZED)
+                    return
+                try:
+                    if path == "/api/prelabel/worker/register":
+                        result = register_prelabel_node(payload)
+                    elif path == "/api/prelabel/worker/claim":
+                        result = claim_prelabel_job(payload)
+                    elif path == "/api/prelabel/worker/submit":
+                        result = submit_prelabel_batch(payload)
+                    elif path == "/api/prelabel/worker/finish":
+                        result = finish_prelabel_job(payload)
+                    else:
+                        self.send_json({"ok": False, "message": "worker API 不存在"}, HTTPStatus.NOT_FOUND)
+                        return
+                except PermissionError as exc:
+                    self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.CONFLICT)
+                    return
+                self.send_json({"ok": True, "result": result})
+                return
+            if path == "/api/prelabel/distributed/control":
+                user = self.require_api_access(path, "POST")
+                if user is None:
+                    return
+                result = distributed_prelabel_control(
+                    str(payload.get("action") or "resume"),
+                    str(user.get("username") or "unknown"),
+                )
+                self.append_event("distributed_prelabel_control.jsonl", result)
+                message = "分布式预标注将在当前批次后暂停" if result["paused"] else "分布式预标注队列已恢复"
+                self.send_json({"ok": True, "control": result, "message": message})
                 return
             if path.startswith("/api/") and self.require_api_access(path, "POST") is None:
                 return

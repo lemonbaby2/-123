@@ -1,0 +1,23 @@
+[Unit]
+Description=Thermally controlled distributed SOP prelabel worker for 8116
+After=sop-distributed-8116.service network-online.target
+Requires=sop-distributed-8116.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/xjai/Desktop/sop xjai/2026.8.23/sop-distributed-prelabel-20260823-8116
+Environment="SOP_PRELABEL_COORDINATOR=http://127.0.0.1:8116"
+Environment="SOP_PRELABEL_NODE_ID=dgx-spark-gpu0"
+EnvironmentFile=/home/xjai/.config/ningbo-sop/distributed-8116-auth.env
+ExecStart=/home/xjai/micromamba/envs/sop/bin/python sop-platform/scripts/distributed_prelabel_worker.py --batch 4 --imgsz 640 --confidence 0.18 --max-temperature 70 --resume-temperature 62 --cooldown-seconds 0.5 --idle-seconds 30
+Restart=on-failure
+RestartSec=30
+Nice=15
+CPUWeight=10
+CPUQuota=150%
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
