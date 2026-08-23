@@ -1,0 +1,40 @@
+{
+  "url": "http://127.0.0.1:8115",
+  "checks": {
+    "recommended_filter": {
+      "minimum_confidence": "25",
+      "overlap_suppression": true,
+      "show_region_boxes": false,
+      "display_limit": "40",
+      "raw_total": 120,
+      "filtered_total": 8,
+      "summary": "原始 120 个，筛选后 8 个；已隐藏 低置信度 105、区域框 5、重叠框 2"
+    },
+    "table_page_rows": 8,
+    "page_summary": "第 1 / 1 页 · 当前 1-8 条",
+    "expanded_all_candidates": {
+      "filtered_total": 120,
+      "summary": "原始 120 个，筛选后 120 个",
+      "page_summary": "第 1 / 5 页 · 当前 1-25 条"
+    },
+    "expanded_second_page": {
+      "page_summary": "第 2 / 5 页 · 当前 26-50 条",
+      "row_count": 25
+    },
+    "reset_filter": {
+      "minimum_confidence": "25",
+      "overlap_suppression": true,
+      "show_region_boxes": false,
+      "display_limit": "40",
+      "summary": "原始 120 个，筛选后 8 个；已隐藏 低置信度 105、区域框 5、重叠框 2"
+    },
+    "mobile_layout": {
+      "viewport_width": 390,
+      "page_scroll_width": 390,
+      "filter_width": 366
+    }
+  },
+  "http_errors": [],
+  "console_errors": [],
+  "passed": true
+}

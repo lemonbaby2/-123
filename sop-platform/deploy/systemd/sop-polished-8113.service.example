@@ -1,0 +1,25 @@
+[Unit]
+Description=Ningbo SOP polished industrial console on port 8113
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ningbo-sop/sop-polished-20260823-8113
+Environment="SOP_HOST=0.0.0.0"
+Environment="SOP_PORT=8113"
+Environment="SOP_CAMERA_AUTOSTART=0"
+Environment="SOP_RUNTIME_DIR=/var/lib/ningbo-sop/polished-8113"
+Environment="SOP_DESKTOP_DIR=/var/lib/ningbo-sop/polished-8113/desktop"
+Environment="CVAT_API_URL=http://localhost:8081"
+Environment="CVAT_PUBLIC_URL=http://SERVER_IP:8081"
+EnvironmentFile=-/etc/ningbo-sop/polished-8113.env
+EnvironmentFile=-/etc/ningbo-sop/polished-8113-auth.env
+ExecStart=/opt/ningbo-sop/venv/bin/python sop-platform/server.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

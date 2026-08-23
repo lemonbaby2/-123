@@ -1,0 +1,27 @@
+[Unit]
+Description=Ningbo SOP annotation review console 20260823 on port 8115
+After=network-online.target sop-camera-publishers-8112.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/xjai/Desktop/sop xjai/2026.8.23/sop-annotation-review-20260823-8115
+Environment="SOP_HOST=0.0.0.0"
+Environment="SOP_PORT=8115"
+Environment="SOP_CAMERA_AUTOSTART=0"
+Environment="SOP_RUNTIME_DIR=/home/xjai/Desktop/sop xjai/2026.8.23/runtime/integrated-8115"
+Environment="SOP_DESKTOP_DIR=/home/xjai/Desktop/sop xjai/2026.8.23/runtime/integrated-8115/desktop"
+Environment="CVAT_API_URL=http://192.168.1.129:8081"
+Environment="CVAT_PUBLIC_URL=http://192.168.1.129:8081"
+Environment="NO_PROXY=localhost,127.0.0.1,::1,192.168.1.129,192.168.1.0/24"
+Environment="no_proxy=localhost,127.0.0.1,::1,192.168.1.129,192.168.1.0/24"
+EnvironmentFile=-/home/xjai/.config/ningbo-sop/integrated-8115.env
+EnvironmentFile=-/home/xjai/.config/ningbo-sop/integrated-8115-auth.env
+ExecStart=/home/xjai/micromamba/envs/sop/bin/python sop-platform/server.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

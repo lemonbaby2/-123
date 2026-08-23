@@ -1,0 +1,34 @@
+{
+  "url": "http://127.0.0.1:8114",
+  "checks": {
+    "current_frame_ai_boxes": 121,
+    "mouse_select": "电阻 · 第 0 帧",
+    "delete_key_intercepted": true,
+    "custom_vocabulary": true,
+    "track_range": {
+      "start": 0,
+      "end": 30,
+      "valid": true
+    },
+    "cvat_jobs": {
+      "task": "1295",
+      "status": 200,
+      "count": 1
+    },
+    "training_video_count": 23,
+    "thumbnail": {
+      "width": 480,
+      "height": 270
+    },
+    "spark_button": "启动 Spark 训练、推理与验证",
+    "prelabel_status": {
+      "status": "catalog_ready",
+      "frames": 26639,
+      "detections": 440245,
+      "candidates": 111616
+    }
+  },
+  "http_errors": [],
+  "console_errors": [],
+  "passed": true
+}
