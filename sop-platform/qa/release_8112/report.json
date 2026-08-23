@@ -1,0 +1,75 @@
+{
+  "url": "http://127.0.0.1:8112",
+  "generated_at": "2026-08-23 01:36:05",
+  "views": [
+    {
+      "view": "overview",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/01_overview_desktop.png",
+      "title": "总览"
+    },
+    {
+      "view": "monitor",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/02_monitor_desktop.png",
+      "title": "数据获取与清洗"
+    },
+    {
+      "view": "decision",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/03_decision_desktop.png",
+      "title": "AI 预标注与现场证据处置"
+    },
+    {
+      "view": "annotation",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/04_annotation_desktop.png",
+      "title": "CVAT 人工复核与双向同步"
+    },
+    {
+      "view": "quality",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/05_quality_desktop.png",
+      "title": "数据集构建与质量冻结"
+    },
+    {
+      "view": "training",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/06_training_desktop.png",
+      "title": "六模型训练、验证与部署"
+    },
+    {
+      "view": "mes",
+      "screenshot": "/home/xjai/Desktop/sop xjai/2026.8.23/sop-unified-20260823/sop-platform/qa/release_8112/07_mes_desktop.png",
+      "title": "实时 SOP 与 MES 闭环"
+    }
+  ],
+  "console_errors": [],
+  "http_errors": [],
+  "monitor_video": {
+    "readyState": 4,
+    "networkState": 1,
+    "width": 1280,
+    "height": 720,
+    "currentSrc": "http://127.0.0.1:8112/media/local/DJI_20260819151908_0265_D_720p.mp4?release=20260821-annotation-v3"
+  },
+  "annotation_video": {
+    "readyState": 4,
+    "networkState": 1,
+    "width": 1280,
+    "height": 720,
+    "currentSrc": "http://127.0.0.1:8112/media/local/DJI_20260819151908_0265_D_720p.mp4?release=20260821-annotation-v3"
+  },
+  "camera_images": [
+    {
+      "src": "http://127.0.0.1:8112/api/camera/mjpeg?camera=0&ts=1787448986614",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "src": "http://127.0.0.1:8112/api/camera/mjpeg?camera=1&ts=1787448986614",
+      "width": 160,
+      "height": 120
+    },
+    {
+      "src": "http://127.0.0.1:8112/api/camera/mjpeg?camera=2&ts=1787448986614",
+      "width": 960,
+      "height": 540
+    }
+  ],
+  "passed": true
+}
