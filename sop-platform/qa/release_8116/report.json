@@ -6,9 +6,15 @@
       "width": 1491
     },
     "distributed_prelabel": {
-      "detail": "全帧 3,466/187,553 · 3,481 个工位级候选 · AI结果一律 pending_review",
-      "temperature": "52°C",
-      "jobs": "1运行 / 24待领"
+      "detail": "全帧 8,783/187,553 · 7,877 个工位级候选 · AI结果一律 pending_review",
+      "temperature": "51°C",
+      "jobs": "1运行 / 22待领"
+    },
+    "training_resource_policy": {
+      "device": "0",
+      "ddp_disabled": true,
+      "imgsz": "640",
+      "workers": "1"
     },
     "recommended_filter": {
       "minimum_confidence": "25",
@@ -22,7 +28,7 @@
     },
     "table_page_rows": 1,
     "page_summary": "第 1 / 1 页 · 当前 1-1 条",
-    "box_click_ms": 2.1,
+    "box_click_ms": 1.2,
     "selected_box": "操作人员 · 第 0 帧",
     "expanded_all_candidates": {
       "filtered_total": 3,

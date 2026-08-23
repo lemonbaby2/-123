@@ -242,11 +242,11 @@
             <label>基础模型<select id="trainingAlgorithm"></select><small>优先使用 YOLO26N 实时模型</small></label>
             <label>已加载图片/视频标注集<select id="trainingDataset"></select><small id="trainingDatasetState">正在检查标签状态</small></label>
             <label>真值模式<select id="trainingTruthMode"><option value="human-confirmed">正式训练：仅人工确认真值</option><option value="candidate-pretrain">候选预训练：不计量产精度</option></select><small>默认禁止待复核候选冒充真值</small></label>
-            <label>运行设备<select id="trainingDevice"><option value="0">GPU 0 / CUDA</option><option value="1">GPU 1 / CUDA</option><option value="cpu">CPU（很慢，仅兼容测试）</option></select><small>系统将实际占用所选设备</small></label>
+            <label>运行设备<select id="trainingDevice"><option value="0">GPU 0 / NVIDIA GB10</option><option value="0,1" disabled>多 GPU DDP（当前仅 1 卡）</option><option value="cpu">CPU（很慢，仅兼容测试）</option></select><small>训练与后台预标互斥；70°C 暂停、62°C 恢复</small></label>
             <label>训练轮次 Epochs<input id="trainingEpochs" type="number" min="1" max="500" value="5"><small>当前需求默认 5 轮</small></label>
             <label>Batch Size<select id="trainingBatch"><option>1</option><option>2</option><option selected>4</option><option>8</option><option>16</option><option>32</option></select><small>显存不足时减小</small></label>
-            <label>输入尺寸<select id="trainingImgsz"><option value="640">640</option><option value="960" selected>960（小元器件推荐）</option><option value="1280">1280</option></select><small>越大越慢但更利于小目标</small></label>
-            <label>DataLoader Workers<input id="trainingWorkers" type="number" min="0" max="16" value="2"><small>DGX 本地建议 2–8</small></label>
+            <label>输入尺寸<select id="trainingImgsz"><option value="640" selected>640（本轮工位级推荐）</option><option value="960">960</option><option value="1280">1280</option></select><small>升高尺寸前先暂停实时推理并评估温度</small></label>
+            <label>DataLoader Workers<input id="trainingWorkers" type="number" min="0" max="8" value="1"><small>后台低负载默认 1</small></label>
             <label>Early Stop Patience<input id="trainingPatience" type="number" min="0" max="100" value="5"><small>若指标不再提升则提前停止</small></label>
             <label>随机种子<input id="trainingSeed" type="number" value="20260820"><small>保证可复现实验</small></label>
             <label>结果保存位置<select id="trainingOutput"><option value="platform">平台运行目录</option><option value="model-store">DGX 模型仓库</option><option value="desktop">桌面“训练结果”</option></select><small id="trainingOutputPath">由后端限制在安全目录</small></label>

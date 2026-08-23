@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
+import subprocess
 import time
 import traceback
 import zipfile
@@ -20,6 +22,17 @@ def update(status_path: Path, base: dict, **values: object) -> dict:
     base["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     atomic_json(status_path, base)
     return base
+
+
+def gpu_temperature() -> float | None:
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=3, check=False,
+        )
+        return max(float(line.strip()) for line in result.stdout.splitlines()) if result.returncode == 0 else None
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
 
 
 def main() -> None:
@@ -43,6 +56,8 @@ def main() -> None:
     parser.add_argument("--cache", choices=("false", "ram", "disk"), default="false")
     parser.add_argument("--target", choices=("jetson", "cuda-server", "onnx-server"), default="jetson")
     parser.add_argument("--truth-mode", choices=("human-confirmed", "candidate-pretrain"), required=True)
+    parser.add_argument("--max-temperature", type=float, default=70.0)
+    parser.add_argument("--resume-temperature", type=float, default=62.0)
     args = parser.parse_args()
 
     args.job_dir.mkdir(parents=True, exist_ok=True)
@@ -50,10 +65,30 @@ def main() -> None:
     status = json.loads(status_path.read_text(encoding="utf-8"))
     started = time.time()
     try:
+        try:
+            os.nice(15)
+            subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())], timeout=3, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
         from ultralytics import YOLO
 
         update(status_path, status, status="running", stage="训练", progress=5, started_at=time.strftime("%Y-%m-%d %H:%M:%S"))
         model = YOLO(args.model)
+
+        def thermal_guard(_trainer) -> None:
+            temperature = gpu_temperature()
+            if temperature is None or temperature < args.max_temperature:
+                return
+            update(
+                status_path, status, stage="温控暂停", gpu_temperature_c=temperature,
+                message=f"GPU {temperature:.0f}°C，等待降至 {args.resume_temperature:.0f}°C 后继续",
+            )
+            while temperature is not None and temperature > args.resume_temperature:
+                time.sleep(20)
+                temperature = gpu_temperature()
+            update(status_path, status, stage="训练", gpu_temperature_c=temperature, message="温度恢复，继续训练")
+
+        model.add_callback("on_train_batch_start", thermal_guard)
         result = model.train(
             data=str(args.data), epochs=args.epochs, batch=args.batch, imgsz=args.imgsz,
             device=args.device, workers=args.workers, patience=args.patience, seed=args.seed,
@@ -73,6 +108,7 @@ def main() -> None:
 
         update(status_path, status, stage="验证", progress=76, best_weight=str(best_copy))
         validated = YOLO(str(best_copy))
+        validated.add_callback("on_val_batch_start", thermal_guard)
         metrics = validated.val(
             data=str(args.data), split="val", batch=args.batch, imgsz=args.imgsz,
             device=args.device, workers=args.workers, project=str(args.job_dir / "runs"),

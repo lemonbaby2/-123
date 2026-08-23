@@ -113,6 +113,11 @@ AI_PRELABEL_PROCESS: subprocess.Popen | None = None
 PRELABEL_WORKER_TOKEN = os.getenv("SOP_PRELABEL_WORKER_TOKEN", "")
 AUTOMATIC_BACKUP_MIN_INTERVAL = max(60, int(os.getenv("SOP_AUTOMATIC_BACKUP_MIN_INTERVAL", "300")))
 PRELABEL_DISTRIBUTED_CONTROL_PATH = RUNTIME_ROOT / "distributed_prelabel_control.json"
+TRAINING_MAX_TEMPERATURE = max(50.0, float(os.getenv("SOP_TRAINING_MAX_TEMPERATURE", "70")))
+TRAINING_RESUME_TEMPERATURE = min(
+    TRAINING_MAX_TEMPERATURE - 1,
+    float(os.getenv("SOP_TRAINING_RESUME_TEMPERATURE", "62")),
+)
 CAMERA_UPSTREAM_URL = os.getenv("SOP_CAMERA_UPSTREAM_URL", "").strip().rstrip("/")
 CAMERA_UPSTREAM_USER = os.getenv("SOP_CAMERA_UPSTREAM_USER", "").strip()
 CAMERA_UPSTREAM_PASSWORD = os.getenv("SOP_CAMERA_UPSTREAM_PASSWORD", "")
@@ -3232,6 +3237,10 @@ def resolve_training_model(model_id: str) -> Path:
     if not model_path.is_absolute():
         model_path = ROOT / model_path
     if not model_path.is_file():
+        managed_model = SPARK_MODEL_ROOT / model_path.name
+        if managed_model.is_file():
+            model_path = managed_model
+    if not model_path.is_file():
         raise ValueError(f"预训练权重不存在: {model_path}")
     return model_path
 
@@ -3259,6 +3268,16 @@ def training_job(job_id: str) -> dict[str, object] | None:
     return None
 
 
+def cuda_device_count() -> int:
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "-L"], capture_output=True, text=True, timeout=4, check=False,
+        )
+        return sum(line.startswith("GPU ") for line in result.stdout.splitlines()) if result.returncode == 0 else 0
+    except (OSError, subprocess.TimeoutExpired):
+        return 0
+
+
 def start_training_job(payload: dict[str, object], operator: str) -> dict[str, object]:
     dataset = resolve_training_dataset(str(payload.get("dataset") or ""))
     truth_mode = str(payload.get("truth_mode") or "human-confirmed")
@@ -3270,8 +3289,8 @@ def start_training_job(payload: dict[str, object], operator: str) -> dict[str, o
     model_path = resolve_training_model(model_id)
     epochs = max(1, min(500, int(payload.get("epochs", 5))))
     batch = max(1, min(128, int(payload.get("batch", 4))))
-    imgsz = max(320, min(2048, int(payload.get("imgsz", 960))))
-    workers = max(0, min(16, int(payload.get("workers", 2))))
+    imgsz = max(320, min(2048, int(payload.get("imgsz", 640))))
+    workers = max(0, min(8, int(payload.get("workers", 1))))
     patience = max(0, min(100, int(payload.get("patience", min(20, epochs)))))
     seed = int(payload.get("seed", 20260820))
     optimizer = str(payload.get("optimizer") or "auto")
@@ -3286,8 +3305,19 @@ def start_training_job(payload: dict[str, object], operator: str) -> dict[str, o
     if cache not in {"false", "ram", "disk"}:
         raise ValueError("缓存模式只允许 false、ram 或 disk")
     device = str(payload.get("device") or "0")
-    if device not in {"0", "1", "cpu"}:
-        raise ValueError("运行设备只允许 GPU 0、GPU 1 或 CPU")
+    gpu_count = cuda_device_count()
+    valid_devices = {"cpu", *[str(index) for index in range(gpu_count)]}
+    if gpu_count > 1:
+        valid_devices.add(",".join(str(index) for index in range(gpu_count)))
+    if device not in valid_devices:
+        raise ValueError(f"运行设备 {device} 不存在；当前检测到 {gpu_count} 块 GPU")
+    for existing_dir in training_job_dirs():
+        existing = read_config(existing_dir / "status.json", {})
+        if existing.get("status") in {"queued", "running"} and _process_is_running(existing.get("pid")):
+            raise ValueError(f"已有训练任务 {existing.get('job_id') or existing_dir.name} 在运行；为保护 DGX 不允许并发训练")
+    distributed = distributed_prelabel_status()
+    if device != "cpu" and int((distributed.get("jobs") or {}).get("running") or 0):
+        raise ValueError("分布式预标 worker 正在使用 GPU；请先在 03 页面暂停预标，待当前批次落库后再启动训练")
     output_key = str(payload.get("output") or "platform")
     output_root = TRAINING_OUTPUT_ROOTS.get(output_key)
     if output_root is None:
@@ -3306,6 +3336,12 @@ def start_training_job(payload: dict[str, object], operator: str) -> dict[str, o
         "estimated_seconds": seconds_mid, "estimated_range_seconds": [int(seconds_mid * 0.65), int(seconds_mid * 1.6)],
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "truth_notice": "human-confirmed 才可作为量产精度；candidate-pretrain 只衡量候选标签一致性。",
+        "resource_policy": {
+            "gpu_count": gpu_count, "ddp": "," in device,
+            "max_temperature_c": TRAINING_MAX_TEMPERATURE,
+            "resume_temperature_c": TRAINING_RESUME_TEMPERATURE,
+            "concurrent_training": 1, "prelabel_mutual_exclusion": True,
+        },
     }
     (job_dir / "status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
     command = [
@@ -3315,6 +3351,7 @@ def start_training_job(payload: dict[str, object], operator: str) -> dict[str, o
         "--patience", str(patience), "--seed", str(seed), "--target", str(payload.get("target") or "jetson"),
         "--truth-mode", truth_mode, "--optimizer", optimizer, "--lr0", str(lr0), "--weight-decay", str(weight_decay),
         "--close-mosaic", str(close_mosaic), "--freeze", str(freeze), "--amp", "true" if amp else "false", "--cache", cache,
+        "--max-temperature", str(TRAINING_MAX_TEMPERATURE), "--resume-temperature", str(TRAINING_RESUME_TEMPERATURE),
     ]
     log_handle = (job_dir / "training.log").open("a", encoding="utf-8")
     process = subprocess.Popen(command, cwd=ROOT, stdout=log_handle, stderr=subprocess.STDOUT, start_new_session=True)

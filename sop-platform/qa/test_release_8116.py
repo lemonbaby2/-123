@@ -74,6 +74,13 @@ def main() -> None:
             "temperature": page.locator("#distributedTemperature").inner_text(),
             "jobs": page.locator("#distributedJobState").inner_text(),
         }
+        page.click('.nav-item[data-view="training"]')
+        checks["training_resource_policy"] = {
+            "device": page.locator("#trainingDevice").input_value(),
+            "ddp_disabled": page.locator("#trainingDevice option[value='0,1']").evaluate("option => option.disabled"),
+            "imgsz": page.locator("#trainingImgsz").input_value(),
+            "workers": page.locator("#trainingWorkers").input_value(),
+        }
         page.click('.nav-item[data-view="annotation"]')
         page.select_option("#annotVideoSelect", "video_nb0819_01")
         page.wait_for_function("document.querySelector('#annotVideoSelect').value === 'video_nb0819_01'")
@@ -176,6 +183,9 @@ def main() -> None:
     assert checks["architecture"]["loaded"] is True
     assert checks["architecture"]["width"] > 1000
     assert "pending_review" in checks["distributed_prelabel"]["detail"]
+    assert checks["training_resource_policy"] == {
+        "device": "0", "ddp_disabled": True, "imgsz": "640", "workers": "1",
+    }
     assert checks["mobile_layout"]["page_scroll_width"] <= checks["mobile_layout"]["viewport_width"]
     assert checks["mobile_layout"]["filter_width"] <= checks["mobile_layout"]["viewport_width"]
     assert not report["http_errors"]
