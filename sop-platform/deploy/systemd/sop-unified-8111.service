@@ -1,0 +1,26 @@
+[Unit]
+Description=Ningbo SOP and CVAT unified platform on port 8111
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/xjai/Desktop/sop xjai/sop-unified-20260822
+Environment="SOP_HOST=0.0.0.0"
+Environment="SOP_PORT=8111"
+Environment="SOP_CAMERA_AUTOSTART=0"
+Environment="SOP_RUNTIME_DIR=/home/xjai/Desktop/sop xjai/sop-unified-20260822/sop-platform/runtime/unified-8111"
+Environment="SOP_DESKTOP_DIR=/home/xjai/Desktop/sop xjai/sop-unified-20260822/sop-platform/runtime/unified-8111/desktop"
+Environment="SOP_CAMERA_MODEL=/home/xjai/Desktop/sop xjai/SOP分析平台_摄像头接入与低延迟标注增强版_20260819/SOP分析平台_老板汇报版/models/yolo26n_PCB插装0265_50轮_待人工验收.pt"
+Environment="CVAT_API_URL=http://localhost:8081"
+Environment="CVAT_PUBLIC_URL=http://192.168.1.129:8081"
+Environment="SOP_GOOGLE_SOURCE_URL=https://drive.google.com/drive/u/2/folders/1JdsHu0N_jaVC7u4Dg8XfO8JTF4DN-Ijx"
+EnvironmentFile=-/home/xjai/.config/ningbo-sop/unified-8111.env
+ExecStart=/home/xjai/micromamba/envs/sop/bin/python sop-platform/server.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
