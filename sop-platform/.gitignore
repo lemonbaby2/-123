@@ -10,3 +10,9 @@ weights/
 __pycache__/
 *.pyc
 *.zip
+build/
+dist-v3/
+release-v3/
+*.exe
+*.tar
+*.tar.zst

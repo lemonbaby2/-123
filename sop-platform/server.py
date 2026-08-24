@@ -345,6 +345,38 @@ def initialize_annotation_db() -> None:
                 FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
             );
             CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);
+            CREATE TABLE IF NOT EXISTS annotation_assignments (
+                video_id TEXT PRIMARY KEY,
+                assignee_username TEXT NOT NULL,
+                assigned_by TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'assigned',
+                note TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(assignee_username) REFERENCES users(username)
+            );
+            CREATE INDEX IF NOT EXISTS idx_annotation_assignments_assignee
+                ON annotation_assignments(assignee_username, updated_at DESC);
+            CREATE TABLE IF NOT EXISTS user_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                method TEXT NOT NULL,
+                path TEXT NOT NULL,
+                target_type TEXT,
+                target_id TEXT,
+                details_json TEXT NOT NULL,
+                remote_addr TEXT,
+                user_agent TEXT,
+                recorded_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE SET NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_actions_user_time
+                ON user_actions(username, recorded_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_user_actions_type_time
+                ON user_actions(action_type, recorded_at DESC);
             """
         )
         cvat_task_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(cvat_tasks)")}
@@ -467,6 +499,129 @@ def auth_user_for_session(session_id: str) -> dict[str, object] | None:
             (time.strftime("%Y-%m-%d %H:%M:%S"), time.time() + AUTH_SESSION_SECONDS, session_id),
         )
         return {**{key: row[key] for key in row.keys()}, "role_label": ROLE_LABELS.get(row["role"], row["role"]), "views": ROLE_VIEWS.get(row["role"], [])}
+
+
+def record_user_action(
+    user: dict[str, object],
+    action_type: str,
+    method: str,
+    path: str,
+    *,
+    target_type: str = "",
+    target_id: str = "",
+    details: dict[str, object] | None = None,
+    remote_addr: str = "",
+    user_agent: str = "",
+) -> None:
+    safe_details = {
+        key: value for key, value in (details or {}).items()
+        if key not in {"password", "current_password", "new_password", "recovery_code", "evidence_data_url"}
+    }
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    with ANNOTATION_DB_LOCK, annotation_db() as connection:
+        connection.execute(
+            """INSERT INTO user_actions(
+                   user_id, username, role, action_type, method, path, target_type, target_id,
+                   details_json, remote_addr, user_agent, recorded_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                user.get("user_id"), str(user.get("username") or "unknown"), str(user.get("role") or "unknown"),
+                action_type, method, path, target_type or None, target_id or None,
+                json.dumps(safe_details, ensure_ascii=False), remote_addr[:128], user_agent[:512], now,
+            ),
+        )
+
+
+def assign_annotation_work(payload: dict[str, object], assigned_by: str) -> dict[str, object]:
+    video_id = str(payload.get("video_id") or "").strip()
+    assignee = str(payload.get("assignee_username") or "").strip()
+    status = str(payload.get("status") or "assigned").strip()
+    note = str(payload.get("note") or "").strip()[:500]
+    if video_info(video_id) is None:
+        raise ValueError("待分配的视频不存在")
+    if status not in {"assigned", "in_progress", "submitted", "reviewed", "returned"}:
+        raise ValueError("任务状态无效")
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    with ANNOTATION_DB_LOCK, annotation_db() as connection:
+        user = connection.execute(
+            "SELECT username, display_name FROM users WHERE username = ? AND active = 1",
+            (assignee,),
+        ).fetchone()
+        if user is None:
+            raise ValueError("标注员账号不存在或已停用")
+        connection.execute(
+            """INSERT INTO annotation_assignments(
+                   video_id, assignee_username, assigned_by, status, note, created_at, updated_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(video_id) DO UPDATE SET assignee_username=excluded.assignee_username,
+                   assigned_by=excluded.assigned_by, status=excluded.status, note=excluded.note,
+                   updated_at=excluded.updated_at""",
+            (video_id, assignee, assigned_by, status, note, now, now),
+        )
+    return {
+        "video_id": video_id,
+        "assignee_username": assignee,
+        "assignee_display_name": str(user["display_name"]),
+        "assigned_by": assigned_by,
+        "status": status,
+        "note": note,
+        "updated_at": now,
+    }
+
+
+def collaboration_overview(requester: dict[str, object]) -> dict[str, object]:
+    with ANNOTATION_DB_LOCK, annotation_db() as connection:
+        annotators = [
+            dict(row) for row in connection.execute(
+                """SELECT username, display_name, role, active, last_login_at
+                   FROM users WHERE username LIKE 'labeler%' ORDER BY username"""
+            )
+        ]
+        assignments = [
+            dict(row) for row in connection.execute(
+                """SELECT a.video_id, a.assignee_username, u.display_name AS assignee_display_name,
+                          a.assigned_by, a.status, a.note, a.updated_at,
+                          (SELECT c.cvat_task_id FROM cvat_tasks c
+                           WHERE c.video_id = a.video_id AND c.cvat_task_id IS NOT NULL
+                           ORDER BY c.updated_at DESC LIMIT 1) AS cvat_task_id,
+                          (SELECT c.url FROM cvat_tasks c
+                           WHERE c.video_id = a.video_id AND c.cvat_task_id IS NOT NULL
+                           ORDER BY c.updated_at DESC LIMIT 1) AS cvat_url
+                   FROM annotation_assignments a
+                   LEFT JOIN users u ON u.username = a.assignee_username
+                   ORDER BY a.updated_at DESC, a.video_id"""
+            )
+        ]
+        action_query = """SELECT username, role, action_type, method, path, target_type, target_id,
+                                 details_json, recorded_at
+                          FROM user_actions"""
+        action_params: tuple[object, ...] = ()
+        if str(requester.get("role")) == "worker":
+            action_query += " WHERE username = ?"
+            action_params = (str(requester.get("username") or ""),)
+        action_query += " ORDER BY id DESC LIMIT 120"
+        actions = []
+        for row in connection.execute(action_query, action_params):
+            item = dict(row)
+            item["details"] = json.loads(item.pop("details_json") or "{}")
+            actions.append(item)
+        annotation_rows = list(connection.execute("SELECT payload_json FROM annotations"))
+    counts: dict[str, int] = {}
+    for row in annotation_rows:
+        try:
+            item = json.loads(row["payload_json"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        username = str(item.get("operator") or item.get("created_by") or "未归属")
+        counts[username] = counts.get(username, 0) + 1
+    return {
+        "ok": True,
+        "annotators": [{**item, "annotation_count": counts.get(str(item["username"]), 0)} for item in annotators],
+        "assignments": assignments,
+        "recent_actions": actions,
+        "annotation_counts": counts,
+        "sync_model": "所有客户端共享中心 SQLite、CVAT Task 与审计日志；刷新后可见其他标注员的最新提交。",
+    }
 
 
 def db_upsert_annotation(annotation: dict) -> None:
@@ -2768,8 +2923,20 @@ def cvat_task_jobs(task_id: int) -> list[dict[str, object]]:
     ]
 
 
+def cvat_webhook_secret() -> str:
+    """Read the CVAT webhook secret without committing it to source control."""
+    configured = os.getenv("SOP_CVAT_WEBHOOK_SECRET", "").strip()
+    if configured:
+        return configured
+    secret_path = RUNTIME_ROOT / "cvat_webhook_secret"
+    try:
+        return secret_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def cvat_webhook_signature_valid(body: bytes, signature: str) -> bool:
-    secret = os.getenv("SOP_CVAT_WEBHOOK_SECRET", "").encode("utf-8")
+    secret = cvat_webhook_secret().encode("utf-8")
     if not secret or not signature:
         return False
     supplied = signature.strip()
@@ -4455,7 +4622,7 @@ class SOPHandler(SimpleHTTPRequestHandler):
         manager_prefixes = (
             "/api/train", "/api/deploy", "/api/mes", "/api/decision", "/api/sop/save",
             "/api/models", "/api/model-benchmark", "/api/training", "/api/spark", "/api/software", "/api/cloud",
-            "/api/media/import", "/api/datasets/build",
+            "/api/media/import", "/api/datasets/build", "/api/collaboration/assign",
         )
         if method == "POST" and path == "/api/annotations/review":
             manager_prefixes = (*manager_prefixes, "/api/annotations/review")
@@ -4522,6 +4689,9 @@ class SOPHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/prelabel/distributed/status":
             self.send_json(distributed_prelabel_status())
+            return
+        if path == "/api/collaboration/overview":
+            self.send_json(collaboration_overview(self.current_user() or {}))
             return
         if path == "/api/annotations":
             query = parse_qs(parsed.query)
@@ -4744,7 +4914,7 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 "available": probe_url(str(config["url"])),
                 "tasks_url": f"{config['url']}/tasks",
                 "bulk": cvat_bulk_status(),
-                "webhook_configured": bool(os.getenv("SOP_CVAT_WEBHOOK_SECRET", "")),
+                "webhook_configured": bool(cvat_webhook_secret()),
             })
             return
         if path == "/api/cvat/tasks":
@@ -4949,7 +5119,7 @@ class SOPHandler(SimpleHTTPRequestHandler):
         try:
             payload = self.read_json()
             if path == "/api/cvat/webhook":
-                if not os.getenv("SOP_CVAT_WEBHOOK_SECRET", ""):
+                if not cvat_webhook_secret():
                     self.send_json(
                         {"ok": False, "message": "SOP_CVAT_WEBHOOK_SECRET 尚未配置"},
                         HTTPStatus.SERVICE_UNAVAILABLE,
@@ -4960,6 +5130,31 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     self.send_json({"ok": False, "message": "CVAT Webhook 签名无效"}, HTTPStatus.UNAUTHORIZED)
                     return
                 event_name = str(payload.get("event") or "unknown")
+                task_id = cvat_webhook_task_id(payload)
+                sender = payload.get("sender") if isinstance(payload.get("sender"), dict) else {}
+                job_payload = payload.get("job") if isinstance(payload.get("job"), dict) else {}
+                webhook_payload = payload.get("webhook") if isinstance(payload.get("webhook"), dict) else {}
+                sender_username = str(sender.get("username") or sender.get("email") or "cvat-system")
+                record_user_action(
+                    {
+                        "user_id": None,
+                        "username": sender_username,
+                        "role": "cvat",
+                    },
+                    f"cvat.{event_name}",
+                    "POST",
+                    path,
+                    target_type="cvat_task" if task_id > 0 else "cvat_webhook",
+                    target_id=str(task_id or webhook_payload.get("id") or ""),
+                    details={
+                        "event": event_name,
+                        "task_id": task_id or None,
+                        "job_id": job_payload.get("id"),
+                        "review_status": cvat_webhook_review_status(payload),
+                    },
+                    remote_addr=str(self.client_address[0]),
+                    user_agent=str(self.headers.get("User-Agent") or "CVAT Webhook"),
+                )
                 allowed_events = {
                     item.strip() for item in os.getenv(
                         "SOP_CVAT_WEBHOOK_PULL_EVENTS", "update:job,update:task"
@@ -4971,7 +5166,6 @@ class SOPHandler(SimpleHTTPRequestHandler):
                         HTTPStatus.ACCEPTED,
                     )
                     return
-                task_id = cvat_webhook_task_id(payload)
                 if task_id <= 0:
                     raise ValueError("CVAT Webhook 未包含有效 Task ID")
                 binding = db_cvat_task_binding(task_id)
@@ -4997,6 +5191,11 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     return
                 session_id = create_auth_session(int(user["user_id"]))
                 full_user = auth_user_for_session(session_id)
+                record_user_action(
+                    full_user or user, "auth.login", "POST", path,
+                    remote_addr=str(self.client_address[0]),
+                    user_agent=str(self.headers.get("User-Agent") or ""),
+                )
                 self.send_json(
                     {"ok": True, "message": "登录成功", "user": full_user},
                     headers={"Set-Cookie": f"sop_session={session_id}; Path=/; HttpOnly; SameSite=Strict; Max-Age={AUTH_SESSION_SECONDS}{'; Secure' if AUTH_SECURE_COOKIE else ''}"},
@@ -5004,6 +5203,13 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 return
             if path == "/api/auth/logout":
                 session_id = self.auth_session_id()
+                logout_user = self.current_user()
+                if logout_user:
+                    record_user_action(
+                        logout_user, "auth.logout", "POST", path,
+                        remote_addr=str(self.client_address[0]),
+                        user_agent=str(self.headers.get("User-Agent") or ""),
+                    )
                 if session_id:
                     with ANNOTATION_DB_LOCK, annotation_db() as connection:
                         connection.execute("DELETE FROM auth_sessions WHERE session_id = ?", (session_id,))
@@ -5088,6 +5294,37 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 return
             if path.startswith("/api/") and self.require_api_access(path, "POST") is None:
                 return
+            actor = self.current_user() or {}
+            target_id = str(
+                payload.get("annotation_id") or payload.get("video_id") or payload.get("task_id")
+                or payload.get("job_id") or payload.get("dataset_id") or ""
+            )
+            record_user_action(
+                actor,
+                "api.write",
+                "POST",
+                path,
+                target_type=("annotation" if "annotations" in path else "task"),
+                target_id=target_id,
+                details={
+                    key: payload.get(key) for key in (
+                        "video_id", "annotation_id", "label", "region", "review_status", "action",
+                        "assignee_username", "status", "task_id", "dataset_id", "line_id",
+                    ) if key in payload
+                },
+                remote_addr=str(self.client_address[0]),
+                user_agent=str(self.headers.get("User-Agent") or ""),
+            )
+            if path == "/api/collaboration/assign":
+                assignment = assign_annotation_work(payload, str(actor.get("username") or "unknown"))
+                record_user_action(
+                    actor, "annotation.assignment", "POST", path,
+                    target_type="video", target_id=str(assignment["video_id"]), details=assignment,
+                    remote_addr=str(self.client_address[0]),
+                    user_agent=str(self.headers.get("User-Agent") or ""),
+                )
+                self.send_json({"ok": True, "assignment": assignment, "message": "标注任务已分配，所有客户端刷新后同步可见"})
+                return
             if path == "/api/annotations":
                 required = {"video_time", "label", "box"}
                 if not required.issubset(payload):
@@ -5114,7 +5351,9 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     "region": str(payload.get("region") or "未分区"),
                     "track_id": str(payload.get("track_id") or "").strip() or None,
                     "review_status": payload.get("review_status", "pending"),
-                    "reviewer": payload.get("reviewer", "本地标注员"),
+                    "reviewer": payload.get("reviewer", str(actor.get("display_name") or actor.get("username") or "本地标注员")),
+                    "operator": str(actor.get("username") or "unknown"),
+                    "operator_display_name": str(actor.get("display_name") or actor.get("username") or "unknown"),
                 }
                 evidence_data_url = payload.get("evidence_data_url")
                 if evidence_data_url:
@@ -5151,7 +5390,8 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 review = {
                     "annotation_id": annotation_id,
                     "review_status": status,
-                    "reviewer": payload.get("reviewer", "本地质量员"),
+                    "reviewer": str(actor.get("username") or payload.get("reviewer") or "本地质量员"),
+                    "reviewer_display_name": str(actor.get("display_name") or actor.get("username") or "本地质量员"),
                     "comment": payload.get("comment", ""),
                 }
                 db_save_review(review)
@@ -5213,7 +5453,11 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 self.send_json({"ok": True, "scope": scope, "message": "工位标注范围已保存，标注员会看到同一套口径"})
                 return
             if path == "/api/annotations/checkpoint":
-                checkpoint = db_checkpoint(payload)
+                checkpoint = db_checkpoint({
+                    **payload,
+                    "operator": str(actor.get("username") or "unknown"),
+                    "operator_display_name": str(actor.get("display_name") or actor.get("username") or "unknown"),
+                })
                 self.append_event("annotation_checkpoints.jsonl", checkpoint)
                 self.send_json({"ok": True, "checkpoint": checkpoint, "database": annotation_db_health(), "message": f"标注进度已保存并备份：{checkpoint['annotation_count']} 条、{len(checkpoint['regions'])} 个区域"})
                 return

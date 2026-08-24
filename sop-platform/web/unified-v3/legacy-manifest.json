@@ -1,0 +1,9 @@
+{
+  "frozen_at": "2026-08-24",
+  "policy": "V3 is additive. The legacy web files below must remain byte-for-byte unchanged.",
+  "files": {
+    "web/index.html": "154EA89B394C44CD2B05950CE3169ACE407D9D971CD6339CD8A983BBCC3E0C54",
+    "web/app.js": "797768926E641AE1E04C1AC77036B29AD6F19D57EB44B076D8BDC23441E56A4F",
+    "web/styles.css": "B74EC3199BFB1CC9FEFCA96573102551F7102A34A2108B4BBDB2B6FA8E627F2A"
+  }
+}

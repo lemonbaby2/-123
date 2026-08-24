@@ -12,6 +12,13 @@
 - 历史源码快照：[`version-archive/`](version-archive/)
 - 多版本 systemd 部署：[`deploy/versioned/`](deploy/versioned/)
 - GitHub 安全发布包：[`releases/`](releases/)
+- 2026-08-24 V3 多人标注、统一审计与公网部署说明：[`sop-platform/docs/40_V3多人标注审计与公网部署说明_20260824.md`](sop-platform/docs/40_V3多人标注审计与公网部署说明_20260824.md)
+
+## 2026-08-24 V3 多人协作增量
+
+V3 使用独立的 `8117` 端口和 `web/unified-v3/` 页面，不覆盖 8113 旧页面。新增五名标注员任务归属、按用户隔离的操作记录、CVAT HMAC Webhook 审计、分布式预标注入口、三模型训练/验证入口、实时 SOP 与 MES 导航，以及可连接局域网或公网中心服务的 Windows 客户端构建脚本。
+
+旧版 `web/index.html`、`web/app.js`、`web/styles.css` 已用 SHA-256 冻结；执行 `sop-platform/scripts/Test-V3Release.ps1` 可检查是否发生意外覆盖。账号初始密码、CVAT Token、Webhook Secret、SQLite、媒体、模型和多 GB 离线底包仍只在本地交付，不进入公开仓库。
 
 当前 2026-08-23 视觉润色独立站为 `http://192.168.1.129:8113`，CVAT 为 `http://192.168.1.129:8081`。`8102`、`8112` 及原生产入口 `8096`、版本索引 `8099`、`8101`～`8105`、融合站 `8111` 均冻结保留；新站使用独立分支、端口和运行目录，不覆盖旧站代码、媒体或数据库。
 

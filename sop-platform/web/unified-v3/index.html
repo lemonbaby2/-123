@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>宁波视觉SOP协同决策平台 V3</title>
+  <link rel="stylesheet" href="./v3.css">
+</head>
+<body class="pending">
+  <section class="login" id="loginView">
+    <div class="login-story">
+      <div class="logo">NB</div>
+      <p class="kicker">VISUAL SOP COLLABORATION</p>
+      <h1>每一次标注<br>都知道是谁、为谁、改了什么</h1>
+      <p>分布式预标注、五人协同精标、模型训练、实时 SOP 与 MES，在同一中心数据和审计链上完成。</p>
+      <div class="chain"><b>任务分配</b><i></i><b>AI预标注</b><i></i><b>人工精标</b><i></i><b>复核发布</b></div>
+    </div>
+    <form id="loginForm" class="login-card">
+      <p class="kicker">统一身份认证</p><h2>登录协同工作台</h2>
+      <label>账号<input id="username" autocomplete="username" required></label>
+      <label>密码<input id="password" type="password" autocomplete="current-password" required></label>
+      <button id="loginButton">进入系统</button><p id="loginMessage" class="message">正在连接中心服务…</p>
+    </form>
+  </section>
+
+  <div class="app" id="appView">
+    <header>
+      <div class="brand"><div class="logo mini">NB</div><div><b>宁波视觉SOP</b><span>多人标注与工业决策平台 V3</span></div></div>
+      <div class="health"><span id="sopState"><i></i>SOP 检测中</span><span id="cvatState"><i></i>CVAT 检测中</span><span id="nodeState"><i></i>分布式节点检测中</span></div>
+      <div class="user"><div><b id="displayName">—</b><span id="roleName">—</span></div><button id="logoutButton">退出</button></div>
+    </header>
+    <aside>
+      <div class="side-title">端到端流程 <em id="flowIndex">01 / 11</em></div>
+      <nav id="navigation">
+        <button class="nav active" data-stage="collaboration" data-view="overview"><span>01</span><div><b>协作与审计</b><small>人员、任务、行为同步</small></div></button>
+        <button class="nav" data-stage="overview" data-view="overview"><span>02</span><div><b>运营总览</b><small>产线与模型状态</small></div></button>
+        <button class="nav" data-stage="acquire" data-view="monitor"><span>03</span><div><b>数据接入清洗</b><small>视频、相机、抽帧去重</small></div></button>
+        <button class="nav" data-stage="prelabel" data-view="decision"><span>04</span><div><b>分布式 AI 预标注</b><small>多节点并行候选框</small></div></button>
+        <button class="nav" data-stage="annotation" data-view="annotation"><span>05</span><div><b>SOP 标注工作台</b><small>框、轨迹与保存点</small></div></button>
+        <button class="nav" data-stage="cvat" data-view="annotation"><span>06</span><div><b>CVAT 人工精标</b><small>任务交接与官方编辑</small></div></button>
+        <button class="nav" data-stage="quality" data-view="quality"><span>07</span><div><b>质量复核与冻结</b><small>审核、退回、数据版本</small></div></button>
+        <button class="nav" data-stage="training" data-view="training"><span>08</span><div><b>三模型训练</b><small>GPU、温控与模型发布</small></div></button>
+        <button class="nav" data-stage="validation" data-view="training"><span>09</span><div><b>推理验证</b><small>精度、速度与小目标</small></div></button>
+        <button class="nav" data-stage="realtime" data-view="mes"><span>10</span><div><b>实时 SOP</b><small>步骤判断与现场告警</small></div></button>
+        <button class="nav" data-stage="mes" data-view="mes"><span>11</span><div><b>MES 闭环</b><small>结果回传与追溯</small></div></button>
+      </nav>
+      <button class="cvat-button" id="openCvat">打开官方 CVAT</button>
+    </aside>
+    <main>
+      <div class="main-title"><div><p class="kicker" id="stageCode">STAGE 01</p><h1 id="stageTitle">协作与审计</h1><p id="stageDesc">实时查看每位标注员的数据归属、进度与操作行为。</p></div><div class="actions"><button id="refreshButton">刷新同步</button><button class="primary" id="nextButton">下一步</button></div></div>
+      <section id="collaborationPanel" class="collaboration">
+        <div class="metric-row"><article><span>标注员</span><b id="annotatorCount">0</b><small>中心账号</small></article><article><span>已分配任务</span><b id="assignmentCount">0</b><small>所有客户端同步</small></article><article><span>已归属标注框</span><b id="annotationCount">0</b><small>按操作人统计</small></article><article><span>分布式进度</span><b id="distributedProgress">—</b><small id="distributedDetail">等待节点</small></article></div>
+        <div class="grid two">
+          <section class="card"><div class="card-head"><div><p class="kicker">TEAM</p><h2>五人标注协作台</h2></div><span class="sync"><i></i>10 秒自动同步</span></div><div class="annotators" id="annotatorGrid"></div></section>
+          <section class="card manager-only" id="assignmentFormCard"><div class="card-head"><div><p class="kicker">DISPATCH</p><h2>分配标注数据</h2></div></div><form id="assignmentForm" class="assign-form"><label>数据/视频<select id="assignVideo" required></select></label><label>标注员<select id="assignUser" required></select></label><label>任务状态<select id="assignStatus"><option value="assigned">待开始</option><option value="in_progress">标注中</option><option value="submitted">已提交</option><option value="reviewed">已复核</option><option value="returned">已退回</option></select></label><label>任务说明<textarea id="assignNote" placeholder="例如：重点复核螺钉、小目标和遮挡区域"></textarea></label><button class="primary">保存并同步给所有人</button><p id="assignMessage" class="message"></p></form></section>
+        </div>
+        <div class="grid two lower">
+          <section class="card"><div class="card-head"><div><p class="kicker">OWNERSHIP</p><h2>数据归属清单</h2></div></div><div class="table-wrap"><table><thead><tr><th>数据 / CVAT</th><th>标注员</th><th>状态</th><th>任务说明</th><th>更新时间</th></tr></thead><tbody id="assignmentTable"></tbody></table></div></section>
+          <section class="card"><div class="card-head"><div><p class="kicker">AUDIT TRAIL</p><h2>最近操作行为</h2></div></div><div class="timeline" id="activityTimeline"></div></section>
+        </div>
+      </section>
+      <section id="legacyPanel" class="legacy hidden"><div class="legacy-label"><span>封存的成熟功能页通过同源工作区载入，原源码不修改</span><button id="openSeparate">新窗口打开</button></div><iframe id="legacyFrame" title="原 SOP 功能工作区"></iframe></section>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="./v3.js"></script>
+</body>
+</html>
