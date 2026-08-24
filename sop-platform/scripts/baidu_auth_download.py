@@ -66,19 +66,27 @@ def session_from_desktop(cookie_db: Path) -> requests.Session:
 
 
 def get_download_link(session: requests.Session, fs_id: int) -> str:
-    response = session.get(
-        f"{API_ROOT}/api/filemetas",
-        params={"dlink": 1, "fsids": json.dumps([int(fs_id)]), "clienttype": 8, "web": 0},
-        timeout=30,
-    )
-    response.raise_for_status()
-    payload = response.json()
-    if int(payload.get("errno", -1)) != 0 or not payload.get("info"):
-        raise RuntimeError(f"获取下载地址失败，errno={payload.get('errno')}")
-    dlink = str(payload["info"][0].get("dlink") or "")
-    if not dlink.startswith("http"):
-        raise RuntimeError("百度网盘未返回有效下载地址")
-    return dlink
+    last_error: Exception | None = None
+    for attempt in range(8):
+        try:
+            response = session.get(
+                f"{API_ROOT}/api/filemetas",
+                params={"dlink": 1, "fsids": json.dumps([int(fs_id)]), "clienttype": 8, "web": 0},
+                timeout=30,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            if int(payload.get("errno", -1)) != 0 or not payload.get("info"):
+                raise RuntimeError(f"获取下载地址失败，errno={payload.get('errno')}")
+            dlink = str(payload["info"][0].get("dlink") or "")
+            if not dlink.startswith("http"):
+                raise RuntimeError("百度网盘未返回有效下载地址")
+            return dlink
+        except (requests.RequestException, RuntimeError, ValueError) as exc:
+            last_error = exc
+            if attempt < 7:
+                time.sleep(min(60, 3 * (2 ** attempt)))
+    raise RuntimeError(f"百度下载地址连续刷新失败：{last_error}")
 
 
 def load_video_inventory(path: Path) -> list[dict[str, Any]]:
