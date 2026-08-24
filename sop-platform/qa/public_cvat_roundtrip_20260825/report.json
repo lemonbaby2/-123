@@ -1,0 +1,31 @@
+{
+  "version": "2026-08-25-public-cvat-roundtrip",
+  "tested_at": "2026-08-25 01:21:00 Asia/Shanghai",
+  "cvat": {
+    "version": "2.47.0",
+    "public_login_http": 200,
+    "annotation_save_http": 200,
+    "dataset_export_start_http": 202,
+    "dataset_export_status": "finished",
+    "dataset_download_http": 200,
+    "dataset_download_bytes": 527389,
+    "projects": 2,
+    "tasks": 9,
+    "shared_project_id": 2,
+    "labels": 10,
+    "custom_label_verified": "连接器"
+  },
+  "sop": {
+    "public_login_http": 200,
+    "registered_videos": 12,
+    "playable_videos": 12,
+    "downloaded_baidu_originals": 7,
+    "bound_baidu_cvat_tasks": 7,
+    "video_range_http": 206,
+    "annotation_pull_task_id": 5,
+    "annotation_pull_status": "completed",
+    "annotation_count_at_test": 0
+  },
+  "truth_notice": "Task #5 在测试时没有人工保存框；系统按真实结果回流 0，未制造标注或精度。",
+  "secrets_in_report": false
+}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -11,7 +12,12 @@ from docx.shared import Cm, Pt
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "docs" / "27_宁波视觉SOP_CVAT闭环平台完整说明书_20260823.md"
+SOURCE = Path(
+    os.getenv(
+        "SOP_MANUAL_SOURCE",
+        ROOT / "docs" / "27_宁波视觉SOP_CVAT闭环平台完整说明书_20260823.md",
+    )
+)
 OUTPUT = SOURCE.with_suffix(".docx")
 
 
@@ -69,6 +75,11 @@ def add_page_number(section) -> None:
 def build() -> Path:
     lines = SOURCE.read_text(encoding="utf-8").splitlines()
     title = lines[0].removeprefix("# ").strip()
+    version = next((line.removeprefix("版本：") for line in lines if line.startswith("版本：")), "2026-08-23")
+    sop_address = next(
+        (line.removeprefix("SOP 平台：").replace("`", "") for line in lines if line.startswith("SOP 平台：")),
+        "SOP 平台",
+    )
     document = Document()
     section = document.sections[0]
     section.page_width = Cm(21.0)
@@ -94,12 +105,12 @@ def build() -> Path:
     cover.paragraph_format.space_before = Cm(5.0)
     cover.paragraph_format.space_after = Cm(2.0)
     set_run_font(cover.add_run(title), 24, True)
-    for value in ("2026-08-23 独立融合版", "SOP 8112 · CVAT 8081 · MediaMTX 8554", "宁波视觉 SOP 项目组"):
+    for value in (version, f"{sop_address} · CVAT 8081 · MediaMTX 8554", "宁波视觉 SOP 项目组"):
         paragraph = document.add_paragraph()
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         paragraph.paragraph_format.first_line_indent = Cm(0)
         paragraph.paragraph_format.space_after = Pt(12)
-        set_run_font(paragraph.add_run(value), 14, value == "2026-08-23 独立融合版")
+        set_run_font(paragraph.add_run(value), 14, value == version)
     document.add_page_break()
 
     toc_title = document.add_paragraph()

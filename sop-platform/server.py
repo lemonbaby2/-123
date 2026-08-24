@@ -11,6 +11,7 @@ import io
 import math
 import mimetypes
 import os
+import re
 import secrets
 import shlex
 import shutil
@@ -30,29 +31,45 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
 
-ROOT = Path(__file__).resolve().parent
+SOURCE_ROOT = Path(__file__).resolve().parent
+IS_FROZEN = bool(getattr(sys, "frozen", False))
+ROOT = Path(getattr(sys, "_MEIPASS", SOURCE_ROOT)).resolve()
 WEB_ROOT = ROOT / "web"
 DATA_ROOT = WEB_ROOT / "data"
-RUNTIME_ROOT = Path(os.getenv("SOP_RUNTIME_DIR", str(ROOT / "runtime"))).resolve()
+DEFAULT_APP_DATA = (
+    Path(os.getenv("LOCALAPPDATA", str(Path.home() / "AppData" / "Local")))
+    / "NingboSOPCVAT8113"
+    if IS_FROZEN
+    else SOURCE_ROOT
+)
+RUNTIME_ROOT = Path(os.getenv("SOP_RUNTIME_DIR", str(DEFAULT_APP_DATA / "runtime"))).resolve()
 MANAGED_MEDIA_ROOT = RUNTIME_ROOT / "media"
 LEGACY_MEDIA_ROOT = Path(
     os.getenv(
         "SOP_LEGACY_MEDIA_DIR",
-        "/home/xjai/Desktop/sop xjai/SOP分析平台_摄像头接入与低延迟标注增强版_20260819/"
-        "SOP分析平台_老板汇报版/web/media",
+        str(WEB_ROOT / "media"),
     )
 ).expanduser()
-RECIPE_PATH = ROOT / "config" / "sop_recipe.json"
-ALGORITHM_COMPARISON_PATH = ROOT / "config" / "algorithm_comparison.json"
-TRAINING_CATALOG_PATH = ROOT / "config" / "training_catalog.json"
-DATASET_CATALOG_PATH = ROOT / "config" / "dataset_catalog.json"
-PRODUCTION_LINES_PATH = ROOT / "config" / "production_lines.json"
-SPARK_DEPLOYMENT_PATH = ROOT / "config" / "spark_deployment.json"
-PCB_MODEL_REGISTRY_PATH = ROOT / "config" / "pcb_model_registry.json"
+WRITABLE_CONFIG_ROOT = Path(
+    os.getenv("SOP_CONFIG_DIR", str(DEFAULT_APP_DATA / "config" if IS_FROZEN else ROOT / "config"))
+).resolve()
+if WRITABLE_CONFIG_ROOT != ROOT / "config":
+    WRITABLE_CONFIG_ROOT.mkdir(parents=True, exist_ok=True)
+    for bundled_config in (ROOT / "config").glob("*.json"):
+        writable_config = WRITABLE_CONFIG_ROOT / bundled_config.name
+        if not writable_config.exists():
+            shutil.copy2(bundled_config, writable_config)
+RECIPE_PATH = WRITABLE_CONFIG_ROOT / "sop_recipe.json"
+ALGORITHM_COMPARISON_PATH = WRITABLE_CONFIG_ROOT / "algorithm_comparison.json"
+TRAINING_CATALOG_PATH = WRITABLE_CONFIG_ROOT / "training_catalog.json"
+DATASET_CATALOG_PATH = WRITABLE_CONFIG_ROOT / "dataset_catalog.json"
+PRODUCTION_LINES_PATH = WRITABLE_CONFIG_ROOT / "production_lines.json"
+SPARK_DEPLOYMENT_PATH = WRITABLE_CONFIG_ROOT / "spark_deployment.json"
+PCB_MODEL_REGISTRY_PATH = WRITABLE_CONFIG_ROOT / "pcb_model_registry.json"
 ACTIVE_MODEL_SELECTION_PATH = RUNTIME_ROOT / "active_pcb_model.json"
 ANNOTATION_SCOPE_PATH = RUNTIME_ROOT / "station_annotation_scope.json"
 ACTIVE_LINE_ID = os.getenv("SOP_PRODUCTION_LINE", "pcb")
-SPARK_MODEL_ROOT = Path(os.getenv("SOP_SPARK_MODEL_DIR", "/home/xjai/sop-model-store"))
+SPARK_MODEL_ROOT = Path(os.getenv("SOP_SPARK_MODEL_DIR", str(DEFAULT_APP_DATA / "model-store")))
 
 
 def deployed_model(filename: str) -> Path:
@@ -66,10 +83,10 @@ LINE_MODEL_PATHS = {
     "molding-coating": deployed_model("yolo26n.pt"),
 }
 FRAME_CACHE: dict[str, list[dict]] = {}
-DESKTOP_ROOT = Path(os.getenv("SOP_DESKTOP_DIR", "/home/xjai/Desktop/sop xjai"))
+DESKTOP_ROOT = Path(os.getenv("SOP_DESKTOP_DIR", str(DEFAULT_APP_DATA / "desktop")))
 EVIDENCE_ROOT = DESKTOP_ROOT / "摄像头证据"
 ANNOTATION_IMAGE_ROOT = DESKTOP_ROOT / "标注图片"
-NETWORK_CAMERAS_PATH = ROOT / "config" / "network_cameras.json"
+NETWORK_CAMERAS_PATH = WRITABLE_CONFIG_ROOT / "network_cameras.json"
 CAMERA_SLOT_COUNT = max(1, int(os.getenv("SOP_CAMERA_COUNT", "8")))
 ANNOTATION_DB_PATH = Path(os.getenv("SOP_ANNOTATION_DB", str(RUNTIME_ROOT / "sop_annotations.sqlite3")))
 ANNOTATION_AUTOSAVE_ROOT = RUNTIME_ROOT / "annotation_autosave"
@@ -78,15 +95,17 @@ CLOUD_INBOX_ROOT = RUNTIME_ROOT / "cloud_inbox"
 ANNOTATION_EXPORT_ROOT = RUNTIME_ROOT / "annotation_exports"
 CVAT_ANNOTATION_ROOT = RUNTIME_ROOT / "cvat_annotation_versions"
 CVAT_SYNC_JOB_ROOT = RUNTIME_ROOT / "cvat_sync_jobs"
+CVAT_CUSTOM_LABELS_PATH = RUNTIME_ROOT / "cvat_custom_labels.json"
 DATASET_BUILD_ROOT = RUNTIME_ROOT / "dataset_versions"
 REMOVABLE_IMPORT_ROOT = RUNTIME_ROOT / "removable_imports"
-DEVICE_REGISTRY_PATH = ROOT / "config" / "device_registry.json"
+DEVICE_REGISTRY_PATH = WRITABLE_CONFIG_ROOT / "device_registry.json"
 ANNOTATION_DB_LOCK = threading.RLock()
 CVAT_SYNC_LOCK = threading.Lock()
 CVAT_SYNC_GATE = threading.BoundedSemaphore(max(1, int(os.getenv("SOP_CVAT_SYNC_CONCURRENCY", "2"))))
 CAMERA_INFERENCE_GATE = threading.BoundedSemaphore(max(1, int(os.getenv("SOP_CAMERA_GPU_CONCURRENCY", "1"))))
 AUTH_SESSION_SECONDS = max(900, int(os.getenv("SOP_AUTH_SESSION_SECONDS", "28800")))
 AUTH_SECURE_COOKIE = os.getenv("SOP_SECURE_COOKIE", "0").strip().lower() in {"1", "true", "yes", "on"}
+PASSWORD_MIN_LENGTH = 6
 ROLE_LABELS = {"admin": "开发者", "manager": "管理者", "worker": "普通员工"}
 ROLE_VIEWS = {
     "admin": ["overview", "monitor", "decision", "studio", "annotation", "training", "mes", "quality"],
@@ -96,7 +115,15 @@ ROLE_VIEWS = {
 
 GOOGLE_SOURCE_FOLDER_URL = os.getenv("SOP_GOOGLE_SOURCE_URL", "").strip()
 GOOGLE_OUTPUT_FOLDER_URL = os.getenv("SOP_GOOGLE_OUTPUT_URL", "").strip()
-BAIDU_SOURCE_URL = os.getenv("SOP_BAIDU_SOURCE_URL", "").strip()
+BAIDU_SOURCE_URL = os.getenv(
+    "SOP_BAIDU_SOURCE_URL",
+    "https://pan.baidu.com/s/1y5XnnAl1ScVEdhwBT0fHcg?pwd=1234",
+).strip()
+BAIDU_PROJECT_MANIFEST_PATH = WRITABLE_CONFIG_ROOT / "baidu_sop_video_manifest.json"
+BAIDU_PROJECT_DATA_ROOT = Path(
+    os.getenv("SOP_BAIDU_DATA_ROOT", r"D:\NingboSOPData\Baidu_20260819_21")
+).expanduser().resolve()
+BAIDU_DOWNLOAD_STATUS_PATH = BAIDU_PROJECT_DATA_ROOT / "download_status.json"
 CLOUD_SYNC_JOBS: dict[str, dict[str, object]] = {}
 CLOUD_SYNC_LOCK = threading.Lock()
 ANNOTATION_RENDER_JOBS: dict[str, dict[str, object]] = {}
@@ -115,7 +142,7 @@ CAMERA_UPSTREAM_LOCK = threading.Lock()
 def configured_media_roots() -> list[Path]:
     """Return ordered, de-duplicated roots used to resolve catalog media."""
     configured = [Path(value).expanduser() for value in os.getenv("SOP_MEDIA_ROOTS", "").split(os.pathsep) if value.strip()]
-    roots = [WEB_ROOT / "media", MANAGED_MEDIA_ROOT, LEGACY_MEDIA_ROOT, *configured]
+    roots = [WEB_ROOT / "media", MANAGED_MEDIA_ROOT, LEGACY_MEDIA_ROOT, BAIDU_PROJECT_DATA_ROOT, *configured]
     result: list[Path] = []
     seen: set[str] = set()
     for root in roots:
@@ -340,12 +367,13 @@ def initialize_annotation_db() -> None:
         if user_count == 0:
             credentials = []
             now = time.strftime("%Y-%m-%d %H:%M:%S")
+            configured_initial_password = os.getenv("SOP_INITIAL_PASSWORD", "")
             for username, display_name, role in (
                 ("admin", "系统开发者", "admin"),
                 ("manager", "生产管理者", "manager"),
                 ("worker", "现场员工", "worker"),
             ):
-                password = secrets.token_urlsafe(12)
+                password = configured_initial_password or secrets.token_urlsafe(12)
                 connection.execute(
                     "INSERT INTO users(username, password_hash, display_name, role, created_at) VALUES (?, ?, ?, ?, ?)",
                     (username, _password_hash(password), display_name, role, now),
@@ -370,6 +398,57 @@ def authenticate_user(username: str, password: str) -> dict[str, object] | None:
         now = time.strftime("%Y-%m-%d %H:%M:%S")
         connection.execute("UPDATE users SET last_login_at = ? WHERE user_id = ?", (now, row["user_id"]))
         return {key: row[key] for key in ("user_id", "username", "display_name", "role")}
+
+
+def validate_new_password(password: str) -> None:
+    if len(password) < PASSWORD_MIN_LENGTH:
+        raise ValueError(f"新密码至少需要 {PASSWORD_MIN_LENGTH} 位")
+    if len(password) > 128:
+        raise ValueError("新密码不能超过 128 位")
+    if password.isspace():
+        raise ValueError("新密码不能只包含空格")
+
+
+def change_user_password(user_id: int, current_password: str, new_password: str, session_id: str) -> str:
+    validate_new_password(new_password)
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    with ANNOTATION_DB_LOCK, annotation_db() as connection:
+        row = connection.execute(
+            "SELECT username, password_hash FROM users WHERE user_id = ? AND active = 1",
+            (user_id,),
+        ).fetchone()
+        if row is None or not _password_matches(current_password, row["password_hash"]):
+            raise PermissionError("当前密码不正确")
+        if _password_matches(new_password, row["password_hash"]):
+            raise ValueError("新密码不能与当前密码相同")
+        connection.execute("UPDATE users SET password_hash = ? WHERE user_id = ?", (_password_hash(new_password), user_id))
+        connection.execute("DELETE FROM auth_sessions WHERE user_id = ? AND session_id != ?", (user_id, session_id))
+        connection.execute(
+            "INSERT INTO event_log(event_type, payload_json, recorded_at) VALUES (?, ?, ?)",
+            ("auth.password_changed", json.dumps({"username": row["username"], "mode": "self_service"}, ensure_ascii=False), now),
+        )
+    return str(row["username"])
+
+
+def recover_user_password(username: str, recovery_code: str, new_password: str) -> bool:
+    expected = os.getenv("SOP_PASSWORD_RECOVERY_CODE", "")
+    if not expected:
+        raise RuntimeError("管理员尚未配置密码恢复码")
+    if not recovery_code or not hmac.compare_digest(recovery_code.encode("utf-8"), expected.encode("utf-8")):
+        raise PermissionError("恢复码无效，请联系系统管理员")
+    validate_new_password(new_password)
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    with ANNOTATION_DB_LOCK, annotation_db() as connection:
+        row = connection.execute("SELECT user_id FROM users WHERE username = ? AND active = 1", (username,)).fetchone()
+        if row is None:
+            return False
+        connection.execute("UPDATE users SET password_hash = ? WHERE user_id = ?", (_password_hash(new_password), row["user_id"]))
+        connection.execute("DELETE FROM auth_sessions WHERE user_id = ?", (row["user_id"],))
+        connection.execute(
+            "INSERT INTO event_log(event_type, payload_json, recorded_at) VALUES (?, ?, ?)",
+            ("auth.password_recovered", json.dumps({"username": username, "mode": "recovery_code"}, ensure_ascii=False), now),
+        )
+    return True
 
 
 def create_auth_session(user_id: int) -> str:
@@ -1911,10 +1990,149 @@ def cvat_token() -> str:
 
 
 def cvat_config() -> dict[str, object]:
-    url = os.getenv("CVAT_PUBLIC_URL", os.getenv("CVAT_URL", f"http://{primary_lan_address()}:8081")).rstrip("/")
+    public_endpoints = read_config(DATA_ROOT / "public_endpoints.json", {})
+    configured_public = str(public_endpoints.get("cvat_url") or "").strip() if isinstance(public_endpoints, dict) else ""
+    url = os.getenv(
+        "CVAT_PUBLIC_URL",
+        configured_public or os.getenv("CVAT_URL", f"http://{primary_lan_address()}:8081"),
+    ).rstrip("/")
     api_url = os.getenv("CVAT_API_URL", "http://localhost:8081").rstrip("/")
     token = cvat_token()
-    return {"url": url, "api_url": api_url, "token_configured": bool(token)}
+    project_id = cvat_default_project_id()
+    return {
+        "url": url,
+        "api_url": api_url,
+        "token_configured": bool(token),
+        "project_id": project_id or None,
+        "project_url": f"{url}/projects/{project_id}" if project_id else f"{url}/projects",
+    }
+
+
+def cvat_default_project_id() -> int:
+    configured = int(os.getenv("CVAT_PROJECT_ID", "0") or 0)
+    if configured > 0:
+        return configured
+    state = read_config(BAIDU_PROJECT_DATA_ROOT / "cvat_import_state.json", {})
+    try:
+        return max(0, int(state.get("project_id") or 0)) if isinstance(state, dict) else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+def cvat_api_headers(content_type: bool = False) -> dict[str, str]:
+    token = cvat_token()
+    if not token:
+        raise ValueError("CVAT 尚未配置接口令牌")
+    headers = {"Authorization": f"Token {token}", "Accept": "application/vnd.cvat+json"}
+    if content_type:
+        headers["Content-Type"] = "application/json"
+    organization_slug = os.getenv("CVAT_ORGANIZATION_SLUG", "").strip()
+    if organization_slug:
+        headers["X-Organization"] = organization_slug
+    return headers
+
+
+def cvat_project_labels(project_id: int | None = None) -> dict[str, object]:
+    try:
+        import requests
+    except ImportError as exc:
+        raise RuntimeError("缺少 CVAT 同步依赖 requests") from exc
+    project_id = int(project_id or cvat_default_project_id())
+    if project_id <= 0:
+        raise ValueError("尚未绑定 CVAT Project")
+    api_url = str(cvat_config()["api_url"])
+    response = requests.get(
+        f"{api_url}/api/labels",
+        headers=cvat_api_headers(),
+        params={"project_id": project_id, "page_size": 1000},
+        timeout=30,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    labels = payload.get("results", []) if isinstance(payload, dict) else payload
+    items = [
+        {
+            "id": item.get("id"),
+            "name": item.get("name"),
+            "color": item.get("color"),
+            "type": item.get("type") or "any",
+            "attributes": item.get("attributes") or [],
+        }
+        for item in labels
+    ]
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "project_url": f"{cvat_config()['url']}/projects/{project_id}",
+        "items": items,
+        "total": len(items),
+    }
+
+
+def cvat_add_project_label(payload: dict[str, object], operator: str) -> dict[str, object]:
+    try:
+        import requests
+    except ImportError as exc:
+        raise RuntimeError("缺少 CVAT 同步依赖 requests") from exc
+    project_id = int(payload.get("project_id") or cvat_default_project_id())
+    name = str(payload.get("name") or "").strip()
+    color = str(payload.get("color") or "#1f77b4").strip().lower()
+    label_type = str(payload.get("type") or "rectangle").strip().lower()
+    if project_id <= 0:
+        raise ValueError("尚未绑定 CVAT Project")
+    if not name or len(name) > 64 or any(ord(char) < 32 for char in name):
+        raise ValueError("自定义标签名称必须为 1 至 64 个可见字符")
+    if not re.fullmatch(r"#[0-9a-f]{6}", color):
+        raise ValueError("标签颜色必须是 #RRGGBB")
+    allowed_types = {"any", "rectangle", "polygon", "polyline", "points", "ellipse", "cuboid", "mask", "tag"}
+    if label_type not in allowed_types:
+        raise ValueError("不支持的 CVAT 标签类型")
+    existing = cvat_project_labels(project_id)
+    duplicate = next((item for item in existing["items"] if str(item.get("name")) == name), None)
+    if duplicate:
+        return {**existing, "created": False, "label": duplicate, "message": f"标签“{name}”已存在，无需重复创建"}
+    requested_attributes = payload.get("attributes") or []
+    if not isinstance(requested_attributes, list):
+        raise ValueError("自定义属性必须是数组")
+    attribute_names = []
+    for value in requested_attributes[:10]:
+        attribute_name = str(value).strip()
+        if attribute_name and len(attribute_name) <= 64 and attribute_name not in attribute_names:
+            attribute_names.append(attribute_name)
+    attributes = [
+        {"name": "SOP步骤", "mutable": True, "input_type": "select", "default_value": "S01", "values": ["S01", "S02", "S03", "S04", "S05", "S06"]},
+        {"name": "质量结论", "mutable": True, "input_type": "select", "default_value": "待复核", "values": ["待复核", "合格", "不合格"]},
+        {"name": "物料编码", "mutable": True, "input_type": "text", "default_value": "", "values": []},
+    ]
+    built_in = {item["name"] for item in attributes}
+    attributes.extend(
+        {"name": item, "mutable": True, "input_type": "text", "default_value": "", "values": []}
+        for item in attribute_names if item not in built_in
+    )
+    api_url = str(cvat_config()["api_url"])
+    response = requests.patch(
+        f"{api_url}/api/projects/{project_id}",
+        headers=cvat_api_headers(True),
+        json={"labels": [{"name": name, "color": color, "type": label_type, "attributes": attributes}]},
+        timeout=60,
+    )
+    response.raise_for_status()
+    refreshed = cvat_project_labels(project_id)
+    created = next((item for item in refreshed["items"] if str(item.get("name")) == name), None)
+    audit = {
+        "project_id": project_id,
+        "name": name,
+        "color": color,
+        "type": label_type,
+        "attributes": attribute_names,
+        "operator": operator,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    history = read_config(CVAT_CUSTOM_LABELS_PATH, {"items": []})
+    items = list(history.get("items", [])) if isinstance(history, dict) else []
+    items.append(audit)
+    atomic_write_json(CVAT_CUSTOM_LABELS_PATH, {"items": items[-500:], "updated_at": audit["created_at"]})
+    return {**refreshed, "created": True, "label": created, "message": f"自定义标签“{name}”已同步到 CVAT Project #{project_id}"}
 
 
 def cvat_bulk_status() -> dict[str, object]:
@@ -1944,6 +2162,49 @@ def cvat_bulk_status() -> dict[str, object]:
         })
         if len(bulk_items) >= 50:
             break
+    baidu_state = read_config(BAIDU_PROJECT_DATA_ROOT / "cvat_import_state.json", {})
+    baidu_items = baidu_state.get("items", {}) if isinstance(baidu_state, dict) else {}
+    source_to_video: dict[str, str] = {}
+    for video in video_catalog().get("videos", []):
+        source = str(video.get("cloud_source") or "")
+        if source:
+            source_to_video[os.path.normcase(os.path.abspath(source))] = str(video.get("id") or "")
+    existing_task_ids = {int(item["cvat_task_id"]) for item in bulk_items if item.get("cvat_task_id") is not None}
+    for source_key, item in sorted(
+        baidu_items.items(),
+        key=lambda pair: str(pair[1].get("updated_at", "")),
+        reverse=True,
+    ):
+        task_id = int(item.get("task_id") or 0)
+        if task_id <= 0 or task_id in existing_task_ids:
+            continue
+        source = str(item.get("source") or item.get("video") or "")
+        video_id = source_to_video.get(os.path.normcase(os.path.abspath(source)), "") if source else ""
+        bulk_items.append({
+            "local_task_id": f"CVAT-BAIDU-{task_id}",
+            "cvat_task_id": task_id,
+            "name": item.get("task_name") or f"网盘原片｜{Path(source).name}",
+            "dataset_id": "BAIDU-NB-SOP-20260819-21",
+            "line_id": "pcb",
+            "mode": "api",
+            "status": item.get("status") or "已提交CVAT处理",
+            "url": f"{config['url']}/tasks/{task_id}",
+            "labels": baidu_project_status().get("labels", []),
+            "video_id": video_id,
+            "source": source_key,
+            "created_at": item.get("updated_at", ""),
+            "updated_at": item.get("updated_at", ""),
+        })
+        existing_task_ids.add(task_id)
+    baidu_project_id = int(baidu_state.get("project_id") or 0) if isinstance(baidu_state, dict) else 0
+    if baidu_project_id:
+        project = {
+            "project_id": baidu_project_id,
+            "name": baidu_state.get("project_name") or "宁波SOP_网盘产线视频_20260819_21",
+            "url": f"{config['url']}/projects/{baidu_project_id}",
+            "scope": "同一 PostgreSQL 数据库与 cvat_admin 共享项目",
+        }
+        counts["submitted"] = len(baidu_items)
     return {"project": project, "counts": counts, "total_seen": len(latest), "items": bulk_items, "state_path": str(state_path)}
 
 
@@ -2030,6 +2291,55 @@ def control_ai_prelabel(action: str, operator: str) -> dict[str, object]:
         return ai_prelabel_status()
 
 
+def baidu_project_status() -> dict[str, object]:
+    manifest = read_config(BAIDU_PROJECT_MANIFEST_PATH, {"files": []})
+    files = manifest.get("files", []) if isinstance(manifest, dict) else []
+    rows = []
+    downloaded_bytes = 0
+    completed = 0
+    for item in files:
+        source_path = str(item.get("path") or "")
+        relative_parts = [part for part in source_path.strip("/").split("/") if part]
+        if relative_parts and relative_parts[0] == "宁波SoP项目":
+            relative_parts = relative_parts[1:]
+        local_path = BAIDU_PROJECT_DATA_ROOT.joinpath(*relative_parts)
+        partial_path = local_path.with_suffix(local_path.suffix + ".part")
+        expected = int(item.get("size") or 0)
+        final_size = local_path.stat().st_size if local_path.is_file() else 0
+        actual = final_size if final_size else (partial_path.stat().st_size if partial_path.is_file() else 0)
+        ready = bool(expected and final_size == expected)
+        downloaded_bytes += actual
+        if ready:
+            completed += 1
+        rows.append({
+            "source_path": source_path,
+            "name": Path(source_path).name,
+            "batch": relative_parts[0] if relative_parts else "未分类",
+            "station": relative_parts[-2] if len(relative_parts) > 1 else "未分类",
+            "expected_bytes": expected,
+            "downloaded_bytes": actual,
+            "status": "已入库" if ready else ("下载中" if partial_path.exists() else "等待下载"),
+            "ready": ready,
+        })
+    transfer = read_config(BAIDU_DOWNLOAD_STATUS_PATH, {})
+    cvat_import = read_config(BAIDU_PROJECT_DATA_ROOT / "cvat_import_state.json", {})
+    return {
+        "dataset_id": manifest.get("dataset_id"),
+        "name": manifest.get("name"),
+        "source_url": manifest.get("source_url") or BAIDU_SOURCE_URL,
+        "local_root": str(BAIDU_PROJECT_DATA_ROOT),
+        "cvat_project_name": manifest.get("cvat_project_name"),
+        "labels": manifest.get("labels", []),
+        "total": len(rows),
+        "completed": completed,
+        "total_bytes": sum(int(item.get("expected_bytes") or 0) for item in rows),
+        "downloaded_bytes": downloaded_bytes,
+        "transfer": transfer,
+        "cvat_import": cvat_import,
+        "files": rows,
+    }
+
+
 def cloud_sync_status() -> dict[str, object]:
     with CLOUD_SYNC_LOCK:
         jobs = sorted(CLOUD_SYNC_JOBS.values(), key=lambda item: str(item.get("created_at", "")), reverse=True)[:20]
@@ -2046,8 +2356,12 @@ def cloud_sync_status() -> dict[str, object]:
         },
         "baidu": {
             "source_url": BAIDU_SOURCE_URL,
-            "configured": bool(os.getenv("SOP_BAIDU_SYNC_COMMAND", "").strip()),
+            "configured": bool(
+                os.getenv("SOP_BAIDU_SYNC_COMMAND", "").strip()
+                or (ROOT / "scripts" / "baidu_auth_download.py").is_file()
+            ),
             "upload_configured": bool(os.getenv("SOP_BAIDU_UPLOAD_COMMAND", "").strip()),
+            "project": baidu_project_status(),
         },
         "local": {
             "inbox": str(CLOUD_INBOX_ROOT), "cached_files": len(cached_files),
@@ -2089,9 +2403,26 @@ def run_cloud_sync_job(job_id: str, action: str) -> None:
             command = ["rclone", "copy", str(ANNOTATION_EXPORT_ROOT), remote, "--include", "*.mp4", "--include", "*.json"]
         elif action == "pull_baidu":
             configured = os.getenv("SOP_BAIDU_SYNC_COMMAND", "").strip()
-            if not configured:
-                raise RuntimeError("百度网盘同步器尚未授权；请先配置 SOP_BAIDU_SYNC_COMMAND")
-            command = [part.replace("{destination}", str(CLOUD_INBOX_ROOT / "baidu")) for part in shlex.split(configured)]
+            project = baidu_project_status()
+            transfer_status = str((project.get("transfer") or {}).get("status") or "")
+            if transfer_status in {"starting", "downloading", "waiting_retry"}:
+                _update_cloud_job(
+                    job_id,
+                    status="completed",
+                    finished_at=time.strftime("%Y-%m-%d %H:%M:%S"),
+                    message="百度视频后台下载已在进行，进度已同步到数据获取页",
+                )
+                return
+            if configured:
+                command = [part.replace("{destination}", str(BAIDU_PROJECT_DATA_ROOT)) for part in shlex.split(configured)]
+            else:
+                downloader = ROOT / "scripts" / "baidu_auth_download.py"
+                if not downloader.is_file():
+                    raise RuntimeError("百度网盘同步器尚未安装")
+                command = [
+                    sys.executable, str(downloader), "--inventory", str(BAIDU_PROJECT_MANIFEST_PATH),
+                    "--output", str(BAIDU_PROJECT_DATA_ROOT), "--status", str(BAIDU_DOWNLOAD_STATUS_PATH),
+                ]
         elif action == "push_baidu":
             configured = os.getenv("SOP_BAIDU_UPLOAD_COMMAND", "").strip()
             if not configured:
@@ -2942,22 +3273,33 @@ def ingest_cloud_videos() -> list[dict[str, object]]:
     existing_items = existing.get("videos", []) if isinstance(existing, dict) else []
     by_source = {str(item.get("cloud_source")): item for item in existing_items}
     supported = {".mp4", ".mov", ".mkv", ".avi", ".m4v"}
-    for source in sorted(CLOUD_INBOX_ROOT.rglob("*")) if CLOUD_INBOX_ROOT.exists() else []:
+    candidates: list[tuple[Path, Path, bool]] = []
+    if CLOUD_INBOX_ROOT.exists():
+        candidates.extend((path, CLOUD_INBOX_ROOT, False) for path in CLOUD_INBOX_ROOT.rglob("*"))
+    if BAIDU_PROJECT_DATA_ROOT.exists():
+        candidates.extend((path, BAIDU_PROJECT_DATA_ROOT, True) for path in BAIDU_PROJECT_DATA_ROOT.rglob("*"))
+    for source, source_root, direct_media in sorted(candidates, key=lambda value: str(value[0])):
         if not source.is_file() or source.suffix.lower() not in supported:
             continue
         source_key = str(source.resolve())
         if source_key in by_source:
             continue
         digest = hashlib.sha256(source_key.encode("utf-8")).hexdigest()[:12]
-        destination = media_root / f"{digest}_{source.name}"
-        if not destination.exists():
-            try:
-                os.link(source, destination)
-            except OSError:
-                shutil.copy2(source, destination)
+        if direct_media:
+            destination = source
+            media_value = f"media/{source.relative_to(source_root).as_posix()}"
+        else:
+            destination = media_root / f"{digest}_{source.name}"
+            media_value = f"media/cloud/{destination.name}"
+            if not destination.exists():
+                try:
+                    os.link(source, destination)
+                except OSError:
+                    shutil.copy2(source, destination)
         capture = cv2.VideoCapture(str(destination))
         if not capture.isOpened():
-            destination.unlink(missing_ok=True)
+            if not direct_media:
+                destination.unlink(missing_ok=True)
             raise RuntimeError(f"ffprobe/OpenCV 无法读取视频: {source.name}")
         fps = float(capture.get(cv2.CAP_PROP_FPS) or 30)
         frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
@@ -2965,7 +3307,8 @@ def ingest_cloud_videos() -> list[dict[str, object]]:
         height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) or 720)
         capture.release()
         if frames <= 0 or width <= 0 or height <= 0:
-            destination.unlink(missing_ok=True)
+            if not direct_media:
+                destination.unlink(missing_ok=True)
             raise RuntimeError(f"视频没有可读取帧: {source.name}")
         duration = frames / fps if fps > 0 else 0
         boundaries = [0.0, duration * 0.2, duration * 0.5, duration * 0.82, duration]
@@ -2974,10 +3317,9 @@ def ingest_cloud_videos() -> list[dict[str, object]]:
             {"id": f"S{index + 1:02d}", "label": label, "start_s": round(boundaries[index], 3), "end_s": round(boundaries[index + 1], 3), "roi": [0.05, 0.05, 0.95, 0.95]}
             for index, label in enumerate(labels)
         ]
-        relative = f"media/cloud/{destination.name}"
         item = {
-            "id": f"video_cloud_{digest}", "display_name": f"每日云盘视频｜{source.name}",
-            "video": relative, "source_video": relative, "presentation_video": relative,
+            "id": f"video_cloud_{digest}", "display_name": f"宁波网盘视频｜{source.name}",
+            "video": media_value, "source_video": media_value, "presentation_video": media_value,
             "duration_s": round(duration, 3), "fps": round(fps, 3), "frames": frames,
             "resolution": f"{width}x{height}", "presentation_resolution": f"{width}x{height}",
             "algorithm": "待标注 · 流程优先", "steps": steps, "cloud_source": source_key,
@@ -3898,6 +4240,8 @@ class SOPHandler(SimpleHTTPRequestHandler):
             manager_prefixes = (*manager_prefixes, "/api/annotations/prelabel")
         if method == "POST" and path.startswith("/api/cvat/annotations"):
             manager_prefixes = (*manager_prefixes, "/api/cvat/annotations")
+        if method == "POST" and path == "/api/cvat/labels":
+            manager_prefixes = (*manager_prefixes, "/api/cvat/labels")
         if path.startswith(admin_only) and role != "admin":
             self.send_json({"ok": False, "message": "该操作仅开发者可执行"}, HTTPStatus.FORBIDDEN)
             return None
@@ -4177,6 +4521,15 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 "webhook_configured": bool(os.getenv("SOP_CVAT_WEBHOOK_SECRET", "")),
             })
             return
+        if path == "/api/cvat/labels":
+            project_value = parse_qs(parsed.query).get("project_id", [""])[0]
+            try:
+                project_id = int(project_value) if project_value else None
+            except ValueError:
+                self.send_json({"ok": False, "message": "project_id 必须是整数"}, HTTPStatus.BAD_REQUEST)
+                return
+            self.send_json(cvat_project_labels(project_id))
+            return
         if path == "/api/cvat/tasks":
             bulk = cvat_bulk_status()
             self.send_json({"ok": True, "items": bulk["items"] + db_cvat_tasks(), "bulk": bulk})
@@ -4413,6 +4766,47 @@ class SOPHandler(SimpleHTTPRequestHandler):
                     {"ok": True, "message": "已安全退出"},
                     headers={"Set-Cookie": f"sop_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0{'; Secure' if AUTH_SECURE_COOKIE else ''}"},
                 )
+                return
+            if path == "/api/auth/forgot-password":
+                username = str(payload.get("username") or "").strip()
+                recovery_code = str(payload.get("recovery_code") or "")
+                new_password = str(payload.get("new_password") or "")
+                try:
+                    recovered = recover_user_password(username, recovery_code, new_password)
+                except PermissionError as exc:
+                    time.sleep(0.35)
+                    self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.UNAUTHORIZED)
+                    return
+                except ValueError as exc:
+                    self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.BAD_REQUEST)
+                    return
+                except RuntimeError as exc:
+                    self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.SERVICE_UNAVAILABLE)
+                    return
+                if not recovered:
+                    time.sleep(0.35)
+                    self.send_json({"ok": False, "message": "账号或恢复码无效"}, HTTPStatus.UNAUTHORIZED)
+                    return
+                self.send_json({"ok": True, "message": "密码已重置，请使用新密码登录"})
+                return
+            if path == "/api/auth/change-password":
+                user = self.require_api_access(path, "POST")
+                if user is None:
+                    return
+                try:
+                    change_user_password(
+                        int(user["user_id"]),
+                        str(payload.get("current_password") or ""),
+                        str(payload.get("new_password") or ""),
+                        self.auth_session_id(),
+                    )
+                except PermissionError as exc:
+                    self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.UNAUTHORIZED)
+                    return
+                except ValueError as exc:
+                    self.send_json({"ok": False, "message": str(exc)}, HTTPStatus.BAD_REQUEST)
+                    return
+                self.send_json({"ok": True, "message": "密码修改成功，其他设备会话已退出"})
                 return
             if path.startswith("/api/") and self.require_api_access(path, "POST") is None:
                 return
@@ -4654,6 +5048,17 @@ class SOPHandler(SimpleHTTPRequestHandler):
                 self.append_event("cvat_tasks.jsonl", task)
                 self.send_json({**result, "task": task})
                 return
+            if path == "/api/cvat/labels":
+                user = self.current_user() or {}
+                result = cvat_add_project_label(payload, str(user.get("username") or "unknown"))
+                self.append_event("cvat_custom_labels.jsonl", {
+                    "project_id": result.get("project_id"),
+                    "label": result.get("label"),
+                    "created": result.get("created"),
+                    "operator": user.get("username"),
+                })
+                self.send_json(result, HTTPStatus.CREATED if result.get("created") else HTTPStatus.OK)
+                return
             if path == "/api/cvat/annotations":
                 task_id = int(payload.get("task_id") or 0)
                 video_id = str(payload.get("video_id") or "").strip()
@@ -4805,10 +5210,12 @@ class SOPHandler(SimpleHTTPRequestHandler):
             self.send_json({"ok": False, "message": f"服务异常：{exc}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
-def main() -> None:
+def create_server(host: str | None = None, port: int | None = None) -> ThreadingHTTPServer:
+    """Create an embeddable server for both CLI and Windows desktop launchers."""
     mimetypes.add_type("video/mp4", ".mp4")
     restore_selected_pcb_model()
-    host, port = os.getenv("SOP_HOST", "0.0.0.0"), int(os.getenv("SOP_PORT", "8096"))
+    resolved_host = host or os.getenv("SOP_HOST", "0.0.0.0")
+    resolved_port = int(port if port is not None else os.getenv("SOP_PORT", "8096"))
     if os.getenv("SOP_CAMERA_AUTOSTART", "0").strip().lower() in {"1", "true", "yes", "on"}:
         refresh_camera_services()
         for service in LIVE_CAMERAS.values():
@@ -4818,11 +5225,17 @@ def main() -> None:
                 service.start()
             except Exception as exc:
                 print(f"摄像头 {service.camera_id} 自动启动失败：{exc}", file=sys.stderr)
+    return ThreadingHTTPServer((resolved_host, resolved_port), SOPHandler)
+
+
+def main() -> None:
+    host, port = os.getenv("SOP_HOST", "0.0.0.0"), int(os.getenv("SOP_PORT", "8096"))
+    server = create_server(host, port)
     print(f"宁波SOP分析平台已启动：http://127.0.0.1:{port}")
     print(f"局域网访问地址：http://{primary_lan_address()}:{port}")
     print(f"证据保存目录：{EVIDENCE_ROOT}")
     print("按 Ctrl+C 停止服务")
-    ThreadingHTTPServer((host, port), SOPHandler).serve_forever()
+    server.serve_forever()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+services:
+  cvat_server:
+    environment:
+      DJANGO_SETTINGS_MODULE: cvat.settings.production_cloudflare
+      CVAT_CSRF_TRUSTED_ORIGINS: >-
+        https://zum-hugh-focusing-africa.trycloudflare.com
+      CVAT_BASE_URL: https://zum-hugh-focusing-africa.trycloudflare.com
+    volumes:
+      - ./config/production_cloudflare.py:/home/django/cvat/settings/production_cloudflare.py:ro

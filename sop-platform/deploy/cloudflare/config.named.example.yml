@@ -1,0 +1,28 @@
+# 生产环境 Named Tunnel 本地配置模板。
+# 1. 将域名、Tunnel UUID、凭据路径替换为真实值。
+# 2. 运行 cloudflared tunnel ingress validate。
+# 3. 分别为 sop/cvat/mes 创建指向 <UUID>.cfargotunnel.com 的 CNAME。
+
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: C:\Cloudflared\REPLACE_WITH_TUNNEL_UUID.json
+
+ingress:
+  - hostname: sop.example.com
+    service: http://127.0.0.1:8113
+    originRequest:
+      connectTimeout: 30s
+      keepAliveTimeout: 90s
+
+  # 当前 CVAT 的 Traefik 按 10.70.102.210 Host 匹配，必须重写 Host。
+  - hostname: cvat.example.com
+    service: http://10.70.102.210:8081
+    originRequest:
+      httpHostHeader: 10.70.102.210
+      connectTimeout: 30s
+      keepAliveTimeout: 90s
+
+  # MES 页面目前属于 SOP 服务，可使用独立域名指向同一个源站。
+  - hostname: mes.example.com
+    service: http://127.0.0.1:8113
+
+  - service: http_status:404

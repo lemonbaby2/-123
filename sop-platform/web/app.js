@@ -43,6 +43,9 @@ const state = {
   annotationRequestController: null,
   algorithms: [],
   latestCvatTaskId: null,
+  cvatPublicUrl: "",
+  cvatProjectId: null,
+  cvatProjectLabels: [],
   productionLines: [],
   datasets: [],
   trainingDatasets: [],
@@ -66,7 +69,7 @@ async function request(url, options = {}) {
   const response = await fetch(url, options);
   const data = await response.json();
   if (!response.ok) {
-    if (response.status === 401 && !url.startsWith("/api/auth/login")) showLogin();
+    if (response.status === 401 && !url.startsWith("/api/auth/login") && !url.startsWith("/api/auth/forgot-password") && !url.startsWith("/api/auth/change-password")) showLogin();
     throw new Error(data.message || "请求失败");
   }
   return data;
@@ -118,6 +121,71 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   showLogin("已安全退出。请使用岗位账号重新登录。");
 });
 
+function setDialogMessage(id, message, bad = false) {
+  const element = document.getElementById(id);
+  element.textContent = message;
+  element.classList.toggle("bad", bad);
+}
+
+document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => {
+  document.getElementById(button.dataset.closeDialog)?.close();
+}));
+
+document.getElementById("forgotPasswordButton").addEventListener("click", () => {
+  document.getElementById("forgotUsername").value = document.getElementById("loginUsername").value;
+  setDialogMessage("forgotPasswordMessage", "密码至少 6 位；重置成功后原有会话全部失效。");
+  document.getElementById("forgotPasswordDialog").showModal();
+});
+
+document.getElementById("forgotPasswordForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const password = document.getElementById("forgotNewPassword").value;
+  if (password !== document.getElementById("forgotConfirmPassword").value) {
+    setDialogMessage("forgotPasswordMessage", "两次输入的新密码不一致", true);
+    return;
+  }
+  const button = document.getElementById("forgotPasswordSubmit");
+  button.disabled = true;
+  try {
+    const result = await request("/api/auth/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: document.getElementById("forgotUsername").value, recovery_code: document.getElementById("forgotRecoveryCode").value, new_password: password }) });
+    document.getElementById("forgotPasswordDialog").close();
+    document.getElementById("loginUsername").value = document.getElementById("forgotUsername").value;
+    document.getElementById("loginPassword").value = "";
+    showLogin(result.message);
+    document.getElementById("forgotPasswordForm").reset();
+  } catch (error) {
+    setDialogMessage("forgotPasswordMessage", error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("changePasswordButton").addEventListener("click", () => {
+  document.getElementById("changePasswordForm").reset();
+  setDialogMessage("changePasswordMessage", "不要在工位显示器旁张贴生产账号密码。");
+  document.getElementById("changePasswordDialog").showModal();
+});
+
+document.getElementById("changePasswordForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const password = document.getElementById("newPassword").value;
+  if (password !== document.getElementById("confirmNewPassword").value) {
+    setDialogMessage("changePasswordMessage", "两次输入的新密码不一致", true);
+    return;
+  }
+  const button = document.getElementById("changePasswordSubmit");
+  button.disabled = true;
+  try {
+    const result = await request("/api/auth/change-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ current_password: document.getElementById("currentPassword").value, new_password: password }) });
+    setDialogMessage("changePasswordMessage", result.message);
+    window.setTimeout(() => document.getElementById("changePasswordDialog").close(), 900);
+  } catch (error) {
+    setDialogMessage("changePasswordMessage", error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
 function showToast(id, message, bad = false) {
   const element = document.getElementById(id);
   element.textContent = message;
@@ -164,7 +232,10 @@ function switchView(name) {
   if (name === "monitor" && !state.loaded.devices) { loadDeviceInventory(); loadCloudStatus(); state.loaded.devices = true; }
   if (name === "quality" && !state.loaded.quality) { loadQualityReports(); loadCvatIntegration(); loadAnnotationVersions(); loadDatasetVersions(); state.loaded.quality = true; }
   if (name === "training") { loadSparkStatus(); loadPcbModels(); }
-  if (name === "mes") renderMesSopSteps();
+  if (name === "mes") {
+    renderMesSopSteps();
+    if (!document.getElementById("mesLiveFeed").getAttribute("src")) startMesLive();
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1668,18 +1739,90 @@ function renderCompletedTraining(job) {
 async function loadCvatIntegration() {
   try {
     const integration = await request("/api/integrations");
-    const cvat = integration.cvat;
-    document.getElementById("openCvat").href = cvat.tasks_url;
+    const publicEndpoints = await fetch(`/data/public_endpoints.json?t=${Date.now()}`, { cache: "no-store" })
+      .then(response => response.ok ? response.json() : null).catch(() => null);
+    const cvat = { ...integration.cvat };
+    if (publicEndpoints?.cvat_url) {
+      cvat.url = String(publicEndpoints.cvat_url).replace(/\/$/, "");
+      cvat.tasks_url = `${cvat.url}/tasks`;
+      cvat.project_id = Number(publicEndpoints.cvat_project_id || cvat.project_id || 0) || null;
+      cvat.project_url = cvat.project_id ? `${cvat.url}/projects/${cvat.project_id}` : `${cvat.url}/projects`;
+      cvat.available = true;
+    }
+    state.cvatPublicUrl = String(cvat.url || "").replace(/\/$/, "");
+    state.cvatProjectId = Number(cvat.project_id || 0) || null;
+    document.getElementById("openCvat").href = cvat.project_url || cvat.tasks_url;
     document.querySelectorAll("[data-cvat-route]").forEach(link => { link.href = `${String(cvat.url).replace(/\/$/, "")}${link.dataset.cvatRoute}`; });
     document.getElementById("labelStudioLink").href = cvat.tasks_url;
     document.getElementById("labelStudioVideoLink").href = cvat.tasks_url;
+    document.getElementById("openCvatProject").href = cvat.project_url || cvat.tasks_url;
     document.getElementById("cvatStatus").textContent = cvat.available ? "CVAT 在线" : `CVAT 未连接 · ${cvat.url}`;
     document.getElementById("cvatStatus").classList.toggle("green", cvat.available);
     document.getElementById("labelStudioStatus").textContent = cvat.available ? "CVAT 服务在线，可创建任务" : `未连接：${cvat.url}`;
     document.getElementById("cvatMessage").textContent = cvat.token_configured ? "本机官方 CVAT 已接通，可由平台创建任务；任务与保存轮次均在本页留痕。" : "CVAT 已运行但尚未配置接口令牌；可打开 CVAT，配置令牌后由平台自动创建任务。";
-    await loadCvatTasks();
+    await Promise.all([loadCvatTasks(), loadCvatProjectLabels()]);
   } catch (error) { document.getElementById("cvatStatus").textContent = error.message; }
 }
+
+function renderCvatProjectLabels(items = []) {
+  state.cvatProjectLabels = items;
+  const root = document.getElementById("cvatProjectLabelList");
+  if (!root) return;
+  root.innerHTML = items.length ? items.map(item => `<span class="cvat-label-chip" title="${escapeHtml(item.type || "any")}"><i style="background:${escapeHtml(item.color || "#7b8794")}"></i>${escapeHtml(item.name)}<small>${escapeHtml(item.type || "any")}</small></span>`).join("") : '<span class="device-empty">共享 Project 暂无标签。</span>';
+  document.getElementById("cvatLabelStatus").textContent = `共享 Project #${state.cvatProjectId || "--"} · ${items.length} 个标签 · 修改后全部标注员立即共用`;
+  const selector = document.getElementById("annotLabel");
+  if (selector && items.length) {
+    const selected = selector.value;
+    selector.innerHTML = items.map(item => `<option>${escapeHtml(item.name)}</option>`).join("");
+    if (items.some(item => item.name === selected)) selector.value = selected;
+  }
+}
+
+async function loadCvatProjectLabels() {
+  if (!document.getElementById("cvatProjectLabelList")) return;
+  try {
+    const query = state.cvatProjectId ? `?project_id=${encodeURIComponent(state.cvatProjectId)}` : "";
+    const result = await request(`/api/cvat/labels${query}`);
+    state.cvatProjectId = Number(result.project_id || state.cvatProjectId || 0) || null;
+    document.getElementById("openCvatProject").href = result.project_url || `${state.cvatPublicUrl}/projects/${state.cvatProjectId}`;
+    renderCvatProjectLabels(result.items || []);
+  } catch (error) {
+    const fallback = activeProductionLine()?.labels || [];
+    renderCvatProjectLabels(fallback.map(name => ({ name, type: "rectangle", color: "#7b8794" })));
+    document.getElementById("cvatLabelStatus").textContent = `标签目录读取失败：${error.message}；仍可在共享 CVAT Project 的“标签”设置中编辑。`;
+  }
+}
+
+document.getElementById("addCustomCvatLabel").addEventListener("click", async () => {
+  const button = document.getElementById("addCustomCvatLabel");
+  const name = document.getElementById("customCvatLabelName").value.trim();
+  if (!name) { document.getElementById("cvatLabelStatus").textContent = "请先填写新标签名称。"; return; }
+  const attributes = document.getElementById("customCvatAttributes").value.split(/[,，]/).map(item => item.trim()).filter(Boolean);
+  button.disabled = true;
+  button.textContent = "正在同步…";
+  try {
+    const result = await request("/api/cvat/labels", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project_id: state.cvatProjectId,
+        name,
+        type: document.getElementById("customCvatLabelType").value,
+        color: document.getElementById("customCvatLabelColor").value,
+        attributes,
+      }),
+    });
+    renderCvatProjectLabels(result.items || []);
+    document.getElementById("customCvatLabelName").value = "";
+    document.getElementById("customCvatAttributes").value = "";
+    document.getElementById("cvatLabelStatus").textContent = result.message;
+  } catch (error) {
+    document.getElementById("cvatLabelStatus").textContent = `自定义标签同步失败：${error.message}`;
+  } finally {
+    button.disabled = false;
+    button.textContent = "同步到 CVAT";
+  }
+});
 
 async function loadCvatTasks() {
   const rows = document.getElementById("cvatTaskRows");
@@ -1695,7 +1838,15 @@ async function loadCvatTasks() {
     const counts = bulk.counts || {};
     const project = bulk.project || {};
     const summary = project.project_id ? `<div class="history-row region-summary"><b>共享项目 #${escapeHtml(project.project_id)} · ${escapeHtml(project.name || "全量视频标注")}</b><span>已扫描 ${Number(bulk.total_seen || 0).toLocaleString("zh-CN")} 段 · 已提交 ${Number(counts.submitted || 0).toLocaleString("zh-CN")} · 解码中 ${Number(counts.created || 0).toLocaleString("zh-CN")} · 无效 ${Number(counts.invalid || 0).toLocaleString("zh-CN")} · 失败 ${Number(counts.failed || 0).toLocaleString("zh-CN")}</span><small>项目位于 lan-team 组织，原有标注账号均可见；后台按文件大小持续断点上传。</small><a href="${escapeHtml(project.url || "#")}" target="_blank" rel="noreferrer">打开项目</a></div>` : "";
-    rows.innerHTML = summary + (tasks.length ? tasks.map((item, index) => `<div class="history-row"><b>${index + 1}. ${escapeHtml(item.name)}</b><span>${escapeHtml(item.status)} · ${escapeHtml(item.dataset_id || "未指定数据集")} · ${escapeHtml(item.created_at)}</span><small>${item.cvat_task_id == null ? "入口待配置" : `CVAT #${item.cvat_task_id}`} · ${(item.labels || []).length} 个标签</small><a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">打开任务</a></div>`).join("") : "<span>尚无 CVAT 任务。填写名称和数据集后点击“创建 CVAT 任务”。</span>");
+    rows.innerHTML = summary + (tasks.length ? tasks.map((item, index) => `<div class="history-row"><b>${index + 1}. ${escapeHtml(item.name)}</b><span>${escapeHtml(item.status)} · ${escapeHtml(item.dataset_id || "未指定数据集")} · ${escapeHtml(item.created_at)}</span><small>${item.cvat_task_id == null ? "入口待配置" : `CVAT #${item.cvat_task_id}`} · ${(item.labels || []).length} 个标签${item.video_id ? " · 已绑定整段视频" : ""}</small><a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">打开任务</a>${item.cvat_task_id == null ? "" : `<button class="ghost" data-bind-cvat-task="${Number(item.cvat_task_id)}" data-video-id="${escapeHtml(item.video_id || "")}">选为同步任务</button>`}</div>`).join("") : "<span>尚无 CVAT 任务。填写名称和数据集后点击“创建 CVAT 任务”。</span>");
+    rows.querySelectorAll("[data-bind-cvat-task]").forEach(button => button.addEventListener("click", () => {
+      state.latestCvatTaskId = Number(button.dataset.bindCvatTask);
+      const videoId = button.dataset.videoId;
+      if (videoId && state.catalog?.videos?.some(item => item.id === videoId)) selectVideo(videoId);
+      document.getElementById("pushAnnotationsToCvat").disabled = false;
+      document.getElementById("pullAnnotationsFromCvat").disabled = false;
+      document.getElementById("cvatPullStatus").textContent = `已绑定 CVAT #${state.latestCvatTaskId}${videoId ? " 与对应整段视频" : ""}`;
+    }));
   } catch (error) {
     rows.innerHTML = `<span>CVAT 任务读取失败：${escapeHtml(error.message)}</span>`;
   }
@@ -1703,7 +1854,7 @@ async function loadCvatTasks() {
 
 document.getElementById("createCvatTask").addEventListener("click", async () => {
   const datasetId = document.getElementById("cvatDatasetSelect").value;
-  const labels = activeProductionLine()?.labels || [];
+  const labels = [...new Set([...(activeProductionLine()?.labels || []), ...state.cvatProjectLabels.map(item => item.name)])];
   try {
     const result = await request("/api/cvat/task", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: document.getElementById("cvatTaskName").value, dataset_id: datasetId, line_id: state.activeLineId, labels, video_id: state.currentVideoId, upload_video: true }) });
     document.getElementById("cvatMessage").textContent = `${result.message}：${result.url}`;
@@ -1806,6 +1957,27 @@ function renderCloudStatus(status) {
   document.getElementById("pushGoogleAnnotations").disabled = !google.output_configured;
   document.getElementById("pullBaiduVideos").disabled = !baidu.configured;
   document.getElementById("pushBaiduAnnotations").disabled = !baidu.upload_configured;
+  const project = baidu.project || {};
+  const transfer = project.transfer || {};
+  const completed = Number(project.completed || 0);
+  const total = Number(project.total || 0);
+  const downloadedBytes = Number(project.downloaded_bytes || 0);
+  const totalBytes = Number(project.total_bytes || 0);
+  const progress = totalBytes ? Math.min(100, downloadedBytes * 100 / totalBytes) : 0;
+  const badge = document.getElementById("baiduProjectBadge");
+  if (badge) {
+    badge.textContent = total && completed === total ? "全部入库" : `${progress.toFixed(1)}% · 后台同步`;
+    badge.classList.toggle("green", total > 0 && completed === total);
+    document.getElementById("baiduProjectCount").textContent = `${completed} / ${total}`;
+    document.getElementById("baiduProjectBytes").textContent = `${formatBytes(downloadedBytes)} / ${formatBytes(totalBytes)}`;
+    document.getElementById("baiduProjectCurrent").textContent = transfer.source_path ? transfer.source_path.split("/").at(-1) : (completed ? "等待下一段" : "等待同步");
+    const cvatImport = project.cvat_import || {};
+    const importedTasks = Object.values(cvatImport.items || {}).filter(item => item.task_id).length;
+    document.getElementById("baiduCvatProject").textContent = cvatImport.project_id ? `#${cvatImport.project_id} · ${importedTasks} 个任务` : (project.cvat_project_name || "待建立");
+    document.getElementById("baiduProjectProgress").style.width = `${progress}%`;
+    const rows = document.getElementById("baiduVideoRows");
+    rows.innerHTML = (project.files || []).map(item => `<div class="baidu-video-row"><div><b>${escapeHtml(item.name)}</b><span>${escapeHtml(item.batch)} · ${escapeHtml(item.station)}</span></div><small>${formatBytes(item.downloaded_bytes)} / ${formatBytes(item.expected_bytes)}</small><em class="${item.ready ? "ready" : ""}">${escapeHtml(item.status)}</em></div>`).join("") || '<span class="device-empty">尚未登记网盘视频。</span>';
+  }
 }
 
 for (const linkId of ["openGoogleSource", "openBaiduSource"]) {
@@ -1816,7 +1988,13 @@ for (const linkId of ["openGoogleSource", "openBaiduSource"]) {
 
 async function loadCloudStatus() {
   try {
-    renderCloudStatus(await request("/api/cloud/status"));
+    const status = await request("/api/cloud/status");
+    const project = await fetch(`/data/baidu_project_status.json?t=${Date.now()}`, { cache: "no-store", credentials: "same-origin" }).then(response => response.ok ? response.json() : null).catch(() => null);
+    if (project) {
+      status.baidu = { ...(status.baidu || {}), project, source_url: project.source_url, configured: true };
+      state.baiduProject = project;
+    }
+    renderCloudStatus(status);
   } catch (error) {
     document.getElementById("cloudSyncStatus").textContent = `网盘状态读取失败：${error.message}`;
   }
@@ -1834,6 +2012,11 @@ async function refreshVideoCatalogAfterCloudSync() {
 async function startCloudSync(action) {
   const labels = { pull_google: "Google Drive 拉取", pull_baidu: "百度网盘拉取", push_google: "Google Drive 回传", push_baidu: "百度网盘回传" };
   try {
+    if (action === "pull_baidu" && state.baiduProject) {
+      await loadCloudStatus();
+      document.getElementById("cloudSyncStatus").textContent = "百度网盘自动下载与 CVAT 增量导入已在后台运行；页面状态已刷新。";
+      return;
+    }
     const result = await request("/api/cloud/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
     document.getElementById("cloudSyncStatus").textContent = `${labels[action]}：${result.message}`;
     window.clearInterval(state.cloudJobTimer);
@@ -2003,7 +2186,7 @@ function renderMesSopSteps() {
   document.getElementById("mesLiveStepDetail").textContent = "证据或设备回执缺失时保持 HOLD";
 }
 
-document.getElementById("startMesLive").addEventListener("click", async () => {
+async function startMesLive() {
   if (!state.connectedCameras.length) await loadDeviceInventory();
   const camera = state.connectedCameras[0];
   if (!camera) { document.getElementById("mesCameraState").textContent = "未发现 UVC/RTSP 实时源"; return; }
@@ -2017,7 +2200,9 @@ document.getElementById("startMesLive").addEventListener("click", async () => {
     document.getElementById("mesCameraState").textContent = `HOLD · ${error.message}`;
     document.getElementById("mesInferenceState").textContent = "设备被占用或未就绪";
   }
-});
+}
+
+document.getElementById("startMesLive").addEventListener("click", startMesLive);
 
 document.getElementById("stopMesLive").addEventListener("click", async () => {
   document.getElementById("mesLiveFeed").removeAttribute("src");

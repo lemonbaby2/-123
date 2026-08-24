@@ -1,5 +1,16 @@
 # 宁波零部件 SOP 智能分析决策平台（关键帧标注与三模型对比版）
 
+## 2026-08-24 Windows 完整交付入口
+
+- Windows 安装程序：`release/宁波视觉SOP_CVAT闭环平台_完整安装程序_20260824.exe`
+- 免安装程序：`dist/NingboSOPCVAT/NingboSOPCVAT.exe`
+- 五分钟教学视频：`output/tutorial/宁波视觉SOP_CVAT闭环平台_5分钟中文配音字幕教学_20260824.mp4`
+- 独立中文字幕：`output/tutorial/宁波视觉SOP平台_5分钟教学字幕.srt`
+- 完整部署说明：`docs/32_Windows_EXE与CVAT服务端完整部署说明_20260824.md`
+- 验收报告：`qa/完整安装验收报告_20260824.md`
+
+桌面程序会优先调用 `D:\Anaconda\envs\dl\python.exe`，以复用本机已经配置好的 GPU、OpenCV 和 Ultralytics 环境；找不到该环境时仍可启动内置管理平台，但摄像机 GPU 推理、训练和模型导出需要先补齐深度学习运行环境。
+
 ## 一、交付结果
 
 这不是单独的“识别模型演示”，而是一套可继续扩展的装配 SOP 平台：固定相机录像、自动抽帧、网页标注、GPU训练、SOP顺序判断、现场告警、证据留存、灰度下发和 MES 对接均放在同一工程中。

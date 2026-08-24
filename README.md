@@ -1,5 +1,7 @@
 # 宁波 SOP 平台完整代码与版本档案
 
+> 2026-08-25 最新分支：`sop-public-cvat-roundtrip-20260825`。本分支修复公网 CVAT CSRF 保存/导出、导出链接回跳内网、SOP 跳错 CVAT、共享项目可见性、整段视频回流和自定义 Project 标签。整改与 `sop-unified-20260823` 的逐项对比见 [`README_20260825_公网CVAT闭环与截图整改对比.md`](README_20260825_公网CVAT闭环与截图整改对比.md)。
+
 本仓库保存 SOP 网页、Python 后端、Windows 原生客户端、CVAT 集成、摄像头接入、训练/复核脚本、部署配置、说明文档和历史页面源码。
 
 - 当前完整平台：[`sop-platform/`](sop-platform/)

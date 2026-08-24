@@ -1,0 +1,220 @@
+{
+  "dataset_id": "BAIDU-NB-SOP-20260819-21",
+  "name": "宁波车间 SOP 原始视频（8月19日、8月21日）",
+  "source_url": "https://pan.baidu.com/s/1y5XnnAl1ScVEdhwBT0fHcg?pwd=1234",
+  "local_root": "D:\\NingboSOPData\\Baidu_20260819_21",
+  "cvat_project_name": "宁波SOP_网盘产线视频_20260819_21",
+  "labels": [
+    "螺钉",
+    "大零部件",
+    "PCB主板",
+    "焊点",
+    "漏焊",
+    "工具",
+    "操作人员手部",
+    "DTU",
+    "烧录设备"
+  ],
+  "total": 12,
+  "completed": 7,
+  "total_bytes": 60792187586,
+  "downloaded_bytes": 3766248282,
+  "transfer": {
+    "status": "waiting_retry",
+    "source_path": "/宁波SoP项目/8月21号/DJI_001/DJI_20260821163911_0275_D.MP4",
+    "local_path": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\DJI_001\\DJI_20260821163911_0275_D.MP4",
+    "downloaded_bytes": 3124756480,
+    "expected_bytes": 4042591387,
+    "retry_seconds": 5,
+    "message": "百度分块地址正在刷新重试",
+    "updated_at": "2026-08-25 01:23:01"
+  },
+  "cvat_import": {
+    "items": {
+      "/宁波SoP项目/8月21号/上午DTU测试/10分07秒.mp4": {
+        "task_id": 3,
+        "task_name": "网盘原片｜8月21号 / 上午DTU测试 / 10分07秒.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\10分07秒.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\10分07秒.mp4",
+        "updated_at": "2026-08-24 20:59:55"
+      },
+      "/宁波SoP项目/8月21号/上午DTU测试/13分42秒.mp4": {
+        "task_id": 4,
+        "task_name": "网盘原片｜8月21号 / 上午DTU测试 / 13分42秒.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\13分42秒.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\13分42秒.mp4",
+        "updated_at": "2026-08-24 20:59:57"
+      },
+      "/宁波SoP项目/8月21号/上午DTU测试/3分37秒.mp4": {
+        "task_id": 5,
+        "task_name": "网盘原片｜8月21号 / 上午DTU测试 / 3分37秒.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\3分37秒.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\3分37秒.mp4",
+        "updated_at": "2026-08-24 20:59:57"
+      },
+      "/宁波SoP项目/8月21号/组装下午/组装主板/15分04秒.mp4": {
+        "task_id": 6,
+        "task_name": "网盘原片｜组装下午 / 组装主板 / 15分04秒.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\组装下午\\组装主板\\15分04秒.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\组装下午\\组装主板\\15分04秒.mp4",
+        "updated_at": "2026-08-24 20:59:58"
+      },
+      "/宁波SoP项目/8月21号/组装下午/组装主板/47分36秒.mp4": {
+        "task_id": 7,
+        "task_name": "网盘原片｜组装下午 / 组装主板 / 47分36秒.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\组装下午\\组装主板\\47分36秒.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\组装下午\\组装主板\\47分36秒.mp4",
+        "updated_at": "2026-08-24 21:09:59"
+      },
+      "/宁波SoP项目/8月21号/上午DTU测试/45分59秒.mp4": {
+        "task_id": 8,
+        "task_name": "网盘原片｜8月21号 / 上午DTU测试 / 45分59秒.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\45分59秒.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\上午DTU测试\\45分59秒.mp4",
+        "updated_at": "2026-08-24 21:16:03"
+      },
+      "/宁波SoP项目/8月21号/组装下午/烧录/1小时.mp4": {
+        "task_id": 9,
+        "task_name": "网盘原片｜组装下午 / 烧录 / 1小时.mp4",
+        "status": "已提交CVAT处理",
+        "video": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\组装下午\\烧录\\1小时.mp4",
+        "source": "D:\\NingboSOPData\\Baidu_20260819_21\\8月21号\\组装下午\\烧录\\1小时.mp4",
+        "updated_at": "2026-08-24 21:19:07"
+      }
+    },
+    "project_id": 2,
+    "project_name": "宁波SOP_网盘产线视频_20260819_21",
+    "updated_at": "2026-08-25 01:00:37",
+    "ready_originals": 7,
+    "total_originals": 12
+  },
+  "files": [
+    {
+      "source_path": "/宁波SoP项目/8月21号/DJI_001/DJI_20260821154244_0273_D.MP4",
+      "name": "DJI_20260821154244_0273_D.MP4",
+      "batch": "8月21号",
+      "station": "DJI_001",
+      "expected_bytes": 17187392482,
+      "downloaded_bytes": 0,
+      "status": "等待下载",
+      "ready": false
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/DJI_001/DJI_20260821161211_0274_D.MP4",
+      "name": "DJI_20260821161211_0274_D.MP4",
+      "batch": "8月21号",
+      "station": "DJI_001",
+      "expected_bytes": 17186180061,
+      "downloaded_bytes": 0,
+      "status": "等待下载",
+      "ready": false
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/DJI_001/DJI_20260821163911_0275_D.MP4",
+      "name": "DJI_20260821163911_0275_D.MP4",
+      "batch": "8月21号",
+      "station": "DJI_001",
+      "expected_bytes": 4042591387,
+      "downloaded_bytes": 3124756480,
+      "status": "下载中",
+      "ready": false
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/上午DTU测试/10分07秒.mp4",
+      "name": "10分07秒.mp4",
+      "batch": "8月21号",
+      "station": "上午DTU测试",
+      "expected_bytes": 39697066,
+      "downloaded_bytes": 39697066,
+      "status": "已入库",
+      "ready": true
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/上午DTU测试/13分42秒.mp4",
+      "name": "13分42秒.mp4",
+      "batch": "8月21号",
+      "station": "上午DTU测试",
+      "expected_bytes": 50074502,
+      "downloaded_bytes": 50074502,
+      "status": "已入库",
+      "ready": true
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/上午DTU测试/3分37秒.mp4",
+      "name": "3分37秒.mp4",
+      "batch": "8月21号",
+      "station": "上午DTU测试",
+      "expected_bytes": 13343275,
+      "downloaded_bytes": 13343275,
+      "status": "已入库",
+      "ready": true
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/上午DTU测试/45分59秒.mp4",
+      "name": "45分59秒.mp4",
+      "batch": "8月21号",
+      "station": "上午DTU测试",
+      "expected_bytes": 173526256,
+      "downloaded_bytes": 173526256,
+      "status": "已入库",
+      "ready": true
+    },
+    {
+      "source_path": "/宁波SoP项目/8月19号/波峰焊工位一/DJI_20260819145537_0264_D.MP4",
+      "name": "DJI_20260819145537_0264_D.MP4",
+      "batch": "8月19号",
+      "station": "波峰焊工位一",
+      "expected_bytes": 12227658531,
+      "downloaded_bytes": 0,
+      "status": "等待下载",
+      "ready": false
+    },
+    {
+      "source_path": "/宁波SoP项目/8月19号/波峰焊工位一/DJI_20260819151908_0265_D.MP4",
+      "name": "DJI_20260819151908_0265_D.MP4",
+      "batch": "8月19号",
+      "station": "波峰焊工位一",
+      "expected_bytes": 9506873323,
+      "downloaded_bytes": 0,
+      "status": "等待下载",
+      "ready": false
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/组装下午/烧录/1小时.mp4",
+      "name": "1小时.mp4",
+      "batch": "8月21号",
+      "station": "烧录",
+      "expected_bytes": 238671882,
+      "downloaded_bytes": 238671882,
+      "status": "已入库",
+      "ready": true
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/组装下午/组装主板/15分04秒.mp4",
+      "name": "15分04秒.mp4",
+      "batch": "8月21号",
+      "station": "组装主板",
+      "expected_bytes": 31105314,
+      "downloaded_bytes": 31105314,
+      "status": "已入库",
+      "ready": true
+    },
+    {
+      "source_path": "/宁波SoP项目/8月21号/组装下午/组装主板/47分36秒.mp4",
+      "name": "47分36秒.mp4",
+      "batch": "8月21号",
+      "station": "组装主板",
+      "expected_bytes": 95073507,
+      "downloaded_bytes": 95073507,
+      "status": "已入库",
+      "ready": true
+    }
+  ],
+  "published_at": "2026-08-25 01:23:51"
+}

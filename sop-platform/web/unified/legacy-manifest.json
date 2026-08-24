@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-08-24",
+  "policy": "V2 only adds a wrapper. The following legacy web files must remain byte-for-byte unchanged.",
+  "files": {
+    "web/index.html": "71784657551B3B5C7A9F29C9A94D19CE5613E4243932A9F1940EA0EC99438390",
+    "web/app.js": "3FFED80ACEA39F3957A6C2A40638CDD56A538425BD13534BE1CCF85C77A708CB",
+    "web/styles.css": "63FF4136D1DB5E60DFEA43336EE0B32C81CFF61233ADD4281C2673825BA72921"
+  }
+}

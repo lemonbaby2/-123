@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>宁波视觉SOP · 一体化工作台</title>
+  <link rel="stylesheet" href="./unified.css">
+</head>
+<body class="auth-pending">
+  <div class="login-shell" id="loginShell">
+    <section class="login-brand">
+      <div class="brand-mark">NB</div>
+      <p class="eyebrow">NINGBO VISION OPERATIONS</p>
+      <h1>从数据到现场闭环<br>一套工作台完成</h1>
+      <p class="lead">数据接入、清洗、标注、训练、验证、实时 SOP 与 MES 回传，共用同一账号和同一份中心数据。</p>
+      <div class="login-flow" aria-label="平台流程">
+        <span>数据</span><i></i><span>标注</span><i></i><span>模型</span><i></i><span>现场</span><i></i><span>MES</span>
+      </div>
+    </section>
+    <section class="login-card">
+      <div>
+        <p class="eyebrow">统一身份入口</p>
+        <h2>登录一体化工作台</h2>
+        <p class="muted">沿用现有 SOP 岗位账号，权限和历史数据不会改变。</p>
+      </div>
+      <form id="loginForm">
+        <label>账号<input id="username" name="username" autocomplete="username" required placeholder="请输入岗位账号"></label>
+        <label>密码<input id="password" name="password" type="password" autocomplete="current-password" required placeholder="请输入密码"></label>
+        <button id="loginButton" type="submit">进入工作台</button>
+        <p id="loginMessage" class="form-message">正在连接中心服务…</p>
+      </form>
+      <div class="login-foot"><span class="status-dot"></span>中心数据与操作日志统一保存</div>
+    </section>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <header class="topbar">
+      <div class="top-brand">
+        <div class="brand-mark small">NB</div>
+        <div><b>宁波视觉SOP</b><span>一体化智能分析决策端 V2</span></div>
+      </div>
+      <div class="top-status">
+        <span class="health-pill" id="sopHealth"><i></i>SOP 服务检测中</span>
+        <span class="health-pill" id="cvatHealth"><i></i>CVAT 检测中</span>
+      </div>
+      <div class="user-area">
+        <div><b id="displayName">—</b><span id="roleName">—</span></div>
+        <button class="ghost-button" id="logoutButton">退出</button>
+      </div>
+    </header>
+
+    <aside class="workflow">
+      <div class="workflow-title"><span>端到端工作流</span><b id="flowProgress">1 / 10</b></div>
+      <nav id="workflowNav">
+        <button class="flow-item active" data-step="overview" data-view="overview"><span>01</span><div><b>运营总览</b><small>产线、任务与质量状态</small></div></button>
+        <button class="flow-item" data-step="acquire" data-view="monitor"><span>02</span><div><b>数据接入</b><small>视频、相机与公开数据</small></div></button>
+        <button class="flow-item" data-step="clean" data-view="monitor"><span>03</span><div><b>清洗质检</b><small>抽帧、去重与可用性检查</small></div></button>
+        <button class="flow-item" data-step="prelabel" data-view="decision"><span>04</span><div><b>AI 预标注</b><small>三算法生成候选框</small></div></button>
+        <button class="flow-item" data-step="cvat" data-view="annotation"><span>05</span><div><b>CVAT 人工标注</b><small>复核、跟踪与版本同步</small></div></button>
+        <button class="flow-item" data-step="freeze" data-view="quality"><span>06</span><div><b>数据集冻结</b><small>划分、审计与版本归档</small></div></button>
+        <button class="flow-item" data-step="train" data-view="training"><span>07</span><div><b>模型训练</b><small>参数、GPU 与模型发布</small></div></button>
+        <button class="flow-item" data-step="validate" data-view="training"><span>08</span><div><b>推理验证</b><small>精度、速度与误检对比</small></div></button>
+        <button class="flow-item" data-step="realtime" data-view="mes"><span>09</span><div><b>实时 SOP</b><small>步骤判断与现场告警</small></div></button>
+        <button class="flow-item" data-step="mes" data-view="mes"><span>10</span><div><b>MES 闭环</b><small>结果回传与质量追溯</small></div></button>
+      </nav>
+      <div class="workflow-help">
+        <b>需要人工精标？</b>
+        <p>先在 SOP 创建/绑定任务，再进入官方 CVAT 编辑。</p>
+        <button id="openCvatButton">打开官方 CVAT</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <section class="workspace-head">
+        <div>
+          <p class="eyebrow" id="stageCode">STAGE 01</p>
+          <h1 id="stageTitle">运营总览</h1>
+          <p id="stageDescription">查看产线运行、模型、标注和闭环任务的总体状态。</p>
+        </div>
+        <div class="workspace-actions">
+          <button class="secondary-button" id="refreshButton">刷新当前页</button>
+          <button class="primary-button" id="nextButton">下一步</button>
+        </div>
+      </section>
+      <section class="stage-notice" id="stageNotice">
+        <span>操作提示</span><p id="stageTip">先确认服务和产线状态，再进入数据接入。</p>
+      </section>
+      <section class="legacy-frame-wrap">
+        <div class="frame-label"><span>现有成熟功能区（只读封装，不改旧页面源码）</span><button id="openLegacyButton">在浏览器新窗口打开</button></div>
+        <iframe id="legacyFrame" title="SOP 现有功能工作区" loading="eager"></iframe>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="./unified.js"></script>
+</body>
+</html>

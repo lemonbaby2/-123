@@ -6,7 +6,7 @@
   <meta name="description" content="面向汽车零部件车间的SOP自建、标注、训练、部署和MES追溯平台演示">
   <link rel="icon" href="data:,">
   <title>宁波零部件 SOP 分析平台</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260825-public-cvat">
 </head>
 <body class="auth-pending">
   <section class="login-screen" id="loginScreen" aria-labelledby="loginTitle">
@@ -20,6 +20,7 @@
       <label>账号<input id="loginUsername" name="username" autocomplete="username" required></label>
       <label>密码<input id="loginPassword" name="password" type="password" autocomplete="current-password" required></label>
       <button class="primary" id="loginButton" type="submit">登录</button>
+      <button class="login-link" id="forgotPasswordButton" type="button">忘记密码</button>
       <div class="login-message" id="loginMessage">开发者、管理者和普通员工使用各自账号登录。</div>
     </form>
   </section>
@@ -28,8 +29,33 @@
       <div class="brand-mark">S</div>
       <div><strong>宁波零部件 SOP 分析平台</strong><span>从录像到放行，一套平台闭环</span></div>
     </div>
-    <div class="top-status"><label class="line-switch-label role-manager">当前产线<select id="productionLineSelect" aria-label="选择产线识别模型"><option value="pcb">PCB贴片/焊接</option><option value="automotive">汽车零部件/固定件</option><option value="molding-coating">模塑/喷涂/胶水</option></select></label><button class="line-switch-button role-admin" id="applyLineModel">切换模型</button><span class="pulse"></span><span id="lineModelStatus">模型加载中</span><div class="user-menu"><b id="currentUserName">未登录</b><span id="currentUserRole">--</span><button id="logoutButton" title="退出登录">退出</button></div></div>
+    <div class="top-status"><label class="line-switch-label role-manager">当前产线<select id="productionLineSelect" aria-label="选择产线识别模型"><option value="pcb">PCB贴片/焊接</option><option value="automotive">汽车零部件/固定件</option><option value="molding-coating">模塑/喷涂/胶水</option></select></label><button class="line-switch-button role-admin" id="applyLineModel">切换模型</button><span class="pulse"></span><span id="lineModelStatus">模型加载中</span><div class="user-menu"><b id="currentUserName">未登录</b><span id="currentUserRole">--</span><button id="changePasswordButton" title="修改登录密码">修改密码</button><button id="logoutButton" title="退出登录">退出</button></div></div>
   </header>
+
+  <dialog class="account-dialog" id="forgotPasswordDialog">
+    <form method="dialog" id="forgotPasswordForm">
+      <header><div><span class="eyebrow">ACCOUNT RECOVERY</span><h2>忘记密码</h2></div><button class="dialog-close" type="button" data-close-dialog="forgotPasswordDialog" aria-label="关闭">×</button></header>
+      <p>输入岗位账号和管理员线下提供的恢复码。恢复码只保存在服务器私有配置中。</p>
+      <label>账号<input id="forgotUsername" autocomplete="username" required></label>
+      <label>管理员恢复码<input id="forgotRecoveryCode" type="password" autocomplete="one-time-code" required></label>
+      <label>新密码<input id="forgotNewPassword" type="password" autocomplete="new-password" minlength="6" required></label>
+      <label>确认新密码<input id="forgotConfirmPassword" type="password" autocomplete="new-password" minlength="6" required></label>
+      <div class="dialog-message" id="forgotPasswordMessage">密码至少 6 位；重置成功后原有会话全部失效。</div>
+      <footer><button class="ghost" type="button" data-close-dialog="forgotPasswordDialog">取消</button><button class="primary" id="forgotPasswordSubmit" type="submit">重置密码</button></footer>
+    </form>
+  </dialog>
+
+  <dialog class="account-dialog" id="changePasswordDialog">
+    <form method="dialog" id="changePasswordForm">
+      <header><div><span class="eyebrow">ACCOUNT SECURITY</span><h2>修改密码</h2></div><button class="dialog-close" type="button" data-close-dialog="changePasswordDialog" aria-label="关闭">×</button></header>
+      <p>修改后当前设备继续保持登录，其他设备上的会话会被安全退出。</p>
+      <label>当前密码<input id="currentPassword" type="password" autocomplete="current-password" required></label>
+      <label>新密码<input id="newPassword" type="password" autocomplete="new-password" minlength="6" required></label>
+      <label>确认新密码<input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="6" required></label>
+      <div class="dialog-message" id="changePasswordMessage">不要在工位显示器旁张贴生产账号密码。</div>
+      <footer><button class="ghost" type="button" data-close-dialog="changePasswordDialog">取消</button><button class="primary" id="changePasswordSubmit" type="submit">确认修改</button></footer>
+    </form>
+  </dialog>
 
   <div class="app-shell">
     <aside class="sidebar" aria-label="主导航">
@@ -70,6 +96,7 @@
         <div class="page-head monitor-head"><div><span class="eyebrow">INGEST / QC</span><h1>数据获取与清洗</h1><p>统一接入 RTSP/UVC、Pocket 3/SD 卡、Google Drive 和本地历史视频，先校验、去重，再进入预标。</p></div><span class="badge green">原片只存一次</span></div>
         <article class="card ingest-card"><div class="card-title"><div><span class="eyebrow">SOURCE REGISTRY</span><h2>采集来源与只读介质导入</h2></div><button class="ghost" id="refreshMediaSources">重新盘点</button></div><div class="ingest-status-grid"><div><b>UVC / RTSP</b><span id="ingestCameraStatus">正在读取设备</span></div><div><b>Pocket 3 / SD</b><span id="ingestMediaStatus">正在读取挂载介质</span></div><div><b>Google Drive 17:00</b><span id="dailyDriveStatus">等待 OAuth 状态</span></div><div><b>入库规则</b><span>ffprobe · SHA256 · 去重 · H.264代理</span></div></div><div id="removableMediaRows" class="removable-media-list"><span class="device-empty">正在盘点可移动介质…</span></div><p class="quality-copy">Pocket 3 当前若只显示为存储卷，则只能只读导入视频；切换为官方 UVC/Webcam 模式并出现 /dev/video* 后，才能用于实时检测。平台不会向相机或 SD 卡写入脚本。</p></article>
         <article class="card cloud-sync-card"><div class="card-title"><div><span class="eyebrow">DAILY VIDEO SYNC</span><h2>每日 17:00 Google Drive 增量抓取</h2></div><button class="ghost role-manager" id="refreshCloudStatus">刷新状态</button></div><div class="cloud-source-grid"><div><b>Google Drive 来源</b><span>OAuth/rclone 增量拉取</span><div><a class="ghost" id="openGoogleSource" href="#" target="_blank" rel="noreferrer" aria-disabled="true">打开来源</a><button class="primary role-manager" id="pullGoogleVideos">立即加载</button></div></div><div><b>百度网盘来源</b><span>可选同步适配器</span><div><a class="ghost" id="openBaiduSource" href="#" target="_blank" rel="noreferrer" aria-disabled="true">打开来源</a><button class="ghost role-manager" id="pullBaiduVideos">加载新增视频</button></div></div><div><b>标注审阅成片</b><span>只用于复核，不作为训练标签</span><div><button class="ghost" id="renderAnnotationVideoOverview">生成审阅成片</button><button class="primary role-manager" id="pushGoogleAnnotations">上传结果</button></div></div></div><div class="cloud-sync-state"><b id="cloudSyncStatus">正在检查网盘适配器</b><span id="cloudSyncDetail">账号凭据不会写入网页或源码。</span></div></article>
+        <article class="card baidu-project-card" id="baiduProjectCard"><div class="card-title"><div><span class="eyebrow">BAIDU PROJECT INGEST</span><h2>8月19日 / 8月21日车间视频入库</h2></div><span class="badge" id="baiduProjectBadge">正在读取</span></div><div class="baidu-project-summary"><div><b id="baiduProjectCount">0 / 12</b><span>原始 MP4 已完成</span></div><div><b id="baiduProjectBytes">0 B</b><span>已下载 / 总量</span></div><div><b id="baiduProjectCurrent">等待同步</b><span>当前传输任务</span></div><div><b id="baiduCvatProject">待建立</b><span>CVAT Project</span></div></div><div class="baidu-project-progress"><i id="baiduProjectProgress"></i></div><div class="baidu-video-list" id="baiduVideoRows"><span class="device-empty">正在读取网盘清单…</span></div><p class="quality-copy">原片只保存在 D 盘一次；SOP 通过受控媒体路由读取，CVAT 按“一个来源视频一个任务”建立标注任务。所有 AI 预框均须由标注员复核后才能冻结为训练真值。</p></article>
         <div class="video-switcher" id="videoSwitcher"></div>
         <div class="monitor-grid">
           <article class="video-card">
@@ -166,6 +193,7 @@
       <section class="view" id="view-annotation">
         <div class="page-head"><div><span class="eyebrow">CVAT REVIEW LOOP</span><h1>CVAT 人工复核与双向同步</h1><p>AI 框进入 CVAT 后可删除、移动、缩放、改类别、补框和修 Track；Reviewer 通过后才允许构建正式数据集。</p></div><div class="page-actions"><a class="ghost" id="openCvat" href="http://127.0.0.1:8081/tasks" target="_blank" rel="noreferrer">打开 CVAT</a><button class="ghost" id="saveAnnotation">保存当前区域</button><button class="primary" id="saveAnnotationProgress">保存全部进度</button></div></div>
         <article class="card station-scope-card"><div class="card-title"><div><span class="eyebrow">FIXED STATION SCOPE</span><h2>固定工位标注口径</h2></div><span class="badge green" id="scopeStatus">读取中</span></div><div class="scope-form"><label>工位名称<input id="scopeStationName"></label><label>岗位流程<select id="scopeStationType"><option value="test">测试岗位</option><option value="programming">烧录岗位</option><option value="assembly">组装岗位</option><option value="fastening">打螺丝岗位</option></select></label><label>质量判定目标<input id="scopeQualityGoal"></label><label>物料 A<input id="scopeMaterialA"></label><label>物料 B<input id="scopeMaterialB"></label><label class="scope-check"><input type="checkbox" id="scopeDistinguish"> 两种插件会影响工艺判定，标成不同类别</label><button class="primary role-manager" id="saveAnnotationScope">保存标注口径</button></div><div class="scope-summary"><div><b>当前流程核对</b><span id="scopeVerificationPoints">加载中</span></div><div><b>必须标注</b><span id="scopeRequiredLabels">加载中</span></div><div><b>当前阶段不核对</b><span id="scopeExcludedLabels">加载中</span></div><p id="scopePolicy">只标注能支撑本工位质量判定的目标。</p></div></article>
+        <article class="card cvat-label-manager"><div class="card-title"><div><span class="eyebrow">CUSTOM LABEL CATALOG</span><h2>CVAT 自定义标签与数据字段</h2><p>新增标签会直接写入当前共享 Project；现有任务随项目共用标签目录。系统自动附带 SOP步骤、质量结论和物料编码字段。</p></div><a class="badge green" id="openCvatProject" href="#" target="_blank" rel="noreferrer">共享项目</a></div><div class="cvat-label-form"><label>新标签名称<input id="customCvatLabelName" maxlength="64" placeholder="例如：连接器、螺丝刀、标签纸"></label><label>标注形状<select id="customCvatLabelType"><option value="rectangle">矩形框</option><option value="polygon">多边形</option><option value="polyline">折线</option><option value="points">关键点</option><option value="tag">整帧标签</option><option value="any">不限形状</option></select></label><label>标签颜色<input id="customCvatLabelColor" type="color" value="#1f77b4"></label><label>额外字段<input id="customCvatAttributes" placeholder="逗号分隔，如：工位编号,批次号"></label><button class="primary role-manager" id="addCustomCvatLabel">同步到 CVAT</button></div><div class="cvat-label-list" id="cvatProjectLabelList"><span>正在读取共享标签目录…</span></div><p class="quality-copy" id="cvatLabelStatus">所有标注员使用同一 Project 标签目录，标签变更保留操作者审计记录。</p></article>
         <div class="annotation-workflow" aria-label="关键帧标注操作步骤"><div><b>1</b><span>播放或跳到起始帧</span></div><i>→</i><div><b>2</b><span>画框并设为起始关键帧</span></div><i>→</i><div><b>3</b><span>跳到后续帧，可选校正结束框</span></div><i>→</i><div><b>4</b><span>自动跟踪生成中间框</span></div><i>→</i><div><b>5</b><span>逐段复核并保存</span></div></div>
         <article class="card export-center"><div><span class="eyebrow">LOCAL EXPORT</span><h2>客户可选的三种标注交付</h2><p>轻量包只含坐标、审核记录与 Manifest，推荐用于训练交接；全帧 JPEG 包和完整带框 MP4 按需异步生成。全帧图片会比原 MP4 大，系统采用 JPEG 质量 82 和最大 1280 宽度控制容量。</p><small id="annotationExportStatus">选择当前视频后即可生成，导出不会修改原始视频。</small></div><div class="export-actions"><a class="primary" href="/api/annotations/package?status=human_confirmed" download>下载轻量标注 ZIP</a><button class="ghost role-manager" id="exportAnnotatedFrames">生成全帧图片 ZIP</button><button class="ghost role-manager" id="renderAnnotationVideo">生成完整带框 MP4</button><a class="ghost" href="/api/annotations/export?status=human_confirmed&format=csv" download>坐标 CSV</a><a class="ghost" href="/api/annotations/export?status=human_confirmed" download>坐标 JSON</a></div></article>
         <article class="card cvat-handoff-card"><div class="card-title"><div><span class="eyebrow">CVAT FULL VIDEO</span><h2>当前整段视频创建标注任务</h2></div><span class="badge" id="cvatStatus">正在检查 CVAT</span></div><nav class="cvat-cn-nav" aria-label="CVAT 中文功能导航"><a class="ghost" data-cvat-route="/projects" target="_blank" rel="noreferrer">项目</a><a class="ghost" data-cvat-route="/tasks" target="_blank" rel="noreferrer">任务</a><a class="ghost" data-cvat-route="/jobs" target="_blank" rel="noreferrer">作业</a><a class="ghost" data-cvat-route="/cloudstorages" target="_blank" rel="noreferrer">云存储</a><a class="ghost" data-cvat-route="/models" target="_blank" rel="noreferrer">自动标注模型</a><a class="ghost" data-cvat-route="/webhooks" target="_blank" rel="noreferrer">Webhook</a><a class="ghost" data-cvat-route="/organization" target="_blank" rel="noreferrer">组织</a><a class="ghost" data-cvat-route="/invitations" target="_blank" rel="noreferrer">邀请</a><a class="ghost" data-cvat-route="/api/swagger" target="_blank" rel="noreferrer">API</a></nav><div class="cvat-video-source"><b id="cvatSelectedVideo">正在读取当前视频</b><span>任务创建后上传整段网页代理视频，可在 CVAT 中播放、关键帧画框、插值和跟踪。</span></div><div class="cvat-handoff-grid"><label>任务名称<input id="cvatTaskName" value="宁波SOP整段视频-自动候选人工复核"></label><label>产线数据集<select id="cvatDatasetSelect"><option value="pcb-components">PCB、物料和操作行为</option></select></label><button class="primary" id="createCvatTask">创建并上传整段视频</button></div><p class="quality-copy" id="cvatMessage">正在连接本机官方 CVAT；任务和视频上传状态会保留在下方记录中。</p><div class="cvat-task-history"><div class="history-head"><b>CVAT 任务记录</b><button class="ghost" id="refreshCvatTasks">刷新任务</button></div><div id="cvatTaskRows" class="history-rows"><span>正在读取任务…</span></div></div></article>
@@ -276,6 +304,6 @@
       </section>
     </main>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260825-public-cvat"></script>
 </body>
 </html>
