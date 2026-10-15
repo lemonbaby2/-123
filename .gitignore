@@ -14,6 +14,8 @@ ros2_ws/log/
 *.onnx
 *.pt
 *.pth
+!datawhale_microduck/task1/artifacts/basketball/policy.onnx
+!datawhale_microduck/task1/artifacts/basketball/checkpoint.pt
 *.pcd
 *.ply
 !projects/05_ros2_3dgs/data/sample_gaussians.ply
