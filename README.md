@@ -17,6 +17,10 @@
 
 [Task1 篮球平衡与 Task2 浏览器物理扰动的笔记、课程 Notebook、复现说明及结果](datawhale_microduck/README.md)已单独归档。它们是学习记录，不属于下方八个简历项目的实机成绩；第三方模型与素材保留独立来源和许可说明。
 
+## Datawhale Hello-Robot 组队学习
+
+[Hello-Robot Task1–Task5 的学习笔记、离线算法验证、结果图与前沿算法总结](hello_robot_tasks/README.md)保存在独立的 `hello-robot-tasks` 分支。结果严格区分本机纯 NumPy 实测、官方课程参考素材，以及需要 Isaac Sim、ROS 2 或大模型权重才能完成的部分。
+
 ## 项目导航
 
 | 项目 | 独立交付内容 | 可直接验证 | 生产/实机部分的边界 |
