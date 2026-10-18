@@ -262,6 +262,36 @@ def task3(output: Path) -> dict:
     trajectory = arm_optimizer.time_parameterize(optimized)
     assert checker.path_is_valid(optimized)
     assert all(b.time_from_start > a.time_from_start for a,b in zip(trajectory, trajectory[1:]))
+    # Render the computed trajectories, with an explicit offline label on every frame.
+    from PIL import Image, ImageDraw
+    frames = []
+    def base_pixel(p):
+        return (int(35+(p.x+4.75)*46), int(465-(p.y+4.75)*46))
+    def arm_pixel(p):
+        return (int(750+p[2]*240), int(130+p[1]*290))
+    for frame_index in range(90):
+        im = Image.new('RGB', (1100,540), '#f5f4ed')
+        draw = ImageDraw.Draw(im)
+        draw.text((25,15),'G2 / computed navigation + arm trajectories', fill='#203a34')
+        draw.text((25,510),'OFFLINE NUMERICAL VISUALIZATION | No Isaac Sim physics or controller tracking',fill='#9d3025')
+        draw.rectangle((35,28,472,465), outline='#203a34',width=2)
+        draw.line([base_pixel(p) for p in global_path],fill='#88a77e',width=4)
+        bp=base_pixel(global_path[round(frame_index/89*(len(global_path)-1))])
+        draw.ellipse((bp[0]-7,bp[1]-7,bp[0]+7,bp[1]+7),fill='#203a34')
+        qframe=trajectory[round(frame_index/89*(len(trajectory)-1))].positions
+        points=[arm_pixel(p) for p in model.link_points(qframe)]
+        draw.line(points,fill='#203a34',width=8)
+        for x,y in points:
+            draw.ellipse((x-5,y-5,x+5,y+5),fill='#89ad57')
+        draw.text((540,45), '7-DoF arm / side projection',fill='#203a34')
+        draw.text((540,470), f'Planned duration: {trajectory[-1].time_from_start:.3f}s; playback progress: {frame_index/89:.0%}',fill='#203a34')
+        frames.append(im)
+    gif_path = output / 'task3_trajectory_playback.gif'
+    frames[0].save(gif_path,save_all=True,append_images=frames[1:],duration=66,loop=0)
+    import shutil
+    ffmpeg = shutil.which('ffmpeg')
+    if ffmpeg:
+        subprocess.run([ffmpeg,'-y','-i',str(gif_path),'-movflags','+faststart','-pix_fmt','yuv420p',str(output/'task3_trajectory_playback.mp4')],check=True,capture_output=True)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     extent = [base_map.origin_x, base_map.max_x, base_map.origin_y, base_map.max_y]

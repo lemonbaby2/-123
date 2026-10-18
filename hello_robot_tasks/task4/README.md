@@ -8,6 +8,8 @@ VLM 将图像和文本映射到语义描述、问答或高层任务计划；它�
 
 ## 本机可重复的离线验证
 
+更新：合成回合的 `success` 统一为 `false`，总报告使用 `physical_success_evaluated=false` 表明未做物理成功评估；prompt 顺序通过单独的 `prompt_sequence_complete` 字段记录。合成数据不能作为抓取成功样本。
+
 脚本实际运行了官方 `TaskIntent` 与 `EpisodeRecorder`：依次生成 red、green、blue 三条 pick-and-place prompt；每回合写入三路图像、16 维状态与16 维动作，共 3 个 NPZ、每个 6 帧，并生成 manifest。验证结果见 [`task4_dry_run/manifest.json`](../artifacts/task4_dry_run/manifest.json) 和总报告的 `task4` 字段。
 
 这验证了提示词分解、数据维度和落盘流程，但不包含 π0.5 权重，也不是策略成功率。
