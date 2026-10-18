@@ -234,6 +234,10 @@ def task3(output: Path) -> dict:
     local = LocalPlanner(inflated, dynamic_padding=0.44).plan(
         global_path[max(0, len(global_path) // 2 - 10)], global_path, [dynamic]
     )
+    assert inflated.path_is_free(global_path), 'Global optimized path collides'
+    local_check = inflated.copy()
+    local_check.add_circles([dynamic], padding=0.44)
+    assert not local.blocked and local_check.path_is_free(local.path), 'Local path is unsafe or blocked'
 
     model = G2PlanningModel()
     ik = model.inverse(PRE_GRASP_POSITION, HOME_JOINT_POSITIONS)
@@ -243,17 +247,51 @@ def task3(output: Path) -> dict:
     checker = ArmCollisionChecker(model, obstacles, PlannerConfig(random_seed=11))
     planner = RRTConnectPlanner(checker, PlannerConfig(random_seed=11))
     arm_plan = planner.plan(HOME_JOINT_POSITIONS, ik.joint_positions)
+    collision_scope = 'robot_body_and_scene'
     if not arm_plan.success:
         # Match the tutorial's early pure-NumPy check: the first leg plans against
         # the robot body; perceived scene obstacles are added later in Isaac Sim.
         checker = ArmCollisionChecker(model, [ROBOT_BODY_BOX], PlannerConfig(random_seed=11))
         planner = RRTConnectPlanner(checker, PlannerConfig(random_seed=11))
         arm_plan = planner.plan(HOME_JOINT_POSITIONS, ik.joint_positions)
+        collision_scope = 'robot_body_only_after_scene_plan_failed'
     if not arm_plan.success:
         raise RuntimeError(arm_plan.message)
     arm_optimizer = ArmTrajectoryOptimizer(checker)
     optimized = arm_optimizer.optimize(arm_plan.path)
     trajectory = arm_optimizer.time_parameterize(optimized)
+    assert checker.path_is_valid(optimized)
+    assert all(b.time_from_start > a.time_from_start for a,b in zip(trajectory, trajectory[1:]))
+    # Render the computed trajectories, with an explicit offline label on every frame.
+    from PIL import Image, ImageDraw
+    frames = []
+    def base_pixel(p):
+        return (int(35+(p.x+4.75)*46), int(465-(p.y+4.75)*46))
+    def arm_pixel(p):
+        return (int(750+p[2]*240), int(130+p[1]*290))
+    for frame_index in range(90):
+        im = Image.new('RGB', (1100,540), '#f5f4ed')
+        draw = ImageDraw.Draw(im)
+        draw.text((25,15),'G2 / computed navigation + arm trajectories', fill='#203a34')
+        draw.text((25,510),'OFFLINE NUMERICAL VISUALIZATION | No Isaac Sim physics or controller tracking',fill='#9d3025')
+        draw.rectangle((35,28,472,465), outline='#203a34',width=2)
+        draw.line([base_pixel(p) for p in global_path],fill='#88a77e',width=4)
+        bp=base_pixel(global_path[round(frame_index/89*(len(global_path)-1))])
+        draw.ellipse((bp[0]-7,bp[1]-7,bp[0]+7,bp[1]+7),fill='#203a34')
+        qframe=trajectory[round(frame_index/89*(len(trajectory)-1))].positions
+        points=[arm_pixel(p) for p in model.link_points(qframe)]
+        draw.line(points,fill='#203a34',width=8)
+        for x,y in points:
+            draw.ellipse((x-5,y-5,x+5,y+5),fill='#89ad57')
+        draw.text((540,45), '7-DoF arm / side projection',fill='#203a34')
+        draw.text((540,470), f'Planned duration: {trajectory[-1].time_from_start:.3f}s; playback progress: {frame_index/89:.0%}',fill='#203a34')
+        frames.append(im)
+    gif_path = output / 'task3_trajectory_playback.gif'
+    frames[0].save(gif_path,save_all=True,append_images=frames[1:],duration=66,loop=0)
+    import shutil
+    ffmpeg = shutil.which('ffmpeg')
+    if ffmpeg:
+        subprocess.run([ffmpeg,'-y','-i',str(gif_path),'-movflags','+faststart','-pix_fmt','yuv420p',str(output/'task3_trajectory_playback.mp4')],check=True,capture_output=True)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     extent = [base_map.origin_x, base_map.max_x, base_map.origin_y, base_map.max_y]
@@ -281,7 +319,7 @@ def task3(output: Path) -> dict:
     axes[1].set_ylabel("joint angle / deg")
     axes[1].grid(alpha=0.3)
     axes[1].legend(ncol=2, fontsize=8)
-    fig.suptitle("Hello-Robot Task3 — RViz-equivalent offline planning evidence")
+    fig.suptitle("Hello-Robot Task3 — offline algorithms (not RViz / Isaac Sim)")
     fig.tight_layout()
     fig.savefig(output / "task3_planning_result.png", dpi=180)
     plt.close(fig)
@@ -297,6 +335,9 @@ def task3(output: Path) -> dict:
             "local_blocked": local.blocked,
         },
         "arm": {
+            "collision_scope": collision_scope,
+            "optimized_path_collision_free": True,
+            "trajectory_time_strictly_increasing": True,
             "ik_success": bool(ik.success),
             "ik_error_m": float(ik.position_error),
             "rrt_success": arm_plan.success,
@@ -332,7 +373,8 @@ def task4(output: Path) -> dict:
             state = rng.normal(0, 0.05, 16).astype(np.float32)
             action = np.tanh(state + 0.02).astype(np.float32)
             recorder.record(images, state, action)
-        recorder.save(success=True, overwrite=True)
+        # Synthetic records do not establish physical task success.
+        recorder.save(success=False, overwrite=True)
         completed.add(color)
     update_manifest(task_dir)
     manifest = json.loads((task_dir / "manifest.json").read_text(encoding="utf-8"))
@@ -371,7 +413,8 @@ def task4(output: Path) -> dict:
         "full_prompt": intent.full_prompt,
         "episode_prompts": prompts,
         "episodes": manifest["episodes"],
-        "complete": intent.is_complete(completed),
+        "prompt_sequence_complete": intent.is_complete(completed),
+        "physical_success_evaluated": False,
         "dry_run_gif": gif_path.name,
     }
 

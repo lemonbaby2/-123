@@ -1,5 +1,7 @@
 # 李梓鹏｜具身智能、机器人系统与边缘 AI 作品集
 
+**公开学习网站：[Embodied Lab · 具身学习实验室](https://lemonbaby2.github.io/-123/)**。汇总 MicroDuck 与 Hello-Robot 七项任务、笔记、视频，以及浏览器仿真和运动学实验。
+
 [![CI](https://github.com/lemonbaby2/-123/actions/workflows/ci.yml/badge.svg)](https://github.com/lemonbaby2/-123/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)](https://isocpp.org/)

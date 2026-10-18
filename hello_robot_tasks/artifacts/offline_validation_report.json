@@ -157,6 +157,9 @@
       "local_blocked": false
     },
     "arm": {
+      "collision_scope": "robot_body_and_scene",
+      "optimized_path_collision_free": true,
+      "trajectory_time_strictly_increasing": true,
       "ik_success": true,
       "ik_error_m": 0.0009820897122314507,
       "rrt_success": true,
@@ -181,25 +184,26 @@
         "file": "episode_0000.npz",
         "frames": 6,
         "target_color": "red",
-        "success": true,
+        "success": false,
         "prompt": "Pick up the red block and place it into the empty box."
       },
       {
         "file": "episode_0001.npz",
         "frames": 6,
         "target_color": "green",
-        "success": true,
+        "success": false,
         "prompt": "Pick up the green block and place it into the empty box."
       },
       {
         "file": "episode_0002.npz",
         "frames": 6,
         "target_color": "blue",
-        "success": true,
+        "success": false,
         "prompt": "Pick up the blue block and place it into the empty box."
       }
     ],
-    "complete": true,
+    "prompt_sequence_complete": true,
+    "physical_success_evaluated": false,
     "dry_run_gif": "task4_pipeline_dry_run.gif"
   }
 }

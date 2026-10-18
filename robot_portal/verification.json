@@ -1,0 +1,9 @@
+{
+  "website": "https://lemonbaby2.github.io/-123/",
+  "hosting": "GitHub Pages, gh-pages branch",
+  "tasks": 7,
+  "offline_validation": "passed with collision and trajectory-time assertions",
+  "browser_interaction_qa": "not run: browser control connection unavailable",
+  "simulation_runtime_qa": "not verified on public deployment; static resources checked via HTTPS",
+  "notes": "Two existing physics recordings and one new computed-trajectory playback. Full Hello-Robot Isaac Sim/VLA tasks remain incomplete."
+}
