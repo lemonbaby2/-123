@@ -1,0 +1,2551 @@
+{
+  "format": 5,
+  "version": "0.11.9",
+  "uses_custom_js": false,
+  "viewer_gui": [
+    {
+      "type": "folder",
+      "label": "Scene",
+      "children": [
+        {
+          "type": "folder",
+          "label": "Camera",
+          "children": [
+            {
+              "type": "checkbox",
+              "label": "Track camera",
+              "default": true,
+              "hint": "Keep tracked body centered."
+            },
+            {
+              "type": "slider",
+              "label": "FOV (\u00b0)",
+              "default": 60,
+              "min": 20,
+              "max": 150,
+              "step": 1,
+              "hint": "Vertical FOV in degrees."
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "label": "Debug Viz",
+          "children": [
+            {
+              "type": "checkbox",
+              "label": "Enabled",
+              "default": true,
+              "hint": "Show debug arrows and ghost meshes."
+            },
+            {
+              "type": "checkbox",
+              "label": "All envs",
+              "default": false,
+              "hint": "Show debug visualization for all environments."
+            },
+            {
+              "type": "slot",
+              "name": "debug_vis"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "microduck",
+      "name": "Microduck",
+      "scenes": [
+        {
+          "id": "duck",
+          "name": "Duck",
+          "scene": "scene.mjz",
+          "control_dt": 0.02,
+          "camera": {
+            "lookat": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "distance": 0.8,
+            "elevation": -12.0,
+            "azimuth": 40.0,
+            "origin_type": "ASSET_BODY",
+            "enable_reflections": true,
+            "enable_shadows": true,
+            "height": 240,
+            "width": 320,
+            "fovy": 45.0,
+            "body_name": "trunk_base"
+          },
+          "mdps": [
+            {
+              "id": "walk",
+              "commands": {
+                "twist": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "lin_vel_x",
+                        "label": "Forward (m/s)",
+                        "min": -0.4,
+                        "max": 0.4,
+                        "step": 0.02,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "lin_vel_y",
+                        "label": "Sideways (m/s)",
+                        "min": -0.3,
+                        "max": 0.3,
+                        "step": 0.015,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "ang_vel_z",
+                        "label": "Turn (rad/s)",
+                        "min": -1.0,
+                        "max": 1.0,
+                        "step": 0.05,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                },
+                "head_pose": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "neck_pitch",
+                        "label": "Neck Pitch",
+                        "min": -1.1,
+                        "max": 1.1,
+                        "step": 0.055,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_pitch",
+                        "label": "Head Pitch",
+                        "min": -1.1,
+                        "max": 1.1,
+                        "step": 0.055,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_yaw",
+                        "label": "Head Yaw",
+                        "min": -1.4,
+                        "max": 1.4,
+                        "step": 0.07,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_roll",
+                        "label": "Head Roll",
+                        "min": -0.31,
+                        "max": 0.31,
+                        "step": 0.0155,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                }
+              },
+              "observations": {
+                "actor": {
+                  "fused": "mdp/walk/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "command": "head_pose",
+                      "field": "command",
+                      "input": "command__head_pose_command",
+                      "shape": [
+                        1,
+                        4
+                      ]
+                    },
+                    {
+                      "command": "twist",
+                      "field": "command",
+                      "input": "command__twist_command",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "twist"
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "head_pose"
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              },
+              "terminations": {
+                "fell_over": {
+                  "name": "fell_over",
+                  "onnx": "mdp/walk/term/fell_over.onnx",
+                  "input_slots": [
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "func": "mjlab.envs.mdp.terminations:bad_orientation",
+                  "doc": "Terminate when the asset's orientation exceeds the limit angle.",
+                  "params": {
+                    "limit_angle": 1.2217304763960306
+                  }
+                }
+              }
+            },
+            {
+              "id": "stand_pose",
+              "commands": {
+                "head_pose": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "neck_pitch",
+                        "label": "Neck Pitch",
+                        "min": -1.1,
+                        "max": 1.1,
+                        "step": 0.055,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_pitch",
+                        "label": "Head Pitch",
+                        "min": -1.1,
+                        "max": 1.1,
+                        "step": 0.055,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_yaw",
+                        "label": "Head Yaw",
+                        "min": -1.4,
+                        "max": 1.4,
+                        "step": 0.07,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_roll",
+                        "label": "Head Roll",
+                        "min": -0.31,
+                        "max": 0.31,
+                        "step": 0.0155,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                },
+                "body_pose": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "z",
+                        "label": "Trunk Height (m)",
+                        "min": -0.04,
+                        "max": 0.03,
+                        "step": 0.0018,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "roll",
+                        "label": "Trunk Roll (rad)",
+                        "min": -0.2617993877991494,
+                        "max": 0.2617993877991494,
+                        "step": 0.0131,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "pitch",
+                        "label": "Trunk Pitch (rad)",
+                        "min": -0.2617993877991494,
+                        "max": 0.2617993877991494,
+                        "step": 0.0131,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                }
+              },
+              "observations": {
+                "actor": {
+                  "fused": "mdp/stand_pose/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "command": "body_pose",
+                      "field": "command",
+                      "input": "command__body_pose_command",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "command": "head_pose",
+                      "field": "command",
+                      "input": "command__head_pose_command",
+                      "shape": [
+                        1,
+                        4
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 3
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "head_pose"
+                      }
+                    },
+                    {
+                      "name": "body_xy",
+                      "size": 2,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 2
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "body_pose"
+                      }
+                    },
+                    {
+                      "name": "body_yaw",
+                      "size": 1,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 1
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              }
+            },
+            {
+              "id": "sit_stand",
+              "commands": {
+                "posture": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "checkbox",
+                        "name": "sit",
+                        "label": "Sit",
+                        "default": false
+                      }
+                    ]
+                  }
+                },
+                "head_pose": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "neck_pitch",
+                        "label": "Neck Pitch",
+                        "min": -1.1,
+                        "max": 1.1,
+                        "step": 0.055,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_pitch",
+                        "label": "Head Pitch",
+                        "min": -1.1,
+                        "max": 1.1,
+                        "step": 0.055,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_yaw",
+                        "label": "Head Yaw",
+                        "min": -1.4,
+                        "max": 1.4,
+                        "step": 0.07,
+                        "default": 0.0
+                      },
+                      {
+                        "type": "slider",
+                        "name": "head_roll",
+                        "label": "Head Roll",
+                        "min": -0.31,
+                        "max": 0.31,
+                        "step": 0.0155,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                }
+              },
+              "observations": {
+                "actor": {
+                  "fused": "mdp/sit_stand/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "command": "head_pose",
+                      "field": "command",
+                      "input": "command__head_pose_command",
+                      "shape": [
+                        1,
+                        4
+                      ]
+                    },
+                    {
+                      "command": "posture",
+                      "field": "command",
+                      "input": "command__posture_command",
+                      "shape": [
+                        1,
+                        1
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "posture",
+                      "size": 1,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "posture"
+                      }
+                    },
+                    {
+                      "name": "twist_pad",
+                      "size": 2,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 2
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "head_pose"
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              }
+            },
+            {
+              "id": "ground_pick",
+              "commands": {
+                "twist": {
+                  "name": "OnnxCommand",
+                  "term_id": "twist",
+                  "onnx": "mdp/ground_pick/command/twist.onnx",
+                  "command_field": "phase_cmd",
+                  "rand_dim": 0,
+                  "rand_ranges": [],
+                  "state_fields": [
+                    {
+                      "name": "step_count",
+                      "shape": [
+                        1,
+                        1
+                      ],
+                      "dtype": "float32",
+                      "init": [
+                        0.0
+                      ]
+                    },
+                    {
+                      "name": "phase_cmd",
+                      "shape": [
+                        1,
+                        3
+                      ],
+                      "dtype": "float32",
+                      "init": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ]
+                    }
+                  ],
+                  "input_slots": [],
+                  "write_targets": [],
+                  "debug_vis": false,
+                  "resampling_time_range": [
+                    1000000000.0,
+                    1000000000.0
+                  ],
+                  "func": "mjswan_playground.microduck.terms:GroundPickPhaseCommand",
+                  "doc": "``phase`` as a count of whole steps over the cycle length, not a running sum."
+                }
+              },
+              "observations": {
+                "actor": {
+                  "fused": "mdp/ground_pick/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "command": "twist",
+                      "field": "command",
+                      "input": "command__twist_command",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "twist"
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 4
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              },
+              "terminations": {
+                "fell_over": {
+                  "name": "fell_over",
+                  "onnx": "mdp/ground_pick/term/fell_over.onnx",
+                  "input_slots": [
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "func": "mjlab.envs.mdp.terminations:bad_orientation",
+                  "doc": "Terminate when the asset's orientation exceeds the limit angle.",
+                  "params": {
+                    "limit_angle": 1.2217304763960306
+                  }
+                }
+              }
+            },
+            {
+              "id": "roulade",
+              "observations": {
+                "actor": {
+                  "fused": "mdp/roulade/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 3
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 4
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              }
+            }
+          ],
+          "policies": [
+            {
+              "id": "walk",
+              "name": "Walk",
+              "mdp": "walk",
+              "onnx": "policy/walk.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            },
+            {
+              "id": "stand_pose",
+              "name": "Stand & Pose",
+              "mdp": "stand_pose",
+              "onnx": "policy/stand_pose.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            },
+            {
+              "id": "sit_stand",
+              "name": "Sit / Stand",
+              "mdp": "sit_stand",
+              "onnx": "policy/sit_stand.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            },
+            {
+              "id": "ground_pick",
+              "name": "Ground Pick",
+              "mdp": "ground_pick",
+              "onnx": "policy/ground_pick.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            },
+            {
+              "id": "roulade",
+              "name": "Roulade",
+              "mdp": "roulade",
+              "onnx": "policy/roulade.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ball_right_foot",
+          "name": "Ball (right foot)",
+          "scene": "scene.mjz",
+          "control_dt": 0.02,
+          "camera": {
+            "lookat": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "distance": 0.8,
+            "elevation": -12.0,
+            "azimuth": 40.0,
+            "origin_type": "ASSET_BODY",
+            "enable_reflections": true,
+            "enable_shadows": true,
+            "height": 240,
+            "width": 320,
+            "fovy": 45.0,
+            "body_name": "trunk_base"
+          },
+          "mdps": [
+            {
+              "id": "kick",
+              "observations": {
+                "actor": {
+                  "fused": "mdp/kick/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 3
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 4
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              },
+              "terminations": {
+                "fell_over": {
+                  "name": "fell_over",
+                  "onnx": "mdp/kick/term/fell_over.onnx",
+                  "input_slots": [
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "func": "mjlab.envs.mdp.terminations:bad_orientation",
+                  "doc": "Terminate when the asset's orientation exceeds the limit angle.",
+                  "params": {
+                    "limit_angle": 1.2217304763960306
+                  }
+                }
+              }
+            }
+          ],
+          "policies": [
+            {
+              "id": "kick",
+              "name": "Kick",
+              "mdp": "kick",
+              "onnx": "policy/kick.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ball_left_foot",
+          "name": "Ball (left foot)",
+          "scene": "scene.mjz",
+          "control_dt": 0.02,
+          "camera": {
+            "lookat": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "distance": 0.8,
+            "elevation": -12.0,
+            "azimuth": 40.0,
+            "origin_type": "ASSET_BODY",
+            "enable_reflections": true,
+            "enable_shadows": true,
+            "height": 240,
+            "width": 320,
+            "fovy": 45.0,
+            "body_name": "trunk_base"
+          },
+          "mdps": [
+            {
+              "id": "kick",
+              "observations": {
+                "actor": {
+                  "fused": "mdp/kick/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 3
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 4
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              },
+              "terminations": {
+                "fell_over": {
+                  "name": "fell_over",
+                  "onnx": "mdp/kick/term/fell_over.onnx",
+                  "input_slots": [
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "func": "mjlab.envs.mdp.terminations:bad_orientation",
+                  "doc": "Terminate when the asset's orientation exceeds the limit angle.",
+                  "params": {
+                    "limit_angle": 1.2217304763960306
+                  }
+                }
+              }
+            }
+          ],
+          "policies": [
+            {
+              "id": "kick",
+              "name": "Kick",
+              "mdp": "kick",
+              "onnx": "policy/kick.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rollers",
+          "name": "Rollers",
+          "scene": "scene.mjz",
+          "control_dt": 0.02,
+          "camera": {
+            "lookat": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "distance": 0.8,
+            "elevation": -12.0,
+            "azimuth": 40.0,
+            "origin_type": "ASSET_BODY",
+            "enable_reflections": true,
+            "enable_shadows": true,
+            "height": 240,
+            "width": 320,
+            "fovy": 45.0,
+            "body_name": "trunk_base"
+          },
+          "mdps": [
+            {
+              "id": "skate",
+              "commands": {
+                "throttle": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "lin_vel_x",
+                        "label": "Forward (m/s)",
+                        "min": -0.5,
+                        "max": 0.6,
+                        "step": 0.0275,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                },
+                "heading": {
+                  "name": "UiCommand",
+                  "ui": {
+                    "inputs": [
+                      {
+                        "type": "slider",
+                        "name": "heading_error",
+                        "label": "Error (rad)",
+                        "min": -1.0,
+                        "max": 1.0,
+                        "step": 0.05,
+                        "default": 0.0
+                      }
+                    ]
+                  }
+                }
+              },
+              "observations": {
+                "actor": {
+                  "fused": "mdp/skate/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "command": "heading",
+                      "field": "command",
+                      "input": "command__heading_command",
+                      "shape": [
+                        1,
+                        1
+                      ]
+                    },
+                    {
+                      "command": "throttle",
+                      "field": "command",
+                      "input": "command__throttle_command",
+                      "shape": [
+                        1,
+                        1
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        18
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        18
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "throttle",
+                      "size": 1,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "throttle"
+                      }
+                    },
+                    {
+                      "name": "lin_vel_y",
+                      "size": 1,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 1
+                      }
+                    },
+                    {
+                      "name": "heading",
+                      "size": 1,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "heading"
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 4
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              },
+              "terminations": {
+                "fell_over": {
+                  "name": "fell_over",
+                  "onnx": "mdp/skate/term/fell_over.onnx",
+                  "input_slots": [
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "func": "mjlab.envs.mdp.terminations:bad_orientation",
+                  "doc": "Terminate when the asset's orientation exceeds the limit angle.",
+                  "params": {
+                    "limit_angle": 1.2217304763960306
+                  }
+                }
+              }
+            },
+            {
+              "id": "crouch",
+              "commands": {
+                "twist": {
+                  "name": "OnnxCommand",
+                  "term_id": "twist",
+                  "onnx": "mdp/crouch/command/twist.onnx",
+                  "command_field": "phase_cmd",
+                  "rand_dim": 0,
+                  "rand_ranges": [],
+                  "state_fields": [
+                    {
+                      "name": "step_count",
+                      "shape": [
+                        1,
+                        1
+                      ],
+                      "dtype": "float32",
+                      "init": [
+                        0.0
+                      ]
+                    },
+                    {
+                      "name": "phase_cmd",
+                      "shape": [
+                        1,
+                        3
+                      ],
+                      "dtype": "float32",
+                      "init": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ]
+                    }
+                  ],
+                  "input_slots": [],
+                  "write_targets": [],
+                  "debug_vis": false,
+                  "resampling_time_range": [
+                    1000000000.0,
+                    1000000000.0
+                  ],
+                  "func": "mjswan_playground.microduck.terms:GroundPickPhaseCommand",
+                  "doc": "``phase`` as a count of whole steps over the cycle length, not a running sum."
+                }
+              },
+              "observations": {
+                "actor": {
+                  "fused": "mdp/crouch/obs/actor.onnx",
+                  "input_slots": [
+                    {
+                      "action": "action",
+                      "input": "action__action",
+                      "shape": [
+                        1,
+                        14
+                      ]
+                    },
+                    {
+                      "command": "twist",
+                      "field": "command",
+                      "input": "command__twist_command",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_pos",
+                      "input": "robot__joint_pos",
+                      "shape": [
+                        1,
+                        18
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "joint_vel",
+                      "input": "robot__joint_vel",
+                      "shape": [
+                        1,
+                        18
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    },
+                    {
+                      "entity": "robot",
+                      "field": "root_link_ang_vel_b",
+                      "input": "robot__root_link_ang_vel_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "layout": [
+                    {
+                      "name": "base_ang_vel",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:base_ang_vel"
+                    },
+                    {
+                      "name": "projected_gravity",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:projected_gravity"
+                    },
+                    {
+                      "name": "joint_pos",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_pos_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "joint_vel",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:joint_vel_rel",
+                      "params": {
+                        "asset_cfg": {
+                          "entity": "robot",
+                          "joint_names": [
+                            "left_hip_yaw",
+                            "left_hip_roll",
+                            "left_hip_pitch",
+                            "left_knee",
+                            "left_ankle",
+                            "neck_pitch",
+                            "head_pitch",
+                            "head_yaw",
+                            "head_roll",
+                            "right_hip_yaw",
+                            "right_hip_roll",
+                            "right_hip_pitch",
+                            "right_knee",
+                            "right_ankle"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "actions",
+                      "size": 14,
+                      "func": "mjlab.envs.mdp.observations:last_action"
+                    },
+                    {
+                      "name": "twist",
+                      "size": 3,
+                      "func": "mjlab.envs.mdp.observations:generated_commands",
+                      "params": {
+                        "command_name": "twist"
+                      }
+                    },
+                    {
+                      "name": "head_command",
+                      "size": 4,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 4
+                      }
+                    },
+                    {
+                      "name": "body_command",
+                      "size": 6,
+                      "func": "mjswan_playground.microduck.terms:zeros",
+                      "doc": "``dim`` columns of zeros, upstream's ``zero_command_padding``: every policy",
+                      "params": {
+                        "dim": 6
+                      }
+                    }
+                  ],
+                  "size": 61
+                }
+              },
+              "actions": {
+                "joint_pos": {
+                  "type": "joint_position",
+                  "actuator_names": [
+                    ".*"
+                  ],
+                  "use_default_offset": true
+                }
+              },
+              "terminations": {
+                "fell_over": {
+                  "name": "fell_over",
+                  "onnx": "mdp/crouch/term/fell_over.onnx",
+                  "input_slots": [
+                    {
+                      "entity": "robot",
+                      "field": "projected_gravity_b",
+                      "input": "robot__projected_gravity_b",
+                      "shape": [
+                        1,
+                        3
+                      ]
+                    }
+                  ],
+                  "func": "mjlab.envs.mdp.terminations:bad_orientation",
+                  "doc": "Terminate when the asset's orientation exceeds the limit angle.",
+                  "params": {
+                    "limit_angle": 1.2217304763960306
+                  }
+                }
+              }
+            }
+          ],
+          "policies": [
+            {
+              "id": "skate",
+              "name": "Skate",
+              "mdp": "skate",
+              "onnx": "policy/skate.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            },
+            {
+              "id": "crouch",
+              "name": "Crouch",
+              "mdp": "crouch",
+              "onnx": "policy/crouch.onnx",
+              "policy_joint_names": [
+                "left_hip_yaw",
+                "left_hip_roll",
+                "left_hip_pitch",
+                "left_knee",
+                "left_ankle",
+                "neck_pitch",
+                "head_pitch",
+                "head_yaw",
+                "head_roll",
+                "right_hip_yaw",
+                "right_hip_roll",
+                "right_hip_pitch",
+                "right_knee",
+                "right_ankle"
+              ],
+              "default_joint_pos": [
+                0.0,
+                -0.08726646259971647,
+                -0.457924,
+                -0.00494,
+                0.452984,
+                0.3490658503988659,
+                0.3490658503988659,
+                0.0,
+                0.0,
+                0.0,
+                0.08726646259971647,
+                0.457924,
+                0.00494,
+                -0.452984
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

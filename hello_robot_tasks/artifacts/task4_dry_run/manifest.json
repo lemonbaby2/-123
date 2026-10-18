@@ -1,0 +1,25 @@
+{
+  "episodes": [
+    {
+      "file": "episode_0000.npz",
+      "frames": 6,
+      "target_color": "red",
+      "success": false,
+      "prompt": "Pick up the red block and place it into the empty box."
+    },
+    {
+      "file": "episode_0001.npz",
+      "frames": 6,
+      "target_color": "green",
+      "success": false,
+      "prompt": "Pick up the green block and place it into the empty box."
+    },
+    {
+      "file": "episode_0002.npz",
+      "frames": 6,
+      "target_color": "blue",
+      "success": false,
+      "prompt": "Pick up the blue block and place it into the empty box."
+    }
+  ]
+}

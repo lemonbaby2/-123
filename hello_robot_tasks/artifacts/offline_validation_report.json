@@ -1,0 +1,209 @@
+{
+  "source": "https://github.com/datawhalechina/hello-robot",
+  "source_commit": "4af2dde633e2de88f25e0c94f2994a4eb8e4fa00",
+  "runtime": {
+    "python": "3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]",
+    "numpy": "2.5.1"
+  },
+  "task1": {
+    "status": "pass",
+    "swerve": {
+      "forward": {
+        "command": {
+          "vx": 0.4,
+          "vy": 0.0,
+          "wz": 0.0
+        },
+        "wheel_angle_rad": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "wheel_speed_rad_s": [
+          5.714286,
+          5.714286,
+          5.714286,
+          5.714286
+        ],
+        "recovered": {
+          "vx": 0.4,
+          "vy": 0.0,
+          "wz": 0.0
+        },
+        "roundtrip_error": 0.0
+      },
+      "strafe_left": {
+        "command": {
+          "vx": 0.0,
+          "vy": 0.35,
+          "wz": 0.0
+        },
+        "wheel_angle_rad": [
+          1.570796,
+          1.570796,
+          1.570796,
+          1.570796
+        ],
+        "wheel_speed_rad_s": [
+          5.0,
+          5.0,
+          5.0,
+          5.0
+        ],
+        "recovered": {
+          "vx": 2.143131898507868e-17,
+          "vy": 0.35,
+          "wz": 0.0
+        },
+        "roundtrip_error": 2.143131898507868e-17
+      },
+      "rotate_ccw": {
+        "command": {
+          "vx": 0.0,
+          "vy": 0.0,
+          "wz": 0.65
+        },
+        "wheel_angle_rad": [
+          -0.812177,
+          0.812177,
+          0.812177,
+          -0.812177
+        ],
+        "wheel_speed_rad_s": [
+          -2.942619,
+          -2.942619,
+          2.942619,
+          2.942619
+        ],
+        "recovered": {
+          "vx": 6.938893903907228e-18,
+          "vy": 3.469446951953614e-17,
+          "wz": 0.6499999999999999
+        },
+        "roundtrip_error": 1.1652384351680995e-16
+      },
+      "diagonal_turn": {
+        "command": {
+          "vx": 0.3,
+          "vy": -0.18,
+          "wz": -0.35
+        },
+        "wheel_angle_rad": [
+          -0.605517,
+          -0.258501,
+          -0.861254,
+          -0.418515
+        ],
+        "wheel_speed_rad_s": [
+          6.538145,
+          5.560464,
+          4.905265,
+          3.497578
+        ],
+        "recovered": {
+          "vx": 0.3,
+          "vy": -0.18,
+          "wz": -0.35
+        },
+        "roundtrip_error": 0.0
+      }
+    },
+    "arm": {
+      "ik_success": true,
+      "iterations": 8,
+      "position_error_m": 0.00012047943737119657,
+      "orientation_error_rad": 0.00021821830341038176,
+      "target_position_m": [
+        0.5250510890017169,
+        -0.45227912792635383,
+        -0.4590876836568869
+      ],
+      "joint_solution_rad": [
+        0.3983632377966233,
+        -0.5590124941687048,
+        0.3773062746361135,
+        -1.3505883805068735,
+        0.1504722140007134,
+        0.5044591740042683,
+        -0.2203033717809192
+      ]
+    }
+  },
+  "task2": {
+    "status": "pass",
+    "input": "synthetic deterministic lidar rays; not Isaac RTX LiDAR",
+    "frames": 3,
+    "rays": 1081,
+    "points": 2160,
+    "map_width": 162,
+    "map_height": 162,
+    "origin_m": [
+      -4.05,
+      -4.05
+    ],
+    "occupied_cells": 586,
+    "free_cells": 16331,
+    "png": "task2_occupancy_grid.png"
+  },
+  "task3": {
+    "status": "pass",
+    "base": {
+      "expanded_nodes": 7115,
+      "path_cost_m": 11.093250352560283,
+      "global_points": 88,
+      "local_points": 61,
+      "local_used_detour": true,
+      "local_blocked": false
+    },
+    "arm": {
+      "collision_scope": "robot_body_and_scene",
+      "optimized_path_collision_free": true,
+      "trajectory_time_strictly_increasing": true,
+      "ik_success": true,
+      "ik_error_m": 0.0009820897122314507,
+      "rrt_success": true,
+      "rrt_iterations": 5,
+      "raw_waypoints": 7,
+      "optimized_waypoints": 11,
+      "trajectory_points": 648,
+      "duration_s": 5.327467413009288
+    }
+  },
+  "task4": {
+    "status": "pass",
+    "scope": "prompt sequencing and NPZ dataset pipeline only; no pi0.5 weights/inference",
+    "full_prompt": "Pick up the red, green, and blue blocks one at a time and place all three blocks into the empty box on the table.",
+    "episode_prompts": [
+      "Pick up the red block and place it into the empty box.",
+      "Pick up the green block and place it into the empty box.",
+      "Pick up the blue block and place it into the empty box."
+    ],
+    "episodes": [
+      {
+        "file": "episode_0000.npz",
+        "frames": 6,
+        "target_color": "red",
+        "success": false,
+        "prompt": "Pick up the red block and place it into the empty box."
+      },
+      {
+        "file": "episode_0001.npz",
+        "frames": 6,
+        "target_color": "green",
+        "success": false,
+        "prompt": "Pick up the green block and place it into the empty box."
+      },
+      {
+        "file": "episode_0002.npz",
+        "frames": 6,
+        "target_color": "blue",
+        "success": false,
+        "prompt": "Pick up the blue block and place it into the empty box."
+      }
+    ],
+    "prompt_sequence_complete": true,
+    "physical_success_evaluated": false,
+    "dry_run_gif": "task4_pipeline_dry_run.gif"
+  }
+}
