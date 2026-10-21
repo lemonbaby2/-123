@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MicroDuck 03-Notebook 验收报告 · DataWhale</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --ink:#1f2933; --sub:#5b6b7b;
+    --line:#e3e8ef; --ok:#1f9d55; --bad:#d63a3a; --warn:#c9821a;
+    --accent:#2563eb; --code:#0f172a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.6}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+  header h1{font-size:25px;margin:0 0 6px}
+  header .meta{color:var(--sub);font-size:13px}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;margin-right:6px}
+  .ok{background:#e6f6ed;color:var(--ok)}
+  .bad{background:#fdeaea;color:var(--bad)}
+  .warn{background:#fdf3e3;color:var(--warn)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:18px 0;
+          box-shadow:0 1px 3px rgba(16,24,40,.04)}
+  h2{font-size:18px;margin:0 0 14px;border-left:4px solid var(--accent);padding-left:10px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f1f5fb;color:#334155;font-weight:600}
+  tr:nth-child(even) td{background:#fafcfe}
+  code{background:#eef2f7;padding:1px 6px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--code)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+  .vcard{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fbfdff}
+  .vcard h3{margin:0 0 4px;font-size:15px}
+  .vcard .tag{font-size:12px;color:var(--sub);margin-bottom:8px}
+  video{width:100%;border-radius:8px;background:#000;display:block}
+  .metrics{font-size:12px;color:var(--sub);margin-top:8px}
+  .metrics b{color:var(--ink)}
+  .reason{font-size:13px;color:var(--sub);margin-top:6px}
+  .summary-big{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 2px}
+  .stat{flex:1;min-width:140px;background:#f1f5fb;border-radius:12px;padding:14px 16px}
+  .stat .n{font-size:26px;font-weight:700}
+  .stat .l{font-size:12px;color:var(--sub)}
+  a{color:var(--accent);text-decoration:none}
+  footer{color:var(--sub);font-size:12px;text-align:center;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>DataWhale MicroDuck 运动策略与任务开发 · 03-Notebook 验收报告</h1>
+  <div class="meta">
+    课程仓库：<code>datawhalechina/every-embodied</code> → <code>16-专题组队学习/05-MicroDuck/03-Notebook</code><br>
+    执行环境：NVIDIA DGX Spark（GB10, aarch64, sm_121）· CUDA 13.0 · torch 2.10.0+cu128 / MotrixLab torch 2.7.0+cu128 · MuJoCo EGL<br>
+    执行驱动：<code>run_notebook.py</code>（nbclient 顺序执行 00–09，训练类启用课程自带 smoke 训练，BPU 板端统一关闭）<br>
+    执行时间：2026-10-21 · 报告生成：2026-10-21（第二轮全量攻坚：5 项环境阻断全部解除）
+  </div>
+</header>
+
+<section>
+  <h2>一、总览</h2>
+  <div class="summary-big">
+    <div class="stat"><div class="n">10</div><div class="l">Notebook 总数（00–09）</div></div>
+    <div class="stat"><div class="n" style="color:var(--ok)">10</div><div class="l">已执行成功</div></div>
+    <div class="stat"><div class="n" style="color:var(--bad)">0</div><div class="l">阻断项</div></div>
+    <div class="stat"><div class="n" style="color:var(--accent)">12</div><div class="l">真实 GPU 推理视频（MP4）</div></div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>主题</th><th>状态</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>00</td><td>MuJoCo 策略控制 HelloWorld</td><td><span class="pill ok">✅ 成功</span></td><td>基础策略控制链路打通</td></tr>
+      <tr><td>01</td><td>篮球平衡 PPO / ONNX / BPU</td><td><span class="pill ok">✅ 成功·含训练</span></td><td>官方仓库 + smoke PPO 训练 + ONNX 导出 + 1500 步 GPU 视频（parity 1.19e-06）</td></tr>
+      <tr><td>02</td><td>浏览器物理扰动：回放与接口</td><td><span class="pill ok">✅ 成功</span></td><td>walking + perturbation 两段 GPU 视频</td></tr>
+      <tr><td>03</td><td>高跷行走：课程学习与 ONNX/BPU</td><td><span class="pill ok">✅ 成功·含训练</span></td><td>stilt smoke 训练（10 iter / 64 env）+ GPU 视频</td></tr>
+      <tr><td>04</td><td>摆动旋转：ONNX / BPU / MuJoCo</td><td><span class="pill ok">✅ 成功·含训练</span></td><td>swing smoke 训练 + GPU 视频</td></tr>
+      <tr><td>05</td><td>球平衡 FastSAC / ONNX / BPU</td><td><span class="pill ok">✅ 成功·含训练</span></td><td>MotrixLab scratch FastSAC smoke（10 iter / 64 env）+ ONNX 导出 + 900 步 GPU 视频（parity 2.68e-07）</td></tr>
+      <tr><td>06</td><td>梯面攀爬：接触与部署模板</td><td><span class="pill ok">✅ 成功</span></td><td>climber/getup 双策略切换 30 秒 episode（CPU 物理 64 env + GPU 推理录制）</td></tr>
+      <tr><td>07</td><td>RDK 网页与多策略 BPU 验收</td><td><span class="pill warn">⚠ 成功·无板未验收</span></td><td>无 RDK X5 板卡，板端验证标记 <code>not_run_no_board</code></td></tr>
+      <tr><td>08</td><td>LightNav0 视觉语言导航（GPU 多场景）</td><td><span class="pill ok">✅ 成功</span></td><td>vLLM 本地服务（Qwen3-VL 系 LightNav-0 9.6GB）+ 3 场景 24s episodes，全部 model_stop 收敛</td></tr>
+      <tr><td>09</td><td>跨缝跳跃 PPO / GPU / ONNX</td><td><span class="pill ok">✅ 成功·含训练</span></td><td>10 轮 PPO 续训（64 env，精确恢复 actor/critic/normalizer/optimizer）+ ONNX 导出（parity 6.6e-06）+ 三段视频</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>二、精度验收（GPU ONNX via Torch CUDA）</h2>
+  <p class="reason">每个任务的策略网络在 GPU 上以 ONNX 推理，并与参考实现做<b>数值一致性校验</b>：
+     对 32 组观测做 parity 检查，要求 <code>max_abs_output_error ≤ atol/rtol = 1e-4</code>。
+     下表任务全部通过一致性校验，误差量级 1e-7 ~ 1e-6。</p>
+  <table>
+    <thead><tr><th>任务</th><th>task_id</th><th>推理调用</th><th>一致性校验</th><th>max_abs 误差</th><th>atol/rtol</th><th>ONNX 模型</th></tr></thead>
+    <tbody>
+      <tr><td>walking</td><td><code>Mjlab-Velocity-Flat-MicroDuck</code></td><td>500</td><td><b style="color:var(--ok)">32 / 32 ✓</b></td><td>3.58e-07</td><td>1e-4 / 1e-4</td><td><code>walking.opset11.onnx</code></td></tr>
+      <tr><td>perturbation</td><td><code>Mjlab-Velocity-Flat-MicroDuck</code></td><td>500</td><td><b style="color:var(--ok)">32 / 32 ✓</b></td><td>3.58e-07</td><td>1e-4 / 1e-4</td><td><code>walking.opset11.onnx</code></td></tr>
+      <tr><td>stilt</td><td><code>Mjlab-Stilt-Flat-MicroDuck</code></td><td>500</td><td><b style="color:var(--ok)">32 / 32 ✓</b></td><td>5.96e-07</td><td>1e-4 / 1e-4</td><td><code>stilts25.opset11.onnx</code></td></tr>
+      <tr><td>swing</td><td><code>Mjlab-SwingPump-MicroDuck</code></td><td>500</td><td><b style="color:var(--ok)">32 / 32 ✓</b></td><td>8.34e-07</td><td>1e-4 / 1e-4</td><td><code>swing.opset11.onnx</code></td></tr>
+      <tr><td>basketball</td><td><code>Mjlab-Basketball-MicroDuck</code></td><td>1500</td><td><b style="color:var(--ok)">32 / 32 ✓</b></td><td>1.19e-06</td><td>1e-4 / 1e-4</td><td><code>basketball.opset11.onnx</code></td></tr>
+      <tr><td>ball_balance</td><td><code>microduck-ball-balance</code></td><td>900</td><td><b style="color:var(--ok)">32 / 32 ✓</b></td><td>2.68e-07</td><td>1e-4 / 1e-4</td><td><code>motrix_ball_balance_restored.opset11.onnx</code></td></tr>
+      <tr><td>ladder</td><td><code>ladder-official-policy-pair</code></td><td>30s episode</td><td><b style="color:var(--ok)">climber/getup 双策略 ✓</b></td><td>contact handoff 1 步</td><td>—</td><td><code>official_ladder_{climber,getup}.opset11.onnx</code></td></tr>
+      <tr><td>long_jump</td><td><code>Mjlab-PlatformJump-MicroDuck</code></td><td>100 live + 200 obs</td><td><b style="color:var(--ok)">归一化内置 ONNX ✓</b></td><td>3.87e-06</td><td>—</td><td><code>training/policy.onnx</code></td></tr>
+      <tr><td>lightnav ×3</td><td><code>LightNav-0（Qwen3-VL 系 VLA）</code></td><td>37 / 42 / 47 次预测</td><td><b style="color:var(--ok)">model_stop ✓</b></td><td>延迟中位 1.47–1.78 s</td><td>—</td><td>9.6GB 权重 + action_tokenizer</td></tr>
+    </tbody>
+  </table>
+  <p class="reason">结论：全部任务 ONNX 策略在 DGX GPU 上推理数值与参考实现一致（误差量级 1e-7 ~ 1e-6，远低于 1e-4 容差），
+     验证 JSON 见 <code>validation/*.json</code>。</p>
+</section>
+
+<section>
+  <h2>三、真实 GPU 推理视频回放（12 段）</h2>
+  <div class="grid">
+    <div class="vcard">
+      <h3>basketball · 篮球平衡</h3>
+      <div class="tag">Mjlab-Basketball-MicroDuck · 1500 steps · smoke PPO 训练后导出</div>
+      <video controls preload="metadata" src="videos/basketball_gpu_latest.mp4"></video>
+      <div class="metrics">一致性 <b>32/32 ✓</b> · max_abs <b>1.19e-06</b></div>
+    </div>
+    <div class="vcard">
+      <h3>ball_balance · 球平衡</h3>
+      <div class="tag">microduck-ball-balance · FastSAC scratch smoke · 900 steps</div>
+      <video controls preload="metadata" src="videos/ball_balance_gpu_latest.mp4"></video>
+      <div class="metrics">一致性 <b>32/32 ✓</b> · max_abs <b>2.68e-07</b></div>
+    </div>
+    <div class="vcard">
+      <h3>ladder · 梯面攀爬</h3>
+      <div class="tag">climber/getup 双策略 · 30s episode · CPU 物理 64 env</div>
+      <video controls preload="metadata" src="videos/ladder_gpu_latest.mp4"></video>
+      <div class="metrics">策略切换 <b>contact handoff ✓</b> · seed 123</div>
+    </div>
+    <div class="vcard">
+      <h3>long_jump · 跨缝跳跃（预训练）</h3>
+      <div class="tag">Mjlab-PlatformJump-MicroDuck · 原始检查点回放</div>
+      <video controls preload="metadata" src="videos/long_jump_pretrained_latest.mp4"></video>
+      <div class="metrics">终止 <b>time_out</b> · 12.0s</div>
+    </div>
+    <div class="vcard">
+      <h3>long_jump · 跨缝跳跃（续训后）</h3>
+      <div class="tag">10 轮 PPO 续训（64 env，精确恢复）</div>
+      <video controls preload="metadata" src="videos/long_jump_continued_latest.mp4"></video>
+      <div class="metrics">候选模型 <b>已验收</b> · ONNX parity 6.6e-06</div>
+    </div>
+    <div class="vcard">
+      <h3>long_jump · 跨缝跳跃（ONNX 部署）</h3>
+      <div class="tag">归一化内置 ONNX · 100 live steps 对照</div>
+      <video controls preload="metadata" src="videos/long_jump_onnx_latest.mp4"></video>
+      <div class="metrics">max_abs_action_error <b>3.87e-06</b></div>
+    </div>
+    <div class="vcard">
+      <h3>lightnav · official_apartment</h3>
+      <div class="tag">LightNav-0 VLA · "Walk to the table on your left and stop."</div>
+      <video controls preload="metadata" src="videos/lightnav_official_apartment_latest.mp4"></video>
+      <div class="metrics">停止 <b>model_stop</b> · 37 次预测 · 目标 2.95→1.87 m</div>
+    </div>
+    <div class="vcard">
+      <h3>lightnav · living_room</h3>
+      <div class="tag">LightNav-0 VLA · "Walk to the armchair in front of you and stop."</div>
+      <video controls preload="metadata" src="videos/lightnav_living_room_latest.mp4"></video>
+      <div class="metrics">停止 <b>model_stop</b> · 42 次预测 · 目标 1.81→1.17 m</div>
+    </div>
+    <div class="vcard">
+      <h3>lightnav · corridor</h3>
+      <div class="tag">LightNav-0 VLA · "Go straight down the hallway to the potted plant and stop."</div>
+      <video controls preload="metadata" src="videos/lightnav_corridor_latest.mp4"></video>
+      <div class="metrics">停止 <b>model_stop</b> · 47 次预测 · 目标 2.70→1.22 m</div>
+    </div>
+    <div class="vcard">
+      <h3>walking · navigation</h3>
+      <div class="tag">Mjlab-Velocity-Flat-MicroDuck · 500 steps</div>
+      <video controls preload="metadata" src="videos/walking_gpu_latest.mp4"></video>
+      <div class="metrics">一致性 <b>32/32 ✓</b> · max_abs <b>3.58e-07</b></div>
+    </div>
+    <div class="vcard">
+      <h3>perturbation · physical-perturbation</h3>
+      <div class="tag">Mjlab-Velocity-Flat-MicroDuck · 500 steps</div>
+      <video controls preload="metadata" src="videos/perturbation_gpu_latest.mp4"></video>
+      <div class="metrics">一致性 <b>32/32 ✓</b> · max_abs <b>3.58e-07</b></div>
+    </div>
+    <div class="vcard">
+      <h3>stilt · stilts-25cm</h3>
+      <div class="tag">Mjlab-Stilt-Flat-MicroDuck · 500 steps</div>
+      <video controls preload="metadata" src="videos/stilt_gpu_latest.mp4"></video>
+      <div class="metrics">一致性 <b>32/32 ✓</b> · max_abs <b>5.96e-07</b></div>
+    </div>
+    <div class="vcard">
+      <h3>swing · swing-pump</h3>
+      <div class="tag">Mjlab-SwingPump-MicroDuck · 500 steps</div>
+      <video controls preload="metadata" src="videos/swing_gpu_latest.mp4"></video>
+      <div class="metrics">一致性 <b>32/32 ✓</b> · max_abs <b>8.34e-07</b></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>四、各 Notebook 执行详情</h2>
+  <table>
+    <thead><tr><th>#</th><th>Notebook 文件</th><th>状态</th><th>cells</th><th>耗时</th><th>执行产物</th></tr></thead>
+    <tbody>
+      <tr><td>00</td><td><code>00_MuJoCo策略控制_HelloWorld.ipynb</code></td><td><span class="pill ok">✅</span></td><td>—</td><td>3.9s</td><td>基础控制链路</td></tr>
+      <tr><td>01</td><td><code>01_篮球平衡_PPO_ONNX_BPU_MuJoCo.ipynb</code></td><td><span class="pill ok">✅</span></td><td>9/9</td><td>78.1s</td><td>smoke PPO + ONNX + 视频/json（parity 1.19e-06）</td></tr>
+      <tr><td>02</td><td><code>02_浏览器物理扰动_回放与接口.ipynb</code></td><td><span class="pill ok">✅</span></td><td>—</td><td>60.9s</td><td>walking + perturbation 视频/json</td></tr>
+      <tr><td>03</td><td><code>03_高跷行走_课程与ONNX_BPU.ipynb</code></td><td><span class="pill ok">✅</span></td><td>—</td><td>27.1s</td><td>stilt 训练 + 视频/json</td></tr>
+      <tr><td>04</td><td><code>04_摆动旋转_ONNX_BPU_MuJoCo.ipynb</code></td><td><span class="pill ok">✅</span></td><td>—</td><td>33.8s</td><td>swing 训练 + 视频/json</td></tr>
+      <tr><td>05</td><td><code>05_球平衡_FastSAC_ONNX_BPU.ipynb</code></td><td><span class="pill ok">✅</span></td><td>11/11</td><td>41.6s</td><td>FastSAC smoke 训练 + ONNX + 视频/json + checkpoint 审计</td></tr>
+      <tr><td>06</td><td><code>06_梯面攀爬_接触与部署模板.ipynb</code></td><td><span class="pill ok">✅</span></td><td>9/9</td><td>992.1s</td><td>climber/getup 双策略 30s 视频/json/trace</td></tr>
+      <tr><td>07</td><td><code>07_RDK网页与多策略_BPU验收.ipynb</code></td><td><span class="pill warn">⚠</span></td><td>—</td><td>21.5s</td><td>执行成功，BPU 无板未验收</td></tr>
+      <tr><td>08</td><td><code>08_LightNav0_视觉语言导航_GPU_多场景.ipynb</code></td><td><span class="pill ok">✅</span></td><td>12/12</td><td>227.2s</td><td>3 场景视频 + reports（model_stop ×3）</td></tr>
+      <tr><td>09</td><td><code>09_跨缝跳跃_PPO_GPU_ONNX.ipynb</code></td><td><span class="pill ok">✅</span></td><td>13/13</td><td>539.7s</td><td>3 段视频 + 续训 + deployment parity + lesson summary</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>五、第二轮攻坚记录（5 项阻断的解除）</h2>
+  <table>
+    <thead><tr><th>Notebook</th><th>原阻断根因</th><th>解除方式</th></tr></thead>
+    <tbody>
+      <tr><td>01 篮球</td><td>缺官方仓库与任务注册</td><td>DGX 实测有外网（此前 gitclone 镜像 502 误判）→ <code>GIT_CONFIG_GLOBAL=/dev/null</code> 绕过镜像直连 GitHub 克隆 <code>microduck-playground-official</code>；export.py 补 <code>import mjlab_microduck.tasks</code> 修复任务注册</td></tr>
+      <tr><td>05 球平衡</td><td>缺 FastSAC 模型与训练入口</td><td>MotrixLab <code>uv sync --package motrix-lab --extra cuda</code>（triton 无 aarch64 轮子，<code>--no-install-package triton</code> 绕行）；补 <code>scripts/train.py</code> / <code>scripts/export_onnx.py</code> 两个 shim 指向 <code>mxlab</code>；<code>learning_starts=0→2</code> 修复空 buffer 采样；40 个 microduck STL + 球资产为 git-LFS 指针，经 <code>media.githubusercontent.com</code> 逐一拉取并 SHA256 校验 → scratch smoke 训练 → ONNX 导出（parity 2.38e-07）</td></tr>
+      <tr><td>06 梯面</td><td>缺 getup 模型与场景 + notebook 600s 超时</td><td>导出 <code>official_ladder_getup.opset11.onnx</code>（opset11）并补齐 desk-climb 场景；notebook cell <code>timeout=600→3600</code>；standalone 先行录制验证 30s episode 可在 ~16 分钟完成</td></tr>
+      <tr><td>08 LightNav</td><td>模型服务不可用</td><td>克隆 LightNav-0（9.6GB 权重，hf-mirror 直下）；lightnav-0 env 修 torch 2.10.0+cu128 + torchvision 0.25.0+cu128（vllm 0.19.1 ABI 匹配）；<strong>关键坑</strong>：<code>run_notebook.py</code> 曾把内核 <code>http_proxy</code> 指向本地 7890 代理，websocket CONNECT 隧道被破坏 → 移除代理注入后 3 场景全部 model_stop</td></tr>
+      <tr><td>09 跨缝</td><td>外网下载 + 目录权限</td><td>hf-mirror 429 限流 → 本机下载后 scp（SHA256 双文件 MATCH）；<code>MICRODUCK_JUMP_HOME</code> override 避开 <code>/home/nvidia/projects</code> 权限限制；10 轮 PPO 续训精确恢复 + ONNX parity 6.6e-06</td></tr>
+    </tbody>
+  </table>
+  <p class="reason">说明：第二轮将第一轮 5 项"环境性阻断"全部解除，00–09 十本 Notebook 在 DGX Spark（GB10）上全部真实执行成功；
+     唯一保留项为 07 的 RDK X5 板端验收（无实体硬件，标记 <code>not_run_no_board</code>）。</p>
+</section>
+
+<section>
+  <h2>六、产物清单（已随本报告归档）</h2>
+  <ul>
+    <li><code>videos/</code> ：12 段 GPU 推理 MP4（walking / perturbation / stilt / swing / basketball / ball_balance / ladder / long_jump ×3 / lightnav ×3）</li>
+    <li><code>validation/</code> ：对应精度验收 JSON（含 parity、推理耗时、ONNX sha256、long_jump 续训摘要、lightnav 三场景报告）</li>
+    <li><code>notebooks/</code> ：00–09 共 10 本 Notebook（课程原件）</li>
+    <li><code>logs/</code> ：00–09 notebook 运行日志（第二轮全量执行）</li>
+  </ul>
+</section>
+
+<footer>
+  本报告由 WorkBuddy 在 NVIDIA DGX Spark（GB10）上真实执行生成 · 2026-10-21 ·
+  课程：DataWhale every-embodied / 05-MicroDuck 运动策略与任务开发专题 / 03-Notebook
+</footer>
+</div>
+</body>
+</html>

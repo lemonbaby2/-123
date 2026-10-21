@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "long-jump": {
+      "task": "Mjlab-PlatformJump-MicroDuck",
+      "checkpoint_sha256": "114ab38724b1bea789b0d3f12a1a18a5981b40572863117e212a2a0601f9ed4a",
+      "seed": 42,
+      "provenance": "p1_v1 stored iteration 15250. Original launch_p1.sh and recorded agent/env YAML recovered. Entropy 0.005; no evaluation gap/drop pin. Uses the published platform-jump source, which contains later research changes, not the original p1 implementation.",
+      "limitations": "Supported continuation from original PPO state under explicit current-source settings, not bit-exact p1 replay. Stage schedule is applied at the restored counter; new episode/RNG state. No external reset bank required.",
+      "environment": {
+        "MICRODUCK_PJ_ENTROPY": "0.005",
+        "MICRODUCK_PJ_CURRICULUM_SHIFT": "0",
+        "MICRODUCK_PJ_FLIGHT_PROB": "0.30"
+      }
+    }
+  }
+}
