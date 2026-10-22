@@ -36,6 +36,7 @@
   .metrics{font-size:12px;color:var(--sub);margin-top:8px}
   .metrics b{color:var(--ink)}
   .reason{font-size:13px;color:var(--sub);margin-top:6px}
+  .note{font-size:12px;line-height:1.5;color:#7a4b00;background:#fff8e8;border-left:3px solid #e0a800;padding:6px 9px;border-radius:6px;margin-top:8px}
   .summary-big{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 2px}
   .stat{flex:1;min-width:140px;background:#f1f5fb;border-radius:12px;padding:14px 16px}
   .stat .n{font-size:26px;font-weight:700}
@@ -148,9 +149,10 @@
     </div>
     <div class="vcard">
       <h3>06 · ladder 梯面攀爬</h3>
-      <div class="tag">120s · 3 段不同种子拼接 · climber/getup 双策略 · 已修 terrain/airborne</div>
+      <div class="tag">120s · 2× 慢放（8 段不同种子 · 梯级起爬）· climber ONNX 实时推理</div>
       <video controls preload="metadata" src="videos/ladder_120.mp4"></video>
-      <div class="metrics">梯级 27 踏 · 桌面 0.66m · 手递手 <b>contact handoff ✓</b></div>
+      <div class="metrics">梯级 27 踏 · 桌面 0.66m · ONNX parity <b>8.9e-07</b> · 已修 terrain / airborne / nconmax</div>
+      <div class="note">已知限制：官方 climber 权重在本环境每次起爬约 1–3 踏后失稳滑落，故按“多次真实起爬”剪辑；场景与接触链路已修复，非渲染问题。</div>
     </div>
     <div class="vcard">
       <h3>08 · LightNav0 视觉语言导航</h3>
