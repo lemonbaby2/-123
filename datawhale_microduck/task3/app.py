@@ -229,3 +229,14 @@ def index():
     if page.is_file():
         return FileResponse(page)
     return JSONResponse({"service": "microduck-task3", "api": "/api/tasks"}, status_code=200)
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "8000")),
+        log_level="info",
+    )
