@@ -1,0 +1,11 @@
+{
+  "source": "DGX Spark GB10 / embodied-harvest",
+  "count": 1,
+  "videos": [
+    {
+      "name": "go2_flat",
+      "duration_s": 120.0,
+      "size_bytes": 13027295
+    }
+  ]
+}

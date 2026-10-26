@@ -235,5 +235,19 @@
   <p>启动：<code>uvicorn app:app --host 0.0.0.0 --port $PORT</code></p>
 </section>
 
+
+<section>
+  <h2>八、具身智能 · DGX 闲余算力收割</h2>
+  <p>本站第三章是 MicroDuck 十项课程任务；本区块来自同一台 NVIDIA DGX Spark（GB10 · aarch64 · CUDA sm_121）的<strong>闲余算力</strong>：生产服务（SOP 推理 / CVAT）优先，GPU 空转时由 <code>embodied-harvest</code> 调度器自动领任务 —— Isaac Lab 3.0 训练 → 推理录像 → 归一 120 秒 → 回传本站。</p>
+  <div class="vgrid">
+    <div class="vcard">
+      <h3>E01 · go2_flat</h3>
+      <div class="tag">Isaac Lab / mjlab 推理录像 · 120s</div>
+      <video controls preload="metadata" src="videos/go2_flat.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+  </div>
+</section>
+
 </body>
 </html>
