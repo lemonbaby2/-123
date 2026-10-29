@@ -144,10 +144,26 @@ app.add_middleware(
 )
 
 for sub, mount in (("videos", "videos"), ("validation", "validation"),
-                   ("notebooks", "notebooks"), ("logs", "logs")):
+                   ("notebooks", "notebooks"), ("logs", "logs"), ("duck", "duck")):
     p = BASE / sub
     if p.is_dir():
         app.mount(f"/{mount}", StaticFiles(directory=str(p)), name=mount)
+
+
+@app.get("/api/duck/sprint")
+def duck_sprint():
+    """MicroDuck 短跑实验室：训练曲线 + 实测速度（第十一章数据源）。"""
+    out = {}
+    for name in ("sprint_metrics.json", "sprint_speed.json"):
+        p = BASE / "duck" / name
+        if p.is_file():
+            try:
+                out[name.replace(".json", "")] = json.loads(p.read_text(encoding="utf-8"))
+            except Exception as exc:  # noqa: BLE001
+                out[name.replace(".json", "")] = {"error": str(exc)}
+    if not out:
+        raise HTTPException(status_code=404, detail="duck/sprint_*.json not synced yet")
+    return out
 
 
 @app.get("/api/health")
