@@ -9,16 +9,30 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 PROJECTS = ROOT / "projects"
 
+# 项目数只设下限：新增项目不该让 CI 变红，删项目才该。
+EXPECTED_MIN = 9
+
 
 def main() -> None:
     projects = sorted(path for path in PROJECTS.iterdir() if path.is_dir())
-    if len(projects) != 8:
-        raise RuntimeError(f"expected 8 projects, found {len(projects)}")
+    if len(projects) < EXPECTED_MIN:
+        raise RuntimeError(f"expected at least {EXPECTED_MIN} projects, found {len(projects)}")
     for project in projects:
-        required = [project / "README.md", project / "src", project / "tests"]
+        # 两种合法形态：
+        #   代码型 → README.md + src/ + tests/
+        #   归档型 → README.md + 至少一个子目录（如 09 的 isaac-sim-arm/、bench/）
+        required = [project / "README.md"]
         missing = [path for path in required if not path.exists()]
         if missing:
             raise RuntimeError(f"{project.name} missing: {missing}")
+
+        if (project / "src").is_dir() and (project / "tests").is_dir():
+            continue
+        subdirs = [p for p in project.iterdir() if p.is_dir()]
+        if not subdirs:
+            raise RuntimeError(
+                f"{project.name}: neither src/+tests/ nor any subdirectory found"
+            )
 
     markdown_files = [ROOT / "README.md", ROOT / "README_EN.md", *ROOT.rglob("projects/*/README.md")]
     pattern = re.compile(r"\[[^]]+\]\((?!https?://|#|mailto:)([^)]+)\)")
@@ -27,7 +41,7 @@ def main() -> None:
             clean_target = target.split("#", 1)[0]
             if clean_target and not (document.parent / clean_target).resolve().exists():
                 raise RuntimeError(f"broken link in {document.relative_to(ROOT)}: {target}")
-    print("layout: 8 projects complete; local README links valid")
+    print(f"layout: {len(projects)} projects complete; local README links valid")
 
 
 if __name__ == "__main__":

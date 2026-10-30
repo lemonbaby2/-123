@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>双卡 VLA 训练 × 激光 SLAM 实验台 · 2026-10</title>
+<meta name="description" content="RTX 4060 + RTX 5060 Ti 两张显卡并行训练 ACT 与 SmolVLA(LoRA)，同时运行本机 MuJoCo Go2 激光建图、ICP 评测与 SegFormer 视觉语义推理的可视化实验台。">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="mark">V</span><div><b>VLA × SLAM Lab</b><small>DUAL-GPU EMBODIED STACK</small></div></div>
+  <nav>
+    <a href="#train" class="active">双卡训练</a>
+    <a href="#cloud">三维点云</a>
+    <a href="#video">视频结果</a>
+    <a href="#semantic">视觉语义</a>
+    <a href="#method">方法与边界</a>
+  </nav>
+  <span class="stamp"><i></i> RUN 2026-10-25</span>
+</header>
+
+<main>
+<section class="hero">
+  <span class="eyebrow">VISION · LANGUAGE · ACTION &nbsp;/&nbsp; LIDAR · INERTIAL · SEMANTIC</span>
+  <h1>两张显卡，一条从像素到动作的链路。</h1>
+  <p>本机 RTX 4060 与 RTX 5060 Ti 同时训练两个机器人策略模型；同一台机器上的 MuJoCo Go2 激光建图、ICP 评测与 SegFormer 语义推理同步产出点云、指标与视频。页面上每个数字都来自本次真实运行。</p>
+  <div class="stat-strip">
+    <div><small>并行训练任务</small><strong>2</strong><span>ACT + SmolVLA(LoRA)</span></div>
+    <div><small>策略总参数量</small><strong>502 M</strong><span>52M + 451M</span></div>
+    <div><small>点云规模</small><strong id="heroPoints">196,826</strong><span>MuJoCo 射线扫描</span></div>
+    <div><small>ICP 单帧耗时</small><strong>10.1 ms</strong><span>100 Hz 实时余量</span></div>
+  </div>
+</section>
+
+<section id="train">
+  <div class="sec-head">
+    <h2>01 / 双卡训练实况</h2>
+    <span>LeRobot 0.4.4 · pytorch cu128 · 数据集 lerobot/pusht（206 回合 / 25,650 帧 / 10 fps）</span>
+  </div>
+  <div class="gpu-grid">
+    <article class="gpu-card" id="card-act">
+      <div class="gpu-top"><span class="tag g0">GPU 0</span><b>RTX 4060 · 8 GB</b></div>
+      <h3>ACT 策略 · 从零训练</h3>
+      <p class="muted">Action Chunking Transformer，ResNet18 视觉主干 + Transformer 编码器，单卡满负荷梯度更新。</p>
+      <div class="kv"><div><small>可训练参数</small><strong>51.6 M</strong></div><div><small>batch</small><strong>16</strong></div><div><small>总步数</small><strong>20,000</strong></div><div><small>吞吐</small><strong>≈11.7 step/s</strong></div></div>
+      <div class="prog"><i id="actBar"></i></div>
+      <div class="progline"><span id="actStep">步数 —</span><span id="actLoss">loss —</span></div>
+    </article>
+    <article class="gpu-card" id="card-smolvla">
+      <div class="gpu-top"><span class="tag g1">GPU 1</span><b>RTX 5060 Ti · 16 GB</b></div>
+      <h3>SmolVLA · LoRA 微调</h3>
+      <p class="muted">视觉-语言-动作模型，SmolVLM2-500M 主干冻结，仅训练 LoRA 适配器与动作投影层。</p>
+      <div class="kv"><div><small>总参数</small><strong>450.8 M</strong></div><div><small>可训练</small><strong>743 K · 0.16%</strong></div><div><small>LoRA rank</small><strong>16</strong></div><div><small>batch</small><strong>8</strong></div></div>
+      <div class="prog"><i id="vlaBar"></i></div>
+      <div class="progline"><span id="vlaStep">步数 —</span><span id="vlaLoss">loss —</span></div>
+    </article>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-head"><h3>训练损失曲线</h3><span id="chartNote">数据每 20 步记录一次</span></div>
+    <canvas id="lossChart" height="260"></canvas>
+    <div class="legend-row"><span class="lc act"></span>ACT · GPU0<span class="lc vla"></span>SmolVLA · GPU1</div>
+  </div>
+</section>
+
+<section id="cloud">
+  <div class="sec-head">
+    <h2>02 / 三维点云</h2>
+    <span>MuJoCo Go2 · 16 线 × 240 方位角射线 · 180 帧 · 体素 7 cm 降采样</span>
+  </div>
+  <div class="cloud-wrap">
+    <div class="cloud-tools">
+      <label>着色模式
+        <select id="colorMode">
+          <option value="material">仿真材质色</option>
+          <option value="height">高度色带</option>
+          <option value="mono">单色点云</option>
+        </select>
+      </label>
+      <label>点大小 <output id="sizeOut">0.035</output>
+        <input id="pointSize" type="range" min="0.01" max="0.09" step="0.005" value="0.035">
+      </label>
+      <label class="row"><input id="showTraj" type="checkbox" checked> 轨迹</label>
+      <label class="row"><input id="showGrid" type="checkbox" checked> 坐标网格</label>
+      <button id="buildBtn">▶ 回放建图过程</button>
+      <a class="dl" href="data/map.ply" download>↓ 下载 PLY 模型</a>
+    </div>
+    <div class="cloud-view">
+      <div id="viewport"><div id="loading">正在载入点云…</div></div>
+      <div class="cloud-hud"><span id="ptCount">—</span><span id="frameTag">FRAME 179 / 179</span></div>
+    </div>
+  </div>
+  <p class="foot-note">点云为激光射线几何重建结果，颜色取仿真材质色，不代表语义预测。可拖动旋转、滚轮缩放、右键平移。</p>
+</section>
+
+<section id="video">
+  <div class="sec-head">
+    <h2>03 / 视频结果</h2>
+    <span>960×720 · H.264 · 由本机脚本逐帧渲染</span>
+  </div>
+  <div class="video-grid">
+    <figure>
+      <video src="video/map_build.mp4" controls preload="metadata"></video>
+      <figcaption><b>激光建图渐进过程</b><span>180 帧扫描按采集顺序逐帧叠加，黄色为估计轨迹。可看到闭环处墙体出现双层，对应 ATE 2.13 m 的累积漂移。</span></figcaption>
+    </figure>
+    <figure>
+      <video src="video/map_orbit.mp4" controls preload="metadata"></video>
+      <figcaption><b>点云环绕视角</b><span>固定半径环绕一周，俯仰随方位角起伏。中心蓝橙色块为货架与料箱，灰色为墙面。</span></figcaption>
+    </figure>
+    <figure>
+      <video src="video/vla_eval_best.mp4" controls preload="metadata" loop muted></video>
+      <figcaption><b>ACT 策略执行 · 最优回合</b><span>蓝灰色为被推方块，绿色为目标位形，红十字为目标点。该回合覆盖率 58%，为 10 回合中最高，仍未达标。视频由评测流程自动录制，30 秒 / 300 步。</span></figcaption>
+    </figure>
+    <figure>
+      <video src="video/vla_eval_grid.mp4" controls preload="metadata"></video>
+      <figcaption><b>10 回合评测全景</b><span>同一检查点、10 个随机初始位形并排回放。最高覆盖率 58%，最低 0.3%，成功率 0/10：这说明 20,000 步对从零训练的 ACT 仍然不足，损失下降不等于任务完成。</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="semantic">
+  <div class="sec-head">
+    <h2>04 / 视觉语义推理</h2>
+    <span>SegFormer-B0 · ADE20K 20 类细分 · 本机 CPU 推理</span>
+  </div>
+  <div class="sem-grid">
+    <div class="sem-imgs">
+      <figure><img src="data/rgb-000.jpg" alt="仿真原始 RGB"><figcaption>原始 RGB · 帧 000</figcaption></figure>
+      <figure><img src="data/semantic-000.jpg" alt="语义分割叠加"><figcaption>语义叠加 · 帧 000</figcaption></figure>
+      <figure><img src="data/semantic-060.jpg" alt="语义分割叠加"><figcaption>语义叠加 · 帧 060</figcaption></figure>
+    </div>
+    <div class="sem-side">
+      <h3>推理记录</h3>
+      <ul id="semList"><li class="muted">载入中…</li></ul>
+      <p class="muted small">三轮推理共 9 张图，稳定后每轮 0.33 秒（CPU，256×256 输入）。注意主导标签是 sky / floor —— 一个室内实验室被判成天空，说明 ADE20K 预训练权重迁移到本仿真渲染风格有明显域偏移。正因为没有语义真值、也没有在本场景微调，这里不给出任何 mIoU 声明。</p>
+    </div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="sec-head">
+    <h2>05 / 指标与方法边界</h2>
+    <span>同样的环境，三个不同的噪声随机种子</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>种子</th><th>帧数</th><th>点数</th><th>ATE RMSE</th><th>RPE RMSE</th><th>地图平均 NN</th><th>10 cm 覆盖率</th><th>ICP 耗时</th></tr></thead>
+      <tbody id="runsTable"><tr><td colspan="8" class="muted">载入中…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="eval-block">
+    <div class="sec-head"><h2>策略评测结果</h2><span>LeRobot 评测流程 · gym_pusht · 每回合上限 300 步</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>策略</th><th>训练步数</th><th>评测回合</th><th>平均累计奖励</th><th>平均最高覆盖率</th><th>成功率</th><th>评测速度</th></tr></thead>
+        <tbody>
+          <tr><td>ACT · GPU0</td><td>20,000</td><td>10</td><td>31.6</td><td>33.2%</td><td>0 / 10</td><td>2.10 s / 回合</td></tr>
+          <tr><td>SmolVLA LoRA · GPU1</td><td>4,000（评测时）</td><td>5</td><td>8.42</td><td>15.0%</td><td>0 / 5</td><td>3.20 s / 回合</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot-note">两个策略在本次预算内都没有完成推动任务。ACT 的最高覆盖率 33.2% 说明它学到了部分推进方向；SmolVLA 只完成了 4,000 步（计划 20,000 步）的 LoRA 适配，还在训练中。这类结论比“loss 降到 0.1”更有参考价值：损失下降只代表拟合了训练动作，不代表任务成功。</p>
+  </div>
+  <div class="method-grid">
+    <article>
+      <h3>做了什么</h3>
+      <p>用 MuJoCo 与公开 Go2 MJCF 模型，按预设运动学轨迹发射激光射线，叠加 1 cm 独立高斯噪声；用陀螺仪 yaw 约束与截断式点到点 ICP 做扫描匹配；体素降采样后统计轨迹误差与地图最近邻误差。</p>
+      <p>训练侧使用 LeRobot 0.4.4：GPU0 上 ACT 从零训练 20,000 步，GPU1 上 SmolVLA 以 LoRA 方式微调预训练权重（rank 16，仅 0.16% 参数可训练）。训练结束后用 LeRobot 官方 rollout 流程在 gym_pusht 中并行评测，并自动录制每回合视频。</p>
+    </article>
+    <article>
+      <h3>没有做什么</h3>
+      <p>这不是强化学习步态或自主导航验证，机器人位姿由运动学预设，不测试动力学稳定性。ICP 基线没有融合 IMU 预积分与视觉，RGB 只用于独立的语义展示。FAST-LIVO2 未接入运行，本页不声称复现其结果。</p>
+      <p>语义模型未在本场景微调，无分割真值，不给精度结论。训练损失下降不等于任务成功率提升，策略评测结果会单独列出。</p>
+    </article>
+  </div>
+  <div class="files">
+    <h3>产出文件</h3>
+    <ul>
+      <li><a href="data/map.ply" download>map.ply</a> · 196,826 点三维模型，可用 MeshLab / CloudCompare 打开</li>
+      <li><a href="data/simulation.json" download>simulation.json</a> · 三次建图实验的完整指标与轨迹</li>
+      <li><a href="data/semantics.json" download>semantics.json</a> · 语义推理记录与权重哈希</li>
+      <li><a href="data/training.json" download>training.json</a> · 两卡训练损失采样序列</li>
+      <li><a href="video/map_build.mp4" download>map_build.mp4</a> · 建图渐进视频</li>
+      <li><a href="video/map_orbit.mp4" download>map_orbit.mp4</a> · 点云环绕视角</li>
+      <li><a href="video/vla_eval_best.mp4" download>vla_eval_best.mp4</a> · ACT 最优回合执行回放</li>
+      <li><a href="video/vla_eval_grid.mp4" download>vla_eval_grid.mp4</a> · 10 回合评测全景</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span>VLA × SLAM Lab · 本机实验产物</span>
+  <span>仿真与训练结果不代表实机性能</span>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

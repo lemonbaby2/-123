@@ -1,8 +1,8 @@
 # 2026 简历项目：源码与结果索引
 
-更新日期：2026-10-12。这里的“可复现”仅表示公开仓库中的演示命令可运行，不代表简历中的实机指标已经独立复测。所有数值应按[简历证据映射](RESUME_EVIDENCE_MATRIX.md)所述口径解释。
+更新日期：2026-10-31（新增「具身智能仿真与真机数据链路」一行，对应 2026-10 新增的 `projects/09`）。这里的“可复现”仅表示公开仓库中的演示命令可运行，不代表简历中的实机指标已经独立复测。所有数值应按[简历证据映射](RESUME_EVIDENCE_MATRIX.md)所述口径解释。
 
-本轮运行记录见[2026-10-12 验证记录](VERIFICATION_2026-10-12.md)。
+本轮运行记录见[2026-10-12 验证记录](VERIFICATION_2026-10-12.md)。简历全文（脱敏版）见 [RESUME.md](RESUME.md)。
 
 | 简历方向 | 公开代码或资料 | 结果状态 |
 | --- | --- | --- |
@@ -10,13 +10,14 @@
 | Ginger 服务机器人 VLM/VLA 控制 | [协议与安全门控演示](../projects/02_ginger_robot/) | Mock 接口演示可运行；不等同于厂商 CCU 或实机结果 |
 | GeoScan Pro 多传感器扫描仪 | [协议/因子图演示](../projects/03_geoscan_pro/) · [软硬件归档](../projects/08_3dgs_scanner_soft_hardware/) | 模拟数据和部分设计文档可查；完整固件、标定与实测原始数据未公开 |
 | 工业视觉质检 | [指标与量化演示](../projects/04_industrial_vision/) | 合成输入可运行；产线图像、权重和 TensorRT 实机基准未公开 |
-| 世界模型、动作条件预测与 Real2Sim | [MicroDuck 短跑实验档案](../embodied-ai/experiments/microduck_sprint/README.md) | 该档案提供 DGX 上的真实策略训练与测速数据（含 6 份 JSON 与 5 张图），可重跑配方对照；但**世界模型本身的训练代码与 PSNR 28.5 dB 评测输出仍未公开**，不把参考论文当作个人结果 |
+| 世界模型、动作条件预测与 Real2Sim | [MicroDuck 短跑实验档案](../embodied-ai/experiments/microduck_sprint/README.md) · [09 具身智能仿真与真机链路](../projects/09_robotwin_hackathon/) | MicroDuck 档案提供 DGX 上的真实策略训练与测速数据（6 份 JSON + 5 张图），可重跑配方对照；09 提供 Isaac Sim 适配与真机采集流水线。但**世界模型本身的训练代码与 PSNR 28.5 dB 评测输出仍未公开**，不把参考论文当作个人结果 |
 | VLA 语言指令操作 | [VLA/VLM 工程演示](../vla_vlm_projects/) | 两个 dry-run 项目有源码和测试；1000+ 轨迹、92.5% 实机抓放及端侧延迟数据未公开 |
 | VLM 工业 SOP 理解 | [宁波 SOP 源码分支](https://github.com/lemonbaby2/-123/tree/sop-public-cvat-roundtrip-20260825) | 平台源码及部分验收文档已公开；简历中的召回率与幻觉率缺少可公开的同口径复测数据 |
 | ROS2 + 3DGS Lego 可视化 | [PLY/ROS2 演示](../projects/05_ros2_3dgs/) | 自制样例可运行；原 Lego 资产和录屏未公开 |
 | STM32-FreeRTOS BMS | [AEKF/均衡演示](../projects/06_bms/) · [硬件文档](../projects/08_3dgs_scanner_soft_hardware/) | 模拟测试可运行；原 MCU 工程和 HIL 结果未公开 |
 | 宁波螺钉装配 SOP/MES | [2026-08-25 平台源码分支](https://github.com/lemonbaby2/-123/tree/sop-public-cvat-roundtrip-20260825) · [紧固件检测仓库](https://github.com/lemonbaby2/ai-fastener-inspection) | 已有公开代码及部分验收报告；原始车间视频、生产凭据、数据库与未复核标签不在公开代码中 |
 | GaussPatrol 巡检仿真 | [独立项目与模拟产物](../projects/07_gausspatrol/) | 仿真代码、测试与产物可重复；实机性能未据此证明 |
+| 具身智能仿真与真机数据链路（2026-10 新增） | [09 具身智能仿真与真机链路](../projects/09_robotwin_hackathon/) | Isaac Sim 4.5 适配、双卡算力基准、真机采集流水线、SmolVLA/ACT 双卡训练脚本可查；**上游第三方仓库、模型权重、采集数据集、录屏均未入库**，网络地址与凭据已替换为占位符 |
 
 ## 本地快速验证
 

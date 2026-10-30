@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-10-28 00:13:43",
+  "cpu": "i5-12600KF",
+  "torch": "2.11.0+cu128",
+  "stress": {
+    "seconds": 90,
+    "threads": 2,
+    "errors": [],
+    "error_count": 0,
+    "idle": {
+      "freq_mhz": null,
+      "perf_pct": null,
+      "acpi_temp_c": null
+    },
+    "load": {
+      "freq_mhz": {
+        "min": 3700.0,
+        "max": 3700.0,
+        "avg": 3700.0,
+        "n": 15
+      },
+      "perf_pct": {
+        "min": 106.6,
+        "max": 113.3,
+        "avg": 112.8,
+        "n": 14
+      },
+      "acpi_temp_c": {
+        "min": 27.9,
+        "max": 27.9,
+        "avg": 27.9,
+        "n": 15
+      }
+    },
+    "verdict": "stable"
+  }
+}

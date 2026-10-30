@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-10-27 04:29:05",
+  "device": 1,
+  "name": "NVIDIA GeForce RTX 5060 Ti",
+  "levels": [
+    {
+      "label": "L1 单 stream FP16 GEMM",
+      "peak_w": 180.1,
+      "avg_w": 179.8,
+      "limit_w": 180.0,
+      "saturation_pct": 100.0,
+      "temp_max_c": 74.0,
+      "clock_min": 2580.0,
+      "clock_max": 2655.0,
+      "seconds": 49.8
+    },
+    {
+      "label": "L2 4-stream 并行 GEMM",
+      "peak_w": 180.1,
+      "avg_w": 176.9,
+      "limit_w": 180.0,
+      "saturation_pct": 100.0,
+      "temp_max_c": 75.0,
+      "clock_min": 2587.0,
+      "clock_max": 2692.0,
+      "seconds": 25.8
+    },
+    {
+      "label": "L3 GEMM + 带宽流并发",
+      "peak_w": 130.3,
+      "avg_w": 128.7,
+      "limit_w": 180.0,
+      "saturation_pct": 72.4,
+      "temp_max_c": 67.0,
+      "clock_min": 2790.0,
+      "clock_max": 2790.0,
+      "seconds": 25.9
+    }
+  ]
+}

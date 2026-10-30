@@ -1,0 +1,62 @@
+# LingBot-VLA 2.0 部署环境（推理侧）—— 2026-10-24 实测通过组合
+#
+# 安装顺序很重要：先装 torch（按 CUDA 版本），再装其余，最后装 lerobot
+# 并在最后"复位" huggingface-hub（lerobot/datasets 会自动顶到 1.x/2.x，
+# 而 transformers 4.57.3 要求 hub<1.0）
+#
+# ---------------------------------------------------------------
+# torch 版本选择（按显卡架构，选错会报 "no kernel image is available"）
+# ---------------------------------------------------------------
+#   Blackwell (RTX 50 系 / sm_120，如 5060Ti/5070/5080/5090) 必须 cu128+：
+#     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+#   Ada/Hopper (RTX 40 系 / A100 / H100)：
+#     pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu121
+#   CPU (仅功能验证)：
+#     pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#
+#   验证 torch 是否含你的架构 kernel:
+#     python -c "import torch;print(torch.cuda.get_arch_list())"
+#     输出里必须出现 sm_120（Blackwell）
+#
+# ---------------------------------------------------------------
+# 硬件门槛（6.38B 参数）
+# ---------------------------------------------------------------
+#   显存 bf16 权重 : 12.76 GB  → 需 >=14GB 可用（16GB 卡留出激活余量）
+#   主机内存       : 官方加载 ~52GB；用 LINGBOT_LOW_MEM=1 流式加载降到 ~26GB；
+#                    再叠加 LINGBOT_BF16_BUILD=1（bf16 构建）可降到 ~14GB
+#   磁盘           : 权重 25.5GB + 仓库 + 环境约 35GB
+#   注意：模型最终占用的内存/显存下限就是权重本身大小，无法靠软件再压缩
+#        （除非量化，而 VLA 动作输出对量化误差敏感，真机首跑不建议）
+#
+# 快速自检（在任何目标机器上先跑这个）:
+#   python deploy/gpu_check.py --weights <模型目录>
+
+transformers==4.57.3
+tokenizers==0.22.2
+huggingface-hub==0.34.4
+datasets==3.6.0
+torchdata==0.11.0
+safetensors
+numpy
+pillow
+opencv-python-headless
+einops
+pyyaml
+tqdm
+pydantic
+sentencepiece
+accelerate
+peft
+qwen-vl-utils
+msgpack
+websockets<14
+av==15.1.0          # 必须 15.x：19.x 无 av.option，lerobot>=0.4 会 AttributeError
+lerobot             # 实测 0.6.1；需配合 deploy/apply_patches.py 打 2 处兼容补丁
+
+# flash-attn 可选：
+#   有 + CUDA 时链路自动用 flash_attention_2；
+#   没装则自动回退 eager（apply_patches.py 的注意力补丁保证）。
+#   注意：flash-attn 编译耗时长，先用 eager 跑通再考虑加速。
+#
+# triton：GPU 机器上随 torch 自带，无需单装；
+#   Windows/无 triton 环境由 apply_patches.py 安装 stub 保证可导入。

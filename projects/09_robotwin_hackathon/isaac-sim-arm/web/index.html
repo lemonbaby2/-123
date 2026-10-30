@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Isaac Sim 4.5 · Franka 机械臂分拣复现 · 2026-10</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">IA</div>
+    <div>
+      <b>Isaac Sim 4.5 × Franka 机械臂复现</b>
+      <small>GITHUB REPO · FULL RUN · 2026-10-26</small>
+    </div>
+  </div>
+  <nav>
+    <a href="#overview">00 总览</a>
+    <a href="#pick">01 仓库选型</a>
+    <a href="#env">02 环境打通</a>
+    <a href="#run">03 完整分拣</a>
+    <a href="#stills">照片墙</a>
+    <a href="#rl">04 机械臂 RL</a>
+    <a href="#pitfall">05 踩坑铁律</a>
+  </nav>
+  <div class="stamp"><i></i>RTX 4060 · ISAAC 4.5.0.0</div>
+</header>
+
+<main>
+
+<!-- ==================== 00 总览 ==================== -->
+<section id="overview" class="hero">
+  <div class="eyebrow">00 / OVERVIEW</div>
+  <h1>从 GitHub 找到一个 Isaac Sim 机械臂仓库，<br><em>改 3 处</em>在本机完整跑通</h1>
+  <p class="lede">
+    目标仓库：<b>Kishan-Gadhavi01/IsaacSim_Robotics_Portfolio</b>（commit <code>48540c0</code>）里的
+    <b>RGB-D 视觉引导三色方块分拣</b>——固定俯视相机 + HSV 分割 + 遮挡判定 + Franka + RMPFlow 状态机。
+    原代码写于 Isaac Sim 4.2/4.3（<code>omni.isaac.*</code> 旧命名空间），在本机 4.5.0.0 上
+    <b>原样运行会直接段错误</b>。本页记录把它完整跑起来、并额外跑完一整套 Isaac Lab 机械臂强化学习的过程与数据。
+  </p>
+
+  <div class="statgrid">
+    <div class="stat">
+      <div class="k">仓库源文件</div>
+      <div class="v">402 <small>行</small></div>
+      <div class="s">RGB_cube_sorter.py，算法零改动</div>
+    </div>
+    <div class="stat v">
+      <div class="k">需要改的地方</div>
+      <div class="v">3 <small>处</small></div>
+      <div class="s">headless / import 路径 / imshow→VideoWriter</div>
+    </div>
+    <div class="stat a">
+      <div class="k">实跑分拣成功</div>
+      <div class="v">8 <small>个方块</small></div>
+      <div class="s">红 3 · 绿 2 · 蓝 3，共 11 次抓取尝试</div>
+    </div>
+    <div class="stat p">
+      <div class="k">Isaac Lab 机械臂训练</div>
+      <div class="v">1500 <small>iters</small></div>
+      <div class="s">73.7 M 步 · 25:07 · RTX 5060 Ti</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>一句话结论：</b>这个仓库值得复现，但「能 import」和「能跑对」是两件事——
+    真正卡住的三道关卡分别是 <b>experience 选择导致的 osqp 段错误</b>、
+    <b>模拟器渲染不写回 USD 导致录像是静止画面</b>、
+    以及 <b>状态机相位时长不足导致夹爪在空中闭合</b>。三者都不是仓库本身的逻辑错误，
+    而是 Isaac 4.5 + 本机环境的耦合问题，详见 <a href="#pitfall">05 踩坑铁律</a>。
+  </div>
+</section>
+
+<!-- ==================== 01 仓库选型 ==================== -->
+<section id="pick">
+  <div class="eyebrow">01 / REPO SELECTION</div>
+  <h2 class="title">为什么是这个仓库</h2>
+  <p class="sub">
+    筛选条件：① 明确是「Isaac Sim/Lab + 机械臂」而不是四足/AMR；② 能在本机 Isaac Sim 4.5.0.0 + Isaac Lab 2.1.1
+    上跑，不需要升级到 5.0/5.1；③ 有可执行的完整 pipeline（视觉/控制器/状态机），不是纯 benchmark。
+  </p>
+
+  <div class="panel">
+    <table>
+      <thead>
+        <tr><th>候选仓库</th><th>热度</th><th>Isaac 版本要求</th><th>机械臂相关度</th><th>结论</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Kishan-Ghadhavi01 / IsaacSim_Robotics_Portfolio</b></td>
+          <td class="mono">—</td>
+          <td class="mono">4.5.0</td>
+          <td>Franka + PickPlace + RMPFlow + RGB-D 视觉分拣</td>
+          <td><span class="pill ok">采用</span></td>
+        </tr>
+        <tr>
+          <td>TrossenRobotics / trossen_ai_isaac</td>
+          <td class="mono">—</td>
+          <td class="mono">5.1 / Lab 2.3</td>
+          <td>ALOHA / WidowX 双臂</td>
+          <td><span class="pill bad">版本不匹配</span></td>
+        </tr>
+        <tr>
+          <td>NVlabs / RoboLab</td>
+          <td class="mono">467★</td>
+          <td class="mono">5.0 / 5.1</td>
+          <td>以 benchmark 为主，非机械臂工程</td>
+          <td><span class="pill bad">版本不匹配</span></td>
+        </tr>
+        <tr>
+          <td>enactic / openarm_isaac_lab</td>
+          <td class="mono">—</td>
+          <td class="mono">5.1 / Lab 2.3 + Py3.11</td>
+          <td>OpenArm 双臂</td>
+          <td><span class="pill bad">版本不匹配</span></td>
+        </tr>
+        <tr>
+          <td>saiga006 / GenReal_CogRob</td>
+          <td class="mono">—</td>
+          <td class="mono">4.5 / Lab 2.1.1（精确匹配）</td>
+          <td>需替换 IsaacLab 内部源码</td>
+          <td><span class="pill warn">风险过高</span></td>
+        </tr>
+        <tr>
+          <td>NVlabs / curobo</td>
+          <td class="mono">1.9k★</td>
+          <td class="mono">无 4.5 示例</td>
+          <td>CUDA 运动规划库，非仿真 app</td>
+          <td><span class="pill warn">不适合直接跑</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">
+      <b>选中的理由：</b>它是唯一一个「Isaac Sim 4.5.0 + 机械臂 + 完整可执行脚本 + 主脚本无外部硬编码路径」的组合。
+      仓库内 <code>PickPlaceController/arm/RGB_cube_sorter.py</code> 是一个自带 RGB-D 相机、HSV 颜色分割、
+      邻域遮挡判定（Y-grip / X-grip 自动切换）、六格码垛计数、PickPlaceController + RMPFlow 状态机的完整分拣应用。
+      同仓库的 <code>rmpflow/arm/franka_pick.py</code> 反而写死了 <code>/home/popoy/...</code> 的 USD 路径，不可直接用。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 02 环境打通 ==================== -->
+<section id="env">
+  <div class="eyebrow">02 / MAKE IT RUN</div>
+  <h2 class="title">3 处代码改动 + 1 个自定义 experience</h2>
+  <p class="sub">
+    原脚本面向 4.2/4.3。下面 3 处是「能否在 4.5 跑起来」的必要改动，算法本体
+    （HSV 阈值、ROI、遮挡判定、Y/X-grip 切换、BinManager 码垛、FSM）一行未动。
+  </p>
+
+  <div class="split">
+    <div class="panel">
+      <h3 style="font-size:16px;margin-bottom:10px">改动的 3 处</h3>
+      <div class="diff">
+        <div class="hd"><span>① 无窗口运行</span><span>第 3 行</span></div>
+        <pre><span class="del">- simulation_app = SimulationApp({"headless": False})</span>
+<span class="add">+ simulation_app = SimulationApp({"headless": True,</span>
+<span class="add">+                  "experience": ".../isaaclab.arm.sorter.headless.kit"})</span></pre>
+      </div>
+      <div class="diff">
+        <div class="hd"><span>② 抓取控制器 import 路径</span><span>第 13 行</span></div>
+        <pre><span class="del">- from omni.isaac.franka.controllers import PickPlaceController</span>
+<span class="add">+ from isaacsim.robot.manipulators.examples.franka.controllers \</span>
+<span class="add">+     import PickPlaceController</span></pre>
+      </div>
+      <div class="diff">
+        <div class="hd"><span>③ 可视化落盘替代 imshow</span><span>第 67/234/399 行</span></div>
+        <pre><span class="del">- cv2.namedWindow("Sorter Dashboard", cv2.WINDOW_NORMAL)</span>
+<span class="del">- cv2.imshow("Sorter Dashboard", dashboard); cv2.waitKey(1)</span>
+<span class="del">- cv2.destroyAllWindows()</span>
+<span class="add">+ dash_writer = cv2.VideoWriter(stage_path("dashboard.mp4"),</span>
+<span class="add">+                               cv2.VideoWriter_fourcc(*"mp4v"), 30, (640,1440))</span>
+<span class="add">+ dash_writer.write(dashboard)</span></pre>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="font-size:16px;margin-bottom:10px">新增的自定义 experience</h3>
+      <p class="small muted" style="margin-bottom:10px">
+        <code>D:\nvidia\Isaac\IsaacLab\apps\isaaclab.arm.sorter.headless.kit</code>
+      </p>
+      <pre># 基线：Isaac Lab headless + 渲染（相机可用）
+"isaaclab.python.headless.rendering" = {}
+
+# 机械臂本体 / 抓取控制器（RMPFlow）
+"isaacsim.robot.manipulators" = {}
+"isaacsim.robot.manipulators.examples" = {}
+"isaacsim.robot_motion.motion_generation" = {}
+
+# RGB-D 相机
+"isaacsim.sensors.camera" = {}
+
+# ★ 刻意不引入 isaacsim.robot.wheeled_robots
+#   它是 osqp 段错误的来源（见 05 铁律 1）</pre>
+      <dl class="kv" style="margin-top:14px">
+        <dt>启动耗时</dt><dd>105 s（首次）/ <b>24 s</b>（扩展缓存热）</dd>
+        <dt>计算设备</dt><dd>CUDA_VISIBLE_DEVICES=0 → <b>RTX 4060 8GB</b></dd>
+        <dt>仿真步长</dt><dd>physics_dt = rendering_dt = 1/60 s</dd>
+        <dt>录制规格</dt><dd>宽视角 1280×720@30fps + 俯视面板 640×1440@30fps</dd>
+      </dl>
+      <div class="note warn" style="margin-top:12px">
+        <b>为什么不用默认 experience：</b>默认 <code>isaacsim.exp.full.kit</code> 在启动阶段就
+        <code>EXIT=139</code> 段错误，连第一行 <code>print</code> 都执行不到。
+      </div>
+      <div style="margin-top:14px">
+        <div class="eyebrow" style="margin-bottom:6px">复现命令（本机实测可直接跑）</div>
+        <pre>cd E:\研究生学习\黑客松\outputs\isaac-arm-2026-10
+
+set CUDA_VISIBLE_DEVICES=0
+set OMNI_CONFIG_PATH=D:\nvidia\Isaac\config
+D:\nvidia\Isaac\envs\isaaclab-2.1.1\Scripts\python.exe -u ^
+  run_rgb_cube_sorter_45.py ^
+  --max-sorted 9 --max-steps 20000 --timeout-s 2700
+
+:: 只做渲染冒烟（不跑分拣）
+::   ... run_rgb_cube_sorter_45.py --smoke</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 03 完整分拣 ==================== -->
+<section id="run">
+  <div class="eyebrow">03 / FULL RUN</div>
+  <h2 class="title">完整分拣复现：视觉 → 抓取 → 码垛</h2>
+  <p class="sub">
+    场景由脚本自动生成：Franka 机械臂 + 12 个 4 cm 动态立方体（红/绿/蓝各 4）+ 3 个颜色分拣箱，
+    方块位置用 <code>MIN_SEPARATION=0.08 m</code> 拒绝采样保证互不重叠。
+    固定俯视相机给出 RGB + 深度，HSV 分割出候选，再用「同层邻域净空」判定能否下爪，
+    不够就自动切 90° 换 X-grip 方向；够不着的一律标红 CLUTTER 跳过。
+  </p>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="pipeline">
+      <div class="step"><div class="i">STEP 1</div><h4>RGB-D 采集</h4><p>俯视相机 640×480，depth via <code>distance_to_image_plane</code></p></div>
+      <div class="step"><div class="i">STEP 2</div><h4>HSV 分割 + ROI</h4><p>红/绿/蓝三通道阈值，ROI 裁剪掉分拣箱区域</p></div>
+      <div class="step"><div class="i">STEP 3</div><h4>遮挡判定</h4><p>同层邻域计算 Y-grip / X-grip 净空，不通则换向</p></div>
+      <div class="step"><div class="i">STEP 4</div><h4>抓取</h4><p>PickPlaceController + RMPFlow，10 相位状态机</p></div>
+      <div class="step"><div class="i">STEP 5</div><h4>码垛</h4><p>BinManager 按颜色六格偏移 + 层高叠加放置</p></div>
+    </div>
+  </div>
+
+  <!-- ---------- 精华片 1 分 40 秒 ---------- -->
+  <div class="hero-video">
+    <div class="vhead">
+      <span class="pill ok">精华片</span>
+      <b>1 分 40 秒 · 8 次抓放实录</b>
+      <span class="m">1280×720 · 30 fps · 99.7 s · 3.4 MB</span>
+    </div>
+    <video controls muted playsinline poster="frames/poster_highlight.jpg">
+      <source src="videos/sorter_highlight.mp4" type="video/mp4">
+      你的浏览器不支持 video 标签。
+    </video>
+    <div class="vcap">
+      全部时间码由日志里 8 次 <code>SUCCESS: Sorted</code> 的仿真步数反推（60 步/秒），抓放周期严格 ≈23.4 s。
+      成片 = <b>首件全流程（绿）</b> + <b>连续 4 件（红/蓝/红/蓝）</b> + <b>终局 8 件入仓定格</b>，
+      无变速、无补帧，仅做淡入淡出转场。
+    </div>
+  </div>
+
+  <!-- ---------- 感知流水线讲解 ---------- -->
+  <div class="split" style="margin-bottom:16px">
+    <div class="video">
+      <video controls muted playsinline poster="frames/poster_detect.jpg">
+        <source src="videos/sorter_detect.mp4" type="video/mp4">
+      </video>
+      <div class="vcap">
+        感知流水线 14 s 四宫格：① 顶视 RGB + 检测判读 · ② 深度 JET 伪彩（蓝近红远）·
+        ③ HSV 三段阈值掩膜 · ④ 判读图例
+      </div>
+    </div>
+    <div class="panel">
+      <h3 style="font-size:16px;margin-bottom:10px">检测框怎么读</h3>
+      <dl class="kv">
+        <dt>绿框 PICK</dt><dd>Y/X 至少一向净空足够，可安全下爪</dd>
+        <dt>红框 CLUTTER</dt><dd>两向都被邻件挡住 → 主动跳过</dd>
+        <dt>橙框 BLOCKER</dt><dd>造成这次遮挡的邻件</dd>
+        <dt>绿竖线 Y-grip</dt><dd>常规夹持方向，不旋转</dd>
+        <dt>紫横线 X-grip</dt><dd>换向 90° 后夹持</dd>
+        <dt>黄框 ROI</dt><dd>ROI 以外一律不计，排除分拣箱区域</dd>
+        <dt>净空判据</dt><dd>夹爪体 45 mm · 张开 100 mm · 余量 5 mm</dd>
+        <dt>同层判定</dt><dd>高差 &lt; 0.75×边长 才视为互相遮挡</dd>
+      </dl>
+      <div class="note" style="margin-top:14px">
+        <b>为什么需要两个方向：</b>夹爪张开 100 mm、夹爪体宽仅 45 mm，
+        所以同一块方块在「竖着夹」被挡时，「横着夹」常常还有空间——这正是脚本自动切
+        <code>angle_offset=π/2</code> 的依据。
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 完整录屏 ---------- -->
+  <div class="panel" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:4px">完整录屏（原速）</h3>
+    <p class="small muted" style="margin-bottom:12px">
+      下面是未剪辑的两路原始录屏，供逐帧核对。精华片即由左图剪出。
+    </p>
+    <div class="split">
+      <div class="video">
+        <video controls muted playsinline poster="frames/poster_wide.jpg">
+          <source src="videos/sorter_wide.mp4" type="video/mp4">
+        </video>
+        <div class="vcap">
+          宽视角 1280×720 · 30 fps · <b>5 分 33 秒</b> · 10,000 帧 · 5.7 MB
+        </div>
+      </div>
+      <div class="video">
+        <video controls muted playsinline poster="frames/poster_dash.jpg">
+          <source src="videos/sorter_dashboard.mp4" type="video/mp4">
+        </video>
+        <div class="vcap">
+          俯视面板 640×1440 · 60 fps · <b>5 分 30 秒</b> · 19,781 帧 · 8.0 MB<br>
+          上=检测标注 · 中=深度 JET · 下=红绿蓝掩膜
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 实测数据 ---------- -->
+  <div class="split" style="margin-bottom:16px">
+    <div class="panel">
+      <h3 style="font-size:16px;margin-bottom:10px">本次运行实测</h3>
+      <dl class="kv">
+        <dt>分拣成功</dt><dd><b>8</b> 个方块</dd>
+        <dt>颜色分布</dt><dd>红 3 / 绿 2 / 蓝 3</dd>
+        <dt>仿真步数</dt><dd>20,000 步 / 333.3 s 仿真时间</dd>
+        <dt>墙钟耗时</dt><dd>821 s（≈24.2 fps，含两路 60 Hz 渲染）</dd>
+        <dt>抓取尝试</dt><dd>11 次（含失败重试）</dd>
+        <dt>生成方块</dt><dd>12 个，完成 8 个</dd>
+      </dl>
+      <div class="note" style="margin-top:14px">
+        <b>渲染实时性已核验：</b>脚本内置「与首帧差异」校验，逐 300 步打印
+        变化像素比例，避免出现「录像是一张静止图」却静默通过的情况。
+      </div>
+      <div class="note warn" style="margin-top:10px">
+        <b>为什么只做了 8 个：</b>收尾阶段日志全部是 <code>blocked by neighbor</code>——剩余方块的同层
+        邻域净空同时不满足 Y-grip 与 X-grip 两套判据，被视觉判定为 <code>CLUTTER</code> 主动跳过，
+        <code>SEARCH</code> 一直找不到安全下爪点，最终在 20,000 步上限退出。
+        这是脚本的遮挡判定在起作用，<b>不是抓取失败</b>。
+      </div>
+    </div>
+    <div class="panel">
+      <h3 style="font-size:16px;margin-bottom:10px">视频与照片是怎么来的</h3>
+      <dl class="kv">
+        <dt>时间轴校准</dt><dd><code>map_highlights.py</code> 扫 48,938 行日志，
+          把 <code>SUCCESS</code> 行回溯到最近的 <code>[PICK] step=</code>，
+          再按 30 fps × 每 2 步 1 帧折成时间码</dd>
+        <dt>精华片</dt><dd><code>make_highlight.sh</code>：三段切分 → 交叉淡化 → 烧录标题</dd>
+        <dt>感知片</dt><dd><code>make_detect.sh</code>：竖版面板裁 3 行 → 2×2 拼合 → 加深图例</dd>
+        <dt>照片组</dt><dd><code>make_photos.sh</code>：每个成功点抽「搬运中 / 已入仓」两张</dd>
+        <dt>成片规格</dt><dd>h264 / yuv420p / faststart，全部可内联播放</dd>
+      </dl>
+      <div class="note" style="margin-top:14px">
+        <b>转场为什么用淡黑：</b>第 2 个转场跨越了 165 s → 329 s 的时间跳跃，
+        用交叉淡化会让机械臂出现「叠影」，容易被误读成渲染 bug，所以改用淡黑明确标记时间跳切。
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 照片墙 ---------- -->
+  <div class="eyebrow" id="stills" style="margin-top:30px">03.1 / STILLS</div>
+  <h3 style="font-size:19px;margin:8px 0 4px">18 张实拍照片 · 8 次抓放逐帧</h3>
+  <p class="small muted">
+    每次成功放置抽两张：<b>搬运中</b>（成功前 3.5 s，工件已在夹爪中飞向目标仓）与
+    <b>已入仓</b>（成功后 0.3 s）。点击任意图片可放大。
+  </p>
+
+  <div class="gallery" id="gallery">
+    <figure class="gitem wide">
+      <img src="photos/hero_wide.jpg" alt="开局全景">
+      <figcaption><b>开局</b> · 1.0 s · 三箱清空，12 个方块散布待抓取区</figcaption>
+    </figure>
+    <figure class="gitem wide">
+      <img src="photos/final_sorted.jpg" alt="终局全景">
+      <figcaption><b>终局</b> · 333.0 s · 8 件入仓（红 3 / 绿 2 / 蓝 3）</figcaption>
+    </figure>
+
+    <figure class="gitem"><img src="photos/pick_01_green_carry.jpg" alt="第1件搬运中">
+      <figcaption><b>① 绿 · 搬运中</b><br>19.5 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_01_green_placed.jpg" alt="第1件已入仓">
+      <figcaption><b>① 绿 · 已入仓</b><br>23.3 s · 累计 1</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_02_red_carry.jpg" alt="第2件搬运中">
+      <figcaption><b>② 红 · 搬运中</b><br>43.0 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_02_red_placed.jpg" alt="第2件已入仓">
+      <figcaption><b>② 红 · 已入仓</b><br>46.8 s · 累计 1</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_03_blue_carry.jpg" alt="第3件搬运中">
+      <figcaption><b>③ 蓝 · 搬运中</b><br>66.0 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_03_blue_placed.jpg" alt="第3件已入仓">
+      <figcaption><b>③ 蓝 · 已入仓</b><br>69.8 s · 累计 1</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_04_red_carry.jpg" alt="第4件搬运中">
+      <figcaption><b>④ 红 · 搬运中</b><br>89.5 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_04_red_placed.jpg" alt="第4件已入仓">
+      <figcaption><b>④ 红 · 已入仓</b><br>93.3 s · 累计 2</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_05_blue_carry.jpg" alt="第5件搬运中">
+      <figcaption><b>⑤ 蓝 · 搬运中</b><br>113.0 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_05_blue_placed.jpg" alt="第5件已入仓">
+      <figcaption><b>⑤ 蓝 · 已入仓</b><br>116.8 s · 累计 2</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_06_red_carry.jpg" alt="第6件搬运中">
+      <figcaption><b>⑥ 红 · 搬运中</b><br>136.5 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_06_red_placed.jpg" alt="第6件已入仓">
+      <figcaption><b>⑥ 红 · 已入仓</b><br>140.3 s · 累计 3</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_07_blue_carry.jpg" alt="第7件搬运中">
+      <figcaption><b>⑦ 蓝 · 搬运中</b><br>160.0 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_07_blue_placed.jpg" alt="第7件已入仓">
+      <figcaption><b>⑦ 蓝 · 已入仓</b><br>163.8 s · 累计 3</figcaption></figure>
+
+    <figure class="gitem"><img src="photos/pick_08_green_carry.jpg" alt="第8件搬运中">
+      <figcaption><b>⑧ 绿 · 搬运中</b><br>183.5 s</figcaption></figure>
+    <figure class="gitem"><img src="photos/pick_08_green_placed.jpg" alt="第8件已入仓">
+      <figcaption><b>⑧ 绿 · 已入仓</b><br>187.3 s · 累计 2</figcaption></figure>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <img alt="">
+    <span></span>
+  </div>
+</section>
+
+<!-- ==================== 04 机械臂 RL ==================== -->
+<section id="rl">
+  <div class="eyebrow">04 / ISAAC LAB RL</div>
+  <h2 class="title">另一条线：Isaac Lab 机械臂强化学习跑满 1500 迭代</h2>
+  <p class="sub">
+    上面的复现是「传统控制 + 视觉」路线。同时我在 RTX 5060 Ti 上用 Isaac Lab 2.1.1 跑了
+    <code>Isaac-Lift-Cube-Franka-v0</code>（Franka 举方块）的 RSL-RL PPO 训练，
+    2048 个并行环境、1500 迭代全部完成，无异常退出。
+  </p>
+
+  <div class="statgrid">
+    <div class="stat">
+      <div class="k">Mean reward</div>
+      <div class="v">0.71 → <span style="color:var(--cyan)">135.9</span></div>
+      <div class="s">1500 迭代内单调抬升</div>
+    </div>
+    <div class="stat v">
+      <div class="k">Episode length</div>
+      <div class="v">18.7 → <span style="color:var(--violet)">250.0</span></div>
+      <div class="s">打满 250 步上限，不再提前终止</div>
+    </div>
+    <div class="stat a">
+      <div class="k">物体位置误差</div>
+      <div class="v">0.2215 → <span style="color:var(--amber)">0.1006</span></div>
+      <div class="s">position_error (m)</div>
+    </div>
+    <div class="stat p">
+      <div class="k">掉落终止率</div>
+      <div class="v">0.0000</div>
+      <div class="s">object_dropping，全程零掉落</div>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top:16px">
+    <div class="panel">
+      <div class="chartwrap"><canvas id="ch_reward" height="240"></canvas></div>
+      <div class="legend" id="ch_reward-legend"></div>
+    </div>
+    <div class="panel">
+      <div class="chartwrap"><canvas id="ch_task" height="240"></canvas></div>
+      <div class="legend" id="ch_task-legend"></div>
+    </div>
+  </div>
+  <div class="split" style="margin-top:16px">
+    <div class="panel">
+      <div class="chartwrap"><canvas id="ch_error" height="240"></canvas></div>
+      <div class="legend" id="ch_error-legend"></div>
+    </div>
+    <div class="panel">
+      <div class="chartwrap"><canvas id="ch_loss" height="240"></canvas></div>
+      <div class="legend" id="ch_loss-legend"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">训练配置与终态指标</h3>
+    <table>
+      <thead><tr><th>项目</th><th>值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>Task</td><td class="mono">Isaac-Lift-Cube-Franka-v0</td><td>Franka 抓取并抬升方块到目标位姿</td></tr>
+        <tr><td>算法 / 后端</td><td class="mono">PPO / rsl_rl</td><td>Isaac Lab 2.1.1 内置</td></tr>
+        <tr><td>并行环境</td><td class="mono">2048</td><td>单卡 RTX 5060 Ti 16GB</td></tr>
+        <tr><td>迭代 / 时间</td><td class="mono">1500 / 25 min 07 s</td><td>≈ 51848 steps/s</td></tr>
+        <tr><td>总经验步数</td><td class="mono">73,728,000</td><td>73.7 M transitions</td></tr>
+        <tr><td>lifting_object</td><td class="mono">0.1175 → 13.1134</td><td>抬升奖励，核心任务信号</td></tr>
+        <tr><td>object_goal_tracking</td><td class="mono">0.0198 → 12.3817</td><td>目标位姿跟踪</td></tr>
+        <tr><td>value_loss</td><td class="mono">0.0226 → 0.4988</td><td>先升后稳，属正常（回报量级变大）</td></tr>
+        <tr><td>object_dropping</td><td class="mono">0.0000</td><td>掉落终止始终为零</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== 05 踩坑铁律 ==================== -->
+<section id="pitfall">
+  <div class="eyebrow">05 / IRON RULES</div>
+  <h2 class="title">5 条踩坑铁律（全部实测查证）</h2>
+  <p class="sub">
+    这一节是本次最有复用价值的部分。每一条都写清了「现象 → 根因 → 判定方法 → 修复」，
+    并且都是在真实命令输出上确认过的，不是推测。
+  </p>
+
+  <div class="pitfalls">
+    <div class="pit">
+      <div class="n">RULE 01</div>
+      <h3>默认 experience 启动即段错误（EXIT=139）</h3>
+      <p>
+        <b>现象：</b><code>SimulationApp({"headless": True})</code> 不传 experience，进程在启动阶段直接
+        段错误，第一步 <code>print</code> 都执行不到；但单独 <code>import osqp</code> 完全正常（0.6.7.post3）。<br>
+        <b>根因：</b>默认 <code>isaacsim.exp.full.kit</code> 会 startup
+        <code>isaacsim.robot.wheeled_robots</code>，其 <code>holonomic_controller.py</code>
+        导入 <code>osqp</code> 的编译扩展 <code>_osqp.cp310-win_amd64.pyd</code>，
+        在全量 Isaac DLL 已加载后初始化即访问违例。<br>
+        <b>为什么训练不崩：</b>Isaac Lab <code>AppLauncher</code> 在 headless 且无相机时用的
+        <code>isaaclab.python.headless.kit</code> 不含 wheeled_robots。<br>
+        <b>修复：</b>自定义 kit，机械臂分拣根本用不到轮式机器人。
+      </p>
+    </div>
+
+    <div class="pit">
+      <div class="n">RULE 02</div>
+      <h3>物理不写回 USD → 录像是一张静止图</h3>
+      <p>
+        <b>现象：</b>仿真状态正常推进（末端从 z=0.30 降到 0.09 再飞到分拣箱），
+        但录出的视频里机械臂一动不动；逐帧比对 <code>MAE=1.5</code>、变化像素仅 7.7%，全是压缩噪声。<br>
+        <b>根因：</b><code>isaaclab.python.headless.rendering</code> 基线把
+        <code>physics.updateToUsd</code>、<code>fabricUpdateTransformations</code> 全设成
+        <code>false</code>（为 RL 吞吐提速）。RTX/Hydra 读到的永远是初始姿态。<br>
+        <b>修复：</b>kit 里显式打开
+        <code>updateToUsd=true</code> / <code>fabricUpdateTransformations=true</code>，
+        并在脚本里内置「与首帧差异」逐 300 步打印作为回归护栏。
+      </p>
+    </div>
+
+    <div class="pit">
+      <div class="n">RULE 03</div>
+      <h3>状态机相位时长不足 → 夹爪在空中闭合</h3>
+      <p>
+        <b>现象：</b>反复打印 <code>Object Dropped Mid-Air!</code>，
+        诊断日志显示末端一路下降但只到 <code>z≈0.096</code>，夹爪就闭合到 <code>0.0000</code>。<br>
+        <b>根因：</b>原仓库用 Franka 默认 <code>events_dt[1]=0.005</code>，phase1 只有 200 步；
+        本机 RMPFlow 下降速度约 <code>0.0012 m/步</code>，从 <code>h1=0.3</code> 降到方块中心（z≈0.02）
+        需要约 255 步 —— 差 55 步，夹爪正好在方块上方 7 cm 处合拢。<br>
+        <b>修复：</b><code>events_dt[1] 0.005 → 0.0025</code>（400 步）。
+        改后末端降到 0.089，夹爪闭合到 0.0406（夹住了），方块 z 从 0.02 抬到 0.0999。
+      </p>
+    </div>
+
+    <div class="pit">
+      <div class="n">RULE 04</div>
+      <h3>OpenCV 4.x 在 Windows 上写不了中文路径</h3>
+      <p>
+        <b>现象：</b><code>cv2.imwrite(r'E:\研究生学习\...\_t.png', img)</code> 返回
+        <code>False</code> 静默失败；<code>cv2.VideoWriter</code> 同路径
+        <code>isOpened()=True</code> 但只落一个 <b>258 字节</b>的空壳文件。<br>
+        <b>根因：</b>OpenCV 内部用 ANSI <code>fopen</code>，非 UTF-8 路径直接失败。<br>
+        <b>修复：</b>所有 OpenCV 落盘先写 <code>%TEMP%/isaac_arm_stage</code>（纯 ASCII），
+        收尾用 <code>shutil.move</code> 搬到中文目录。
+      </p>
+    </div>
+
+    <div class="pit">
+      <div class="n">RULE 05</div>
+      <h3>Isaac Camera 的坐标约定与焦距都和 USD 常识不同</h3>
+      <p>
+        <b>坐标：</b><code>set_world_pose</code> 默认 <code>camera_axes="world"</code>
+        语义是 <b>+X 朝前 / +Z 朝上</b>，而 USD 标准相机是 <b>-Z 朝前 / +Y 朝上</b>。
+        传 USD 四元数会被再叠一层旋转 → 画面横滚、地平线变竖直。必须显式
+        <code>camera_axes="usd"</code>。<br>
+        <b>焦距：</b>默认焦距极短（实测约 4.2 mm，水平视场仅 ~29°），
+        按 USD 常识设 <code>17 mm</code> 反而变成 <b>hFOV=7.1°</b> 的长焦。
+        正确做法是按目标视场反算：
+        <code>focal = horizontal_aperture / (2·tan(hfov/2))</code>。<br>
+        <b>另：</b>不要用 <code>Gf.Matrix4d().SetLookAt().ExtractRotationQuat()</code>，
+        那是 world→camera 视图矩阵，取出的是逆旋转（实测整幅全黑）。
+      </p>
+    </div>
+
+    <div class="pit" style="grid-column:1/-1">
+      <div class="n">RULE 06</div>
+      <h3>两个隐蔽的坑：变量遮蔽 与 headless 下的「假死」</h3>
+      <p>
+        <b>变量遮蔽：</b><code>main()</code> 里写 <code>stage = world.stage</code> 会遮蔽模块级的
+        <code>stage()</code> 函数，触发 <code>UnboundLocalError: local variable 'stage' referenced
+        before assignment</code> —— 因为 Python 在函数入口就把 <code>stage</code> 判定为局部变量。
+        函数改名为 <code>stage_path()</code> 即可。<br>
+        <b>假死：</b>若脚本以 <code>while simulation_app.is_running(): sim.step()</code> 结尾，
+        headless 模式没有窗口可关，<code>is_running()</code> 永远为 True。
+        判定是否为真死锁不要看 CPU，要看 IO 计数器增量：静置 20 s 内
+        <code>ReadOperationCount</code> 增量为 0 即确认未在推进。
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span>Isaac Sim 4.5.0.0 · Isaac Lab 2.1.1 · RTX 4060 8GB + RTX 5060 Ti 16GB</span>
+  <span>repo: Kishan-Ghadhavi01/IsaacSim_Robotics_Portfolio @ 48540c0</span>
+  <span>generated 2026-10-26</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

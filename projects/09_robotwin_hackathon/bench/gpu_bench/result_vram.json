@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-10-25 14:03:58",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "vram": {
+    "0": {
+      "device": 0,
+      "name": "NVIDIA GeForce RTX 4060",
+      "bytes": 5581307904,
+      "errors": [],
+      "checks": 41,
+      "elapsed_s": 1.6,
+      "total_bad": 0,
+      "verdict": "PASS"
+    },
+    "1": {
+      "device": 1,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "bytes": 11851530240,
+      "errors": [],
+      "checks": 41,
+      "elapsed_s": 1.8,
+      "total_bad": 0,
+      "verdict": "PASS"
+    }
+  }
+}

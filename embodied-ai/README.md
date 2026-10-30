@@ -81,6 +81,8 @@ python tools/extract_dialogues.py --emit embodied-ai/dialogues --min-score 6  # 
 
 被排除的典型：`清理C D E盘并保障虚拟机运行空间`、`安装 opencv 与 numpy 依赖`、`生成AI课件面试演讲稿`。
 
+> 与 [`docs/embodied_ai_dialogues/`](../docs/embodied_ai_dialogues/README.md) 的分工：那边是 **8 篇人工精选**的技术摘录（按主题成文，可读性强）；这边是 **33 个会话的机器抽取全量**（按时间排列，可追溯原话）。前者适合快速浏览，后者适合核对"当时到底怎么说的"。
+
 ## 四、论文
 
 [`papers/MicroDuck短跑策略_Real2Sim2Real_双栏投稿稿.docx`](papers/)
@@ -106,7 +108,7 @@ python tools/extract_dialogues.py --emit embodied-ai/dialogues --min-score 6  # 
 
 **仍然保留的内容**：公司名（求职简历本就公开）、技术栈、指标、失败归因。原始会话记录、工具调用输出、生产系统凭据、客户数据**不在本仓库**。
 
-`RESUME_2026_FULL.md` 保留了简历上的电话与邮箱（求职材料本身就要公开联系方式）。如果不想被爬虫抓取，删掉该文件「一、基本信息」表格里这两行即可，PDF 原件不受影响。
+`RESUME_2026_FULL.md` 里的电话与邮箱已打码为 `<PHONE>` / `<EMAIL>`，与 [`docs/RESUME.md`](../docs/RESUME.md) 的脱敏口径一致。**PDF 原件仍含完整联系方式**——它用于投递，转录页用于公开展示，两者用途不同，不要互换。
 
 ## 目录结构
 

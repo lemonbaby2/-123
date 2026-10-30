@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-10-27 04:49:38",
+  "devices": {
+    "0": {
+      "name": "NVIDIA GeForce RTX 4060",
+      "max_alloc_gib": 7.25,
+      "layer_FP16": {
+        "ms": 6.71,
+        "tflops": 30.72,
+        "tokens_s": 76293.8
+      },
+      "layer_BF16": {
+        "ms": 6.47,
+        "tflops": 31.84,
+        "tokens_s": 79086.5
+      },
+      "int8": "INT8 matmul 不支持: \"addmm_cuda\" not implemented for 'Char'"
+    },
+    "1": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "max_alloc_gib": 15.0,
+      "layer_FP16": {
+        "ms": 4.19,
+        "tflops": 49.16,
+        "tokens_s": 122088.3
+      },
+      "layer_BF16": {
+        "ms": 4.34,
+        "tflops": 47.48,
+        "tokens_s": 117916.9
+      },
+      "int8": "INT8 matmul 不支持: \"addmm_cuda\" not implemented for 'Char'"
+    }
+  }
+}
