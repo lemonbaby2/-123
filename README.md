@@ -5,7 +5,7 @@
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)](https://isocpp.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[English](README_EN.md) · [研究与开源资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [复现清单](docs/REPRODUCTION_CHECKLIST.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
+[English](README_EN.md) · [具身智能工程档案](embodied-ai/README.md) · [研究与开源资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [复现清单](docs/REPRODUCTION_CHECKLIST.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
 
 **2026 简历项目总索引：**[源码、演示与结果状态](docs/RESUME_2026_PROJECT_INDEX.md)。该索引逐项标明已公开的代码、可重复的演示，以及尚未找到原始代码或评测证据的项目；宁波 SOP 的公开源码保存在本仓库的独立分支。
 
@@ -16,6 +16,24 @@
 ## Datawhale MicroDuck 第 85 期组队学习
 
 [Task1 篮球平衡与 Task2 浏览器物理扰动的笔记、课程 Notebook、复现说明及结果](datawhale_microduck/README.md)已单独归档。它们是学习记录，不属于下方八个简历项目的实机成绩；第三方模型与素材保留独立来源和许可说明。
+
+## 具身智能工程档案
+
+[`embodied-ai/`](embodied-ai/README.md) 是与源码分开存放的三类材料：**简历全文**、**真实实验数据**、**结对开发对话**。分开的理由是证据强度不同——声明、实测、过程记录不能混着看。
+
+| 内容 | 位置 | 要点 |
+|---|---|---|
+| 简历逐字转录 + 仓库映射 | [embodied-ai/RESUME_2026_FULL.md](embodied-ai/RESUME_2026_FULL.md) | 3 页 PDF 全文，每条简历条目标明「可验证 / 未公开」 |
+| MicroDuck 短跑实验 | [embodied-ai/experiments/microduck_sprint](embodied-ai/experiments/microduck_sprint/README.md) | DGX Spark 上 mjlab + PPO，6 份 JSON、5 张图；同条件对照 **3.09×** |
+| 具身智能对话档案 | [embodied-ai/dialogues/INDEX.md](embodied-ai/dialogues/INDEX.md) | 从 304 个会话筛出 33 个，已脱敏 |
+| 双栏投稿稿 | [embodied-ai/papers](embodied-ai/papers/) | 由实验数据脚本生成，非手写数字 |
+
+MicroDuck 那组实验的两条结论值得单列：
+
+1. **奖励权重决定"愿不愿意跑快"** —— 腾空奖励给到 5.0，策略学会站着踮脚刷分，回合奖励涨到 49.36 而实测速度从 0.135 掉到 0.091 m/s；
+2. **命令覆盖决定"能不能跑快"** —— 同一个检查点，测速命令超出训练分布后速度掉 61%。
+
+> 该实验**没有**达到社区公开的 2.07 m/s（当前 250 迭代、GB10 统一内存、口径不同），倍数是 v1↔v2 内部对照，不对外部成绩作比较。
 
 ## 项目导航
 
@@ -90,6 +108,13 @@ ctest --test-dir build/bms --output-on-failure
 │   ├── run_tests.py             # 验证每个项目自己的测试
 │   ├── verify_layout.py         # 检查目录完整性与 README 本地链接
 │   └── build_bundle.py          # 生成确定性离线源码包和 SHA-256
+├── embodied-ai/                 # 简历全文、实验数据、对话档案、投稿稿
+│   ├── RESUME_2026_FULL.md
+│   ├── experiments/microduck_sprint/   # JSON + 图 + 生成脚本
+│   ├── dialogues/               # 33 个已脱敏会话
+│   └── papers/
+├── tools/
+│   └── extract_dialogues.py     # 会话记录 → 脱敏档案（可重跑）
 ├── docs/                        # 证据边界、研究索引、复现协议、引用
 ├── dist/                        # GitHub 可直接下载的离线包
 └── .github/workflows/ci.yml     # Python 3.10/3.12 + 两套 C++ 构建
