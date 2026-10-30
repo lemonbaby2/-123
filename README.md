@@ -29,6 +29,7 @@
 | [06 STM32-FreeRTOS BMS](projects/06_bms/README.md) | Thevenin 电芯模型、AEKF、均衡逻辑、调度预算、C++17 参考实现、独立测试 | EKF 收敛趋势、温度门控、任务利用率 | 不是功能安全产品，不可直接控制电池包 |
 | [07 GaussPatrol 比赛项目](projects/07_gausspatrol/README.md) | 园区闭环仿真、动态规划、定位/缺陷/地图指标、SVG/PLY、技术方案和比赛材料 | 5/5 点位、动态重规划、ATE/RPE、AP、地图完整度、13 项测试 | 当前为二维仿真；S10/LIO/YOLO/Isaac Lab/真实 3DGS 待接入 |
 | [08 3DGS 扫描仪软硬件](projects/08_3dgs_scanner_soft_hardware/README.md) | BMS/SLAM 主控 PCB PDF、首板 SOP、分析报告、测试矩阵、3DGS 参考索引 | BQ76920 风险、3S2P 接线、打板清单、电源预算、HKU/HKUST/INRIA 资料索引 | 当前为资料工程化归档；缺少 Altium 源文件、Gerber、BOM、固件和实机软件 |
+| [09 具身智能仿真与真机链路](projects/09_robotwin_hackathon/README.md) | Isaac Sim 4.5 适配脚本、真机采集流水线、SmolVLA/ACT 双卡训练脚本、双卡算力基准 | Isaac Sim 段错误复现与规避、SmolVLA LoRA 参数报错链、显存/算力/功耗实测、相机链路诊断方法 | 上游第三方仓库、模型权重、采集数据集、录屏未入库；网络地址与凭据已替换为占位符 |
 
 ## 一分钟验证
 
@@ -84,13 +85,15 @@ ctest --test-dir build/bms --output-on-failure
 │   ├── 05_ros2_3dgs/           # src + tests + data + ros2_ws
 │   ├── 06_bms/                  # src + tests + config + cpp
 │   ├── 07_gausspatrol/          # src + tests + artifacts + docs + submission
-│   └── 08_3dgs_scanner_soft_hardware/ # hardware docs + engineering archive + references
+│   ├── 08_3dgs_scanner_soft_hardware/ # hardware docs + engineering archive + references
+│   └── 09_robotwin_hackathon/   # isaac-sim-arm + lingbot-real-pipeline + vla-slam-stack + bench
 ├── scripts/
 │   ├── run_all_demos.py         # 逐进程运行八个独立入口
 │   ├── run_tests.py             # 验证每个项目自己的测试
 │   ├── verify_layout.py         # 检查目录完整性与 README 本地链接
 │   └── build_bundle.py          # 生成确定性离线源码包和 SHA-256
-├── docs/                        # 证据边界、研究索引、复现协议、引用
+├── docs/                        # 证据边界、研究索引、复现协议、引用、简历（脱敏）
+│   └── embodied_ai_dialogues/   # 具身智能技术对话摘录（已脱敏）
 ├── dist/                        # GitHub 可直接下载的离线包
 └── .github/workflows/ci.yml     # Python 3.10/3.12 + 两套 C++ 构建
 ```

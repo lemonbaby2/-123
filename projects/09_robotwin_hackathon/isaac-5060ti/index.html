@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Isaac Sim/Lab × RTX 5060 Ti — 完整启动实录</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">I</div>
+    <div>
+      <b>Isaac Sim/Lab × RTX 5060 Ti</b>
+      <small>GO2 LOCOMOTION · WSL2 ROS2 · 2026-10-26</small>
+    </div>
+  </div>
+  <nav>
+    <a href="#s0" class="active">总览</a>
+    <a href="#s1">环境矩阵</a>
+    <a href="#s2">平地 Go2</a>
+    <a href="#s3">崎岖 Go2</a>
+    <a href="#s4">WSL2 补齐</a>
+    <a href="#s5">踩坑铁律</a>
+  </nav>
+  <div class="stamp"><i></i>5060 Ti · CUDA_VISIBLE_DEVICES=1</div>
+</header>
+
+<main>
+
+<!-- ============ 00 总览 ============ -->
+<section id="s0" class="hero">
+  <div class="eyebrow">Executive summary</div>
+  <h1>Isaac Sim/Lab 在 <em>RTX 5060 Ti</em> 上<br>完整跑通，WSL2 的 ROS 与 torch 已补齐</h1>
+  <p class="lede">
+    两项任务一次跑通：<b>Go2 平地速度追踪</b>与 <b>Go2 崎岖地形越障</b>，全部钉在
+    <b>RTX 5060 Ti（16&nbsp;GB）</b>上训练并录像；RTX 4060 空闲待命。
+    与此并行，WSL2 Ubuntu-22.04 补上了缺失的 <b>ROS 2 Humble</b> 与 <b>torch 2.7.0+cu128</b>。
+    过程中排掉了 <b>6 个真实坑</b>，其中 3 个是"看起来卡死了但其实在跑"的假故障。
+  </p>
+
+  <div class="statgrid">
+    <div class="stat">
+      <div class="k">活动 GPU</div>
+      <div class="v">5060 Ti <small>/ 16 GB</small></div>
+      <div class="s">RTX 4060（8 GB）并行待命</div>
+    </div>
+    <div class="stat v">
+      <div class="k">训练总步数</div>
+      <div class="v">2,703 万</div>
+      <div class="s">平地 1,475 万 + 崎岖 1,229 万</div>
+    </div>
+    <div class="stat a">
+      <div class="k">平地 mean_reward</div>
+      <div class="v">-0.57 → <b style="color:var(--green)">31.56</b></div>
+      <div class="s">episode 长度 11.8 → 990.6（上限 1000）</div>
+    </div>
+    <div class="stat p">
+      <div class="k">崎岖摔倒终止率</div>
+      <div class="v">0.000</div>
+      <div class="s">500 迭代结束时速误差 1.36 m/s</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 环境矩阵 ============ -->
+<section id="s1">
+  <div class="eyebrow">01 · Environment matrix</div>
+  <h2 class="title">硬件与版本矩阵</h2>
+  <p class="sub">本机 <code>D:\nvidia\Isaac\</code> 下已有一套 2025-07-31 装好的 Isaac（40.55 GB），
+    无需重复下载 30 GB。选 Isaac Sim 4.5.0 而非 6.0.1 的官方依据写在
+    <code>README-安装说明.txt</code>：本机 Windows 10 + RTX 4060 8 GB，而 6.0.1 的最低要求是
+    Windows 11 + RTX 4080 16 GB + 595.97 驱动。</p>
+
+  <div class="grid2">
+    <div class="panel">
+      <table>
+        <thead><tr><th>项</th><th>Windows 原生（Isaac 侧）</th><th>WSL2 Ubuntu-22.04</th></tr></thead>
+        <tbody>
+          <tr><td>GPU</td><td class="mono">4060 8GB / <b style="color:var(--cyan)">5060 Ti 16GB</b></td><td class="mono">仅枚举到 4060</td></tr>
+          <tr><td>驱动 / CUDA</td><td class="mono">581.57</td><td class="mono">581.57 / CUDA 12.6</td></tr>
+          <tr><td>Isaac Sim</td><td class="mono">4.5.0.0（25 包）</td><td class="mono pill bad">不可用（无 Vulkan ICD）</td></tr>
+          <tr><td>Isaac Lab</td><td class="mono">2.1.1（git 90b79bb）</td><td class="mono pill bad">—</td></tr>
+          <tr><td>Python / torch</td><td class="mono">3.10.11 / 2.7.0+cu128</td><td class="mono">3.10.12 / <b style="color:var(--green)">2.7.0+cu128</b></td></tr>
+          <tr><td>RL 后端</td><td class="mono">RSL-RL · SKRL 2.1.0 · SB3 2.7.0</td><td class="mono pill warn">—</td></tr>
+          <tr><td>ROS 2</td><td class="mono pill warn">—</td><td class="mono">Humble 0.10.0-1jammy</td></tr>
+          <tr><td>构建工具</td><td class="mono">—</td><td class="mono">colcon-ros 0.5.0 · rosdepc 1.1.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em">5060 TI 被选中的直接证据</div>
+        <pre>Isaac Sim 启动时打印的 GPU 枚举表：
+
+| GPU | Name                       | Active  | GPU Memory |
+|  0  | NVIDIA GeForce RTX 4060    |         |  7957 MB   |
+|  1  | NVIDIA GeForce RTX 5060 Ti | <b>Yes: 0</b> | 15962 MB   |</pre>
+        <div class="note">
+          训练日志里 <code>Environment device : cuda:0</code> 指向的就是 5060 Ti ——
+          通过 <code>CUDA_VISIBLE_DEVICES=1</code> 把它钉死在物理 GPU 1 上。
+          伴随的 <code>Skipping NVIDIA GPU due CUDA being in bad state: RTX 4060</code>
+          正是屏蔽生效的正常表现，<b>无害</b>。
+        </div>
+      </div>
+      <div class="note warn" style="margin-top:14px">
+        <b>为什么 Isaac 不放 WSL2 里跑：</b>WSL2 的 GPU 直通只带 CUDA 栈，
+        <b>没有 NVIDIA Vulkan ICD</b>（<code>/usr/share/vulkan/icd.d/</code> 整个目录缺失，
+        唯一的 Vulkan 设备是 llvmpipe 软渲染）。Isaac Sim 的渲染走 Vulkan/DX12，所以
+        <b>必须走 Windows 原生侧</b>，WSL2 里再怎么折腾都是死路。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 平地 ============ -->
+<section id="s2">
+  <div class="eyebrow">02 · Flat locomotion</div>
+  <h2 class="title">Go2 平地速度追踪 —— 300 迭代 / 2048 环境</h2>
+  <p class="sub">任务 <code>Isaac-Velocity-Flat-Unitree-Go2-v0</code>，RSL-RL PPO，seed 42。
+    单迭代 1.08 s，<b>6 分 13 秒</b>跑完 1,475 万步。画面里绿色/蓝色箭头是给每只狗下发的速度指令。</p>
+
+  <div class="grid2">
+    <div class="video">
+      <video controls playsinline poster="frames/flat_f60.png">
+        <source src="videos/go2_flat_rslrl_300iter.mp4" type="video/mp4">
+      </video>
+      <div class="vcap">videos/go2_flat_rslrl_300iter.mp4 · 1280×720 · H.264 · 8.0 s · 2.2 MB</div>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead><tr><th>指标</th><th>首</th><th>中</th><th>末</th></tr></thead>
+        <tbody>
+          <tr><td>mean_reward</td><td class="mono">-0.566</td><td class="mono">13.872</td><td class="mono" style="color:var(--green)"><b>31.558</b></td></tr>
+          <tr><td>episode_length</td><td class="mono">11.8</td><td class="mono">973.6</td><td class="mono" style="color:var(--green)"><b>990.6</b></td></tr>
+          <tr><td>误差 vel_xy (m/s)</td><td class="mono">0.017</td><td class="mono">0.961</td><td class="mono" style="color:var(--green)"><b>0.234</b></td></tr>
+          <tr><td>误差 vel_yaw</td><td class="mono">0.018</td><td class="mono">0.513</td><td class="mono" style="color:var(--green)"><b>0.394</b></td></tr>
+          <tr><td>摔倒终止率</td><td class="mono">0.000</td><td class="mono">0.000</td><td class="mono"><b>0.042</b></td></tr>
+          <tr><td>value_loss</td><td class="mono">0.140</td><td class="mono">0.016</td><td class="mono" style="color:var(--green)"><b>0.0045</b></td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        episode 长度逼近环境上限 1000 步（= 20 秒），摔倒终止率仅 4.2% ——
+        <b>策略确实学会了行走并跟踪速度指令</b>，不是奖励曲线的假收敛。
+      </div>
+    </div>
+
+    <div class="panel wide chartwrap">
+      <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;margin-bottom:8px">奖励与回合长度</div>
+      <canvas id="ch_flat_reward" height="230"></canvas>
+      <div class="legend" id="ch_flat_reward-legend"></div>
+    </div>
+
+    <div class="panel wide chartwrap">
+      <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;margin-bottom:8px">速度跟踪误差与价值损失</div>
+      <canvas id="ch_flat_err" height="210"></canvas>
+      <div class="legend" id="ch_flat_err-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 崎岖 ============ -->
+<section id="s3">
+  <div class="eyebrow">03 · Rough terrain</div>
+  <h2 class="title">Go2 崎岖地形越障 —— 500 迭代 / 1024 环境</h2>
+  <p class="sub">任务 <code>Isaac-Velocity-Rough-Unitree-Go2-v0</code>，带地形课程学习（terrain curriculum）
+    与高度扫描。单迭代 2.85 s，<b>24 分 52 秒</b>跑完 1,229 万步。画面是程序生成的踏石/台阶地形。</p>
+
+  <div class="grid2">
+    <div class="video">
+      <video controls playsinline poster="frames/rough_f60.png">
+        <source src="videos/go2_rough_rslrl_500iter.mp4" type="video/mp4">
+      </video>
+      <div class="vcap">videos/go2_rough_rslrl_500iter.mp4 · 1280×720 · H.264 · 0.7 MB</div>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead><tr><th>指标</th><th>首</th><th>中</th><th>末</th></tr></thead>
+        <tbody>
+          <tr><td>mean_reward</td><td class="mono">-0.423</td><td class="mono">8.846</td><td class="mono" style="color:var(--green)"><b>11.040</b></td></tr>
+          <tr><td>episode_length</td><td class="mono">11.3</td><td class="mono">961.2</td><td class="mono" style="color:var(--green)"><b>954.4</b></td></tr>
+          <tr><td>地形课程等级</td><td class="mono">—</td><td class="mono">—</td><td class="mono"><b>0.410</b></td></tr>
+          <tr><td>摔倒终止率</td><td class="mono">0.000</td><td class="mono">0.250</td><td class="mono" style="color:var(--green)"><b>0.000</b></td></tr>
+          <tr><td>误差 vel_xy (m/s)</td><td class="mono">0.017</td><td class="mono">1.490</td><td class="mono">1.362</td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <b>摔倒终止率从 0.25 收敛到 0.00</b>：中段还在大量摔（正穿越复杂地形），
+        末段已能稳定通行。速度误差 1.36 m/s 偏高属正常 —— 崎岖地形任务奖励里
+        <b>生存权重高于速度跟踪</b>，策略优先学会不摔。
+      </div>
+      <div class="note warn">
+        <b>诚实说明：</b>500 迭代对崎岖地形<b>尚未完全收敛</b>（官方配置是 1500 迭代）。
+        这里取 500 是为了在同一晚内完成"训练→录像→可视化"全链路；地形课程等级 0.41
+        说明策略还没爬到最难的地形档位。要追平官方指标请跑到 1500 迭代。
+      </div>
+    </div>
+
+    <div class="panel wide chartwrap">
+      <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;margin-bottom:8px">奖励与回合长度</div>
+      <canvas id="ch_rough_reward" height="230"></canvas>
+      <div class="legend" id="ch_rough_reward-legend"></div>
+    </div>
+
+    <div class="panel wide chartwrap">
+      <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;margin-bottom:8px">速度误差 · 偏航误差 · 摔倒终止率</div>
+      <canvas id="ch_rough_err" height="210"></canvas>
+      <div class="legend" id="ch_rough_err-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 WSL2 ============ -->
+<section id="s4">
+  <div class="eyebrow">04 · WSL2 gap fill</div>
+  <h2 class="title">WSL2 补齐：ROS 2 Humble + torch cu128</h2>
+  <p class="sub">起点：Ubuntu-22.04 可用，但 <b>无 ROS、无 torch</b>。终点：两者都装好并做了端到端验证。</p>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em">ROS 2 HUMBLE —— 已装好</div>
+      <table style="margin-top:10px">
+        <thead><tr><th>项</th><th>结果</th></tr></thead>
+        <tbody>
+          <tr><td>安装包</td><td class="mono">ros-humble-desktop + ros-dev-tools + colcon + rosdep</td></tr>
+          <tr><td>下载量</td><td class="mono">3.6 GB deb · <b style="color:var(--amber)">耗时 1 小时 02 分</b></td></tr>
+          <tr><td><code>ros2 --version</code></td><td class="mono pill ok">通过</td></tr>
+          <tr><td>C++ talker 发布</td><td class="mono pill ok">880 条 / 10 s</td></tr>
+          <tr><td>Python 节点创建</td><td class="mono pill bad">段错误 → 已定位并修复（见 05）</td></tr>
+          <tr><td>rosdep</td><td class="mono">rosdep init 被墙 → <b style="color:var(--green)">rosdepc 1.1.0</b> 替代成功</td></tr>
+        </tbody>
+      </table>
+      <pre><i># 修复 rosdep（raw.githubusercontent.com 被墙）</i>
+sudo pip3 install -U rosdepc -i https://mirrors.aliyun.com/pypi/simple/
+sudo rosdepc init &amp;&amp; rosdepc update
+<i># 小鱼 rosdepc：国内专用，drop-in 替换 rosdep</i></pre>
+    </div>
+
+    <div class="panel">
+      <div class="k muted" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.16em">TORCH 2.7.0+CU128 —— 下载链路是主战场</div>
+      <table style="margin-top:10px">
+        <thead><tr><th>下载源</th><th>实测</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr><td>download.pytorch.org</td><td class="mono pill bad">256 B/s</td><td class="mono">不可用</td></tr>
+          <tr><td>清华 TUNA pytorch-wheels</td><td class="mono pill bad">404</td><td class="mono">无此路径</td></tr>
+          <tr><td>腾讯云镜像</td><td class="mono pill bad">404</td><td class="mono">无此路径</td></tr>
+          <tr><td>上海交大 mirror</td><td class="mono pill warn">5.5 KB/s</td><td class="mono">太慢</td></tr>
+          <tr><td><b>阿里云 pytorch-wheels</b></td><td class="mono pill ok">2.96 MB/s</td><td class="mono"><b>唯一可用</b></td></tr>
+        </tbody>
+      </table>
+      <div class="note warn" style="margin-top:14px">
+        <b>选型理由：</b>torch 2.7.0+cu128 与 Windows 侧 Isaac 环境完全同版本，
+        且 cu128 原生支持 5060 Ti 的 <code>sm_120</code>（Blackwell）架构；
+        向下兼容 4060 的 sm_89。torchvision 0.22.0+cu128 配套。
+      </div>
+      <pre><i># pip 在弱网下会卡死（CPU 时间 15s 零增长），改用 curl 断点续传预下载</i>
+<i># 14 个 nvidia-* 运行时依赖 → 本地 wheel，再离线安装</i>
+pip3 install --no-index --find-links ~/wheels \
+  torch-2.7.0+cu128-...whl torchvision-0.22.0+cu128-...whl</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 踩坑 ============ -->
+<section id="s5">
+  <div class="eyebrow">05 · Pitfalls &amp; iron rules</div>
+  <h2 class="title">踩坑与铁律</h2>
+  <p class="sub">这 6 条全部是本次<b>实际踩到</b>的，不是理论推演。前 3 条的共同点是：
+    "看起来卡死了，其实在跑" —— 判断卡死的唯一可靠依据是 <b>IO 计数器</b>，不是等了多久。</p>
+
+  <div class="pitfalls">
+    <div class="pit">
+      <div class="n">PITFALL 01 · 假卡死</div>
+      <h3><code>create_empty.py --headless</code> 会无限空跑</h3>
+      <p>脚本末尾是 <code>while simulation_app.is_running(): sim.step()</code>。
+        headless 下没有窗口可关，<code>is_running()</code> 恒为真 → 永久循环、
+        GPU 恒定 ~19%、磁盘 IO 为 0。等了 30 分钟的"卡死"其实是正常空转。
+        <b>判据：IO 计数器 20 秒 delta=0 且 CPU 在涨 = 空转，不是读资源。</b></p>
+    </div>
+
+    <div class="pit">
+      <div class="n">PITFALL 02 · 静默日志</div>
+      <h3>重定向到文件必须加 <code>python -u</code></h3>
+      <p>Isaac 的 stdout 走 4–8 KB 块缓冲。不加 <code>-u</code> 时跑了 30 分钟日志仍是
+        <b>0 字节</b>，进程被 kill 时缓冲区整体丢弃，关键行
+        <code>[INFO]: Setup complete...</code> 永远看不到。</p>
+    </div>
+
+    <div class="pit">
+      <div class="n">PITFALL 03 · 选卡</div>
+      <h3><code>CUDA_VISIBLE_DEVICES=1</code> 钉 5060 Ti</h3>
+      <p>双卡机器上 Isaac Sim <b>不会</b>自动选显存最大的卡。显式设
+        <code>CUDA_VISIBLE_DEVICES=1</code> 后，启动日志的 GPU 枚举表里
+        5060 Ti 标记为 <code>Yes: 0</code>（活动），4060 报
+        "CUDA being in bad state" 是<b>被屏蔽的正常表现</b>。</p>
+    </div>
+
+    <div class="pit">
+      <div class="n">PITFALL 04 · 真段错误</div>
+      <h3>把 Anaconda 的 <code>Library/bin</code> 塞进 PATH = 崩溃</h3>
+      <p>为了找 ffmpeg 把 <code>/d/Anaconda/Library/bin</code> 加进 PATH，
+        Isaac 启动即段错误。崩溃点在 <b>ld-linux 动态链接器内部</b>（空指针 +8），
+        触发链是 <code>isaacsim.robot.wheeled_robots → import osqp</code> 的原生扩展。
+        <b>ffmpeg 用绝对路径调用，绝不动 PATH。</b></p>
+    </div>
+
+    <div class="pit">
+      <div class="n">PITFALL 05 · ROS 段错误</div>
+      <h3>numpy 2.x 与 ROS 2 Humble 的 rclpy ABI 不兼容</h3>
+      <p><code>rclpy.init()</code> 正常，但<b>创建节点就崩</b>，且换 CycloneDDS 也崩 ——
+        说明不在中间件层。用 <code>LD_DEBUG=libs</code> 抓到崩溃前最后加载的是
+        <code>~/.local/.../numpy.libs/libscipy_openblas64_*.so</code>。
+        <code>PYTHONNOUSERSITE=1</code> 回落到系统 numpy 1.21.5 后立即 <b>NODE OK</b>。
+        <b>ROS 2 Humble 必须用 numpy &lt; 2。</b></p>
+    </div>
+
+    <div class="pit">
+      <div class="n">PITFALL 06 · 弱网</div>
+      <h3>pip 在弱网下会无声卡死，curl 才稳</h3>
+      <p><code>pip3 install</code> 跑了 50 分钟后 CPU 时间 15 秒<b>零增长</b>、
+        临时目录停在 25 分钟前 —— 无声挂死。改用 <b>curl 断点续传</b>
+        （<code>-C - --retry 8 --retry-all-errors</code>）并行预下载 14 个
+        nvidia wheel，再 <code>--no-index --find-links</code> 离线安装。
+        国内唯一可用的 PyTorch 镜像是<b>阿里云 pytorch-wheels</b>（2.96 MB/s）。</p>
+    </div>
+  </div>
+
+  <div class="note bad" style="margin-top:18px">
+    <b>附加发现（本次未交付，已留档）：</b>Isaac Sim <b>默认</b> experience 在这台机器上
+    用独立脚本启动会段错误（<code>isaacsim.robot.wheeled_robots</code> 加载阶段），
+    而 Isaac Lab 的 <code>headless.rendering.kit</code> experience 一切正常。
+    结论：<b>做 standalone 脚本一律走 Isaac Lab 的 experience</b>，别用默认的。
+    同时该 experience 不含 <code>isaacsim.sensors</code>，需要相机要另想办法。
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span>ISAAC SIM 4.5.0 · ISAAC LAB 2.1.1 · RTX 5060 Ti</span>
+  <span>ROS 2 HUMBLE · TORCH 2.7.0+CU128 · WSL2 UBUNTU-22.04</span>
+  <span>2026-10-26</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

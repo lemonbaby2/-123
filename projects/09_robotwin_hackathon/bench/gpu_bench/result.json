@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-10-25 14:01:24",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "info": {},
+  "bandwidth": {
+    "0": {
+      "name": "NVIDIA GeForce RTX 4060",
+      "写 (fill)": 225.3,
+      "读 + 写 (copy)": 223.0,
+      "theory_gbs": 272.0,
+      "efficiency_pct": 82.0
+    },
+    "1": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "写 (fill)": 423.0,
+      "读 + 写 (copy)": 387.2,
+      "theory_gbs": 448.0,
+      "efficiency_pct": 86.4
+    }
+  },
+  "compute": {
+    "0": {
+      "name": "NVIDIA GeForce RTX 4060",
+      "FP32": 7.12,
+      "TF32": 14.05,
+      "FP16": 28.95,
+      "BF16": 29.64
+    },
+    "1": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "FP32": 16.31,
+      "TF32": 24.5,
+      "FP16": 49.73,
+      "BF16": 48.88
+    }
+  }
+}

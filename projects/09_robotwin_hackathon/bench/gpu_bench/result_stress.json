@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-10-25 14:09:18",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "stress": {
+    "0": {
+      "name": "NVIDIA GeForce RTX 4060",
+      "power_limit_w": 115.0,
+      "power_avg_w": null,
+      "power_max_w": null,
+      "power_readable": false,
+      "power_saturation_pct": null,
+      "temp_max_c": 63.0,
+      "clock_min_mhz": 2790.0,
+      "clock_max_mhz": 2790.0,
+      "clock_peak_mhz": 3105.0,
+      "throttle_pct": 0.0,
+      "util_avg_pct": 100.0,
+      "samples": 261,
+      "loaded_samples": 258,
+      "verdict": "stable"
+    },
+    "1": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "power_limit_w": 180.0,
+      "power_avg_w": 151.1,
+      "power_max_w": 152.9,
+      "power_readable": true,
+      "power_saturation_pct": 84.9,
+      "temp_max_c": 73.0,
+      "clock_min_mhz": 2760.0,
+      "clock_max_mhz": 2805.0,
+      "clock_peak_mhz": 3090.0,
+      "throttle_pct": 1.6,
+      "util_avg_pct": 100.0,
+      "samples": 261,
+      "loaded_samples": 258,
+      "verdict": "stable"
+    }
+  }
+}

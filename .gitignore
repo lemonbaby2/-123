@@ -22,3 +22,33 @@ ros2_ws/log/
 !projects/07_gausspatrol/artifacts/sample_run/*.ply
 data/private/
 work/
+
+# ==== 2026-10 新增：大体积二进制与媒体 ====
+*.mp4
+*.avi
+*.mov
+*.npz
+*.npy
+*.safetensors
+*.ckpt
+*.h5
+*.whl
+*.zip
+!dist/*.zip
+*.tgz
+*.log
+
+# ==== 2026-10 新增：采集数据与第三方克隆不入库 ====
+projects/*/episodes/
+projects/*/episodes_raw/
+projects/*/datasets/
+projects/*/vendor/
+projects/*/deploy_kit/
+projects/*/repo_*/
+projects/*/logs/
+
+# ==== 2026-10 新增：本地脱敏替身（含真实地址/凭据的私用配置） ====
+**/local_config.*
+**/*.private.ini
+.env
+.env.local
