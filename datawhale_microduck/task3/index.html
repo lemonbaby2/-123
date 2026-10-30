@@ -243,55 +243,97 @@
 
 <section>
   <h2>八、具身智能 · DGX 闲余算力收割</h2>
-  <p>本站第三章是 MicroDuck 十项课程任务；本区块来自同一台 NVIDIA DGX Spark（GB10 · aarch64 · CUDA sm_121）的<strong>闲余算力</strong>：生产服务（SOP 推理 / CVAT）优先，GPU 空转时由 <code>embodied-harvest</code> 调度器自动领任务 —— Isaac Lab 3.0 训练 → 推理录像 → 归一 120 秒 → 回传本站。物理后端为 Newton（MJWarp），非 PhysX。</p>
+  <p>本站第三章是 MicroDuck 十项课程任务；本区块来自同一台 NVIDIA DGX Spark（GB10 · aarch64 · CUDA sm_121）的<strong>闲余算力</strong>：生产服务（SOP 推理 / CVAT）优先，GPU 空转时由 <code>embodied-harvest</code> 调度器自动领任务 —— Isaac Lab 3.0 训练 → 推理录像 → 归一 120 秒 → 回传本站。</p>
   <div class="vgrid">
     <div class="vcard">
-      <h3>E01 · Unitree Go2 · 平地</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 2.8M</div>
+      <h3>E01 · Unitree Go2 机械狗 · 平坦地形</h3>
+      <div class="tag">Isaac Lab 3.0 + RSL-RL 自训练 · 四足 flat terrain · 120s</div>
       <video controls preload="metadata" src="videos/go2_flat.mp4"></video>
-      <div class="metrics">四足机器狗 · 速度跟踪 · <code>Isaac-Velocity-Flat-UnitreeGo2</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
     <div class="vcard">
-      <h3>E02 · Unitree Go2 · 粗糙地形</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 301.7K</div>
+      <h3>E02 · Unitree Go2 机械狗 · 粗糙地形</h3>
+      <div class="tag">Isaac Lab 3.0 + RSL-RL 自训练 · 四足 rough terrain · 120s</div>
       <video controls preload="metadata" src="videos/go2_rough.mp4"></video>
-      <div class="metrics">四足机器狗 · 越障行走 · <code>Isaac-Velocity-Rough-UnitreeGo2</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
     <div class="vcard">
-      <h3>E03 · ANYmal D · 粗糙地形</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 337.5K</div>
+      <h3>E03 · ANYmal-D 四足 · 粗糙地形</h3>
+      <div class="tag">Isaac Lab 3.0 · 四足 rough terrain · 120s</div>
       <video controls preload="metadata" src="videos/anymal_rough.mp4"></video>
-      <div class="metrics">工业四足 · 越障行走 · <code>Isaac-Velocity-Rough-AnymalD</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
     <div class="vcard">
-      <h3>E04 · Unitree H1 · 人形</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 444.1K</div>
+      <h3>E04 · Unitree H1 人形 · 粗糙地形</h3>
+      <div class="tag">Isaac Lab 3.0 + RSL-RL 自训练 · 官方 DGX Spark 样例任务 · 120s</div>
       <video controls preload="metadata" src="videos/h1_rough.mp4"></video>
-      <div class="metrics">人形机器人 · 粗糙地形 · <code>Isaac-Velocity-Rough-H1</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
     <div class="vcard">
-      <h3>E05 · Unitree G1 · 人形</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 5.8M</div>
+      <h3>E05 · Unitree G1 人形 · 平坦地形</h3>
+      <div class="tag">Isaac Lab 3.0 · 人形 flat terrain · 120s</div>
       <video controls preload="metadata" src="videos/g1_flat.mp4"></video>
-      <div class="metrics">人形机器人 · 平地 · <code>Isaac-Velocity-Flat-G1</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
     <div class="vcard">
-      <h3>E06 · Franka · 抓取立方体</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 1.7M</div>
-      <video controls preload="metadata" src="videos/franka_lift.mp4"></video>
-      <div class="metrics">七轴机械臂 · 操作任务 · <code>Isaac-Lift-Cube-Franka</code></div>
-    </div>
-    <div class="vcard">
-      <h3>E07 · Allegro · 灵巧手</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 4.1M</div>
+      <h3>E06 · Allegro 灵巧手 · 方块重定向</h3>
+      <div class="tag">Isaac Lab 3.0 · 灵巧手操作 reorient-cube · 120s</div>
       <video controls preload="metadata" src="videos/allegro_reorient.mp4"></video>
-      <div class="metrics">四指灵巧手 · 立方体旋转 · <code>Isaac-Reorient-Cube-Allegro</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
     <div class="vcard">
-      <h3>E08 · Cassie · 双足</h3>
-      <div class="tag">Isaac Lab 3.0 · Newton(MJWarp) 物理 · 120s · 324.3K</div>
+      <h3>E07 · Cassie 双足 · 粗糙地形</h3>
+      <div class="tag">Isaac Lab 3.0 · 双足 rough terrain · 120s</div>
       <video controls preload="metadata" src="videos/cassie_rough.mp4"></video>
-      <div class="metrics">双足机器人 · 粗糙地形 · <code>Isaac-Velocity-Rough-Cassie</code></div>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E08 · Franka 机械臂 · 抓举方块</h3>
+      <div class="tag">Isaac Lab 3.0 · 操作任务 lift-cube · 120s</div>
+      <video controls preload="metadata" src="videos/franka_lift.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E09 · Unitree H1 人形 · 平坦地形</h3>
+      <div class="tag">Isaac Lab 3.0 + RSL-RL 自训练 · 人形 flat terrain · 120s</div>
+      <video controls preload="metadata" src="videos/h1_flat.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E10 · Unitree G1 人形 · 粗糙地形</h3>
+      <div class="tag">Isaac Lab 3.0 · 人形 rough terrain · 120s</div>
+      <video controls preload="metadata" src="videos/g1_rough.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E11 · ANYmal-D 四足 · 平坦地形</h3>
+      <div class="tag">Isaac Lab 3.0 · 四足 flat terrain · 120s</div>
+      <video controls preload="metadata" src="videos/anymal_flat.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E12 · Cassie 双足 · 平坦地形</h3>
+      <div class="tag">Isaac Lab 3.0 · 双足 flat terrain · 120s</div>
+      <video controls preload="metadata" src="videos/cassie_flat.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E13 · Franka 机械臂 · 到达目标位姿</h3>
+      <div class="tag">Isaac Lab 3.0 · 操作任务 reach · 120s</div>
+      <video controls preload="metadata" src="videos/franka_reach.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E14 · Franka 机械臂 · 拉开抽屉</h3>
+      <div class="tag">Isaac Lab 3.0 · 操作任务 open-drawer · 120s</div>
+      <video controls preload="metadata" src="videos/franka_drawer.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
+    </div>
+    <div class="vcard">
+      <h3>E15 · Shadow Hand 灵巧手 · 方块重定向</h3>
+      <div class="tag">Isaac Lab 3.0 · 灵巧手操作 reorient-cube · 120s</div>
+      <video controls preload="metadata" src="videos/shadow_reorient.mp4"></video>
+      <div class="metrics">DGX Spark GB10 实拍 · 统一到 120 秒口径</div>
     </div>
   </div>
 </section>
