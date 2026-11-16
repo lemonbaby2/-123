@@ -50,6 +50,7 @@ MicroDuck 那组实验的两条结论值得单列：
 | [07 GaussPatrol 比赛项目](projects/07_gausspatrol/README.md) | 园区闭环仿真、动态规划、定位/缺陷/地图指标、SVG/PLY、技术方案和比赛材料 | 5/5 点位、动态重规划、ATE/RPE、AP、地图完整度、13 项测试 | 当前为二维仿真；S10/LIO/YOLO/Isaac Lab/真实 3DGS 待接入 |
 | [08 3DGS 扫描仪软硬件](projects/08_3dgs_scanner_soft_hardware/README.md) | BMS/SLAM 主控 PCB PDF、首板 SOP、分析报告、测试矩阵、3DGS 参考索引 | BQ76920 风险、3S2P 接线、打板清单、电源预算、HKU/HKUST/INRIA 资料索引 | 当前为资料工程化归档；缺少 Altium 源文件、Gerber、BOM、固件和实机软件 |
 | [09 具身智能仿真与真机链路](projects/09_robotwin_hackathon/README.md) | Isaac Sim 4.5 适配脚本、真机采集流水线、SmolVLA/ACT 双卡训练脚本、双卡算力基准 | Isaac Sim 段错误复现与规避、SmolVLA LoRA 参数报错链、显存/算力/功耗实测、相机链路诊断方法 | 上游第三方仓库、模型权重、采集数据集、录屏未入库；网络地址与凭据已替换为占位符 |
+| [10 ROS2 课程实验平台](projects/10_ros2_course_lab/README.md) | 差速车 URDF/Xacro、ros2_control、Gazebo 世界、ros_gz 桥接、里程计/前馈 PID/slam_toolbox、网页看板、5 分钟实拍录屏 | 24 项自检 PASS=24、A 段里程计误差 0.0082 %、PID 负载补偿、`/clock` 单发布者、16+13 项离线测试 | 26.04 无实测样本；录屏来自 Gazebo 仿真而非真机；私钥与内网地址已脱敏 |
 
 ## 一分钟验证
 
@@ -106,9 +107,10 @@ ctest --test-dir build/bms --output-on-failure
 │   ├── 06_bms/                  # src + tests + config + cpp
 │   ├── 07_gausspatrol/          # src + tests + artifacts + docs + submission
 │   ├── 08_3dgs_scanner_soft_hardware/ # hardware docs + engineering archive + references
-│   └── 09_robotwin_hackathon/   # isaac-sim-arm + lingbot-real-pipeline + vla-slam-stack + bench
+│   ├── 09_robotwin_hackathon/   # isaac-sim-arm + lingbot-real-pipeline + vla-slam-stack + bench
+│   └── 10_ros2_course_lab/     # src + tests + ros2_ws + portal + teaching + evidence
 ├── scripts/
-│   ├── run_all_demos.py         # 逐进程运行八个独立入口
+│   ├── run_all_demos.py         # 逐进程运行九个独立入口
 │   ├── run_tests.py             # 验证每个项目自己的测试
 │   ├── verify_layout.py         # 检查目录完整性与 README 本地链接
 │   └── build_bundle.py          # 生成确定性离线源码包和 SHA-256

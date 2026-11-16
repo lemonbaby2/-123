@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第12周 · 里程计与 PID 课堂看板</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="dot" id="live"></span>
+    <b>W12 课堂实时看板</b>
+    <span class="sub">运动学 / 里程计 / PID / SLAM</span>
+  </div>
+  <div class="stats" id="stats">
+    <span>数据 <b id="s_age">—</b></span>
+    <span>odom <b id="s_odom">—</b> Hz</span>
+    <span>scan <b id="s_scan">—</b> Hz</span>
+    <span>map <b id="s_map">—</b> Hz</span>
+    <span>误差 <b id="s_err">—</b> m</span>
+  </div>
+</header>
+
+<main>
+  <section class="control">
+    <div class="ctl-title">驾驶台 <span class="hint">按住按钮持续发指令；松手 0.6 s 后看门狗自动停车</span></div>
+    <div class="ctl-row">
+      <div class="pad">
+        <button data-l="0.35" data-a="0"      class="k up">↑ 前进</button><br>
+        <button data-l="0"    data-a="0.8"    class="k left">↰ 左转</button>
+        <button data-l="0"    data-a="0"      class="k stop">■ 停</button>
+        <button data-l="0"    data-a="-0.8"   class="k right">↱ 右转</button><br>
+        <button data-l="-0.25" data-a="0"     class="k down">↓ 后退</button>
+        <button data-l="0.30" data-a="0.60"   class="k circle">⟳ 画圈</button>
+      </div>
+      <div class="readout">
+        <div class="ro"><label>目标 v</label><b id="r_target">0.000</b><span>m/s</span></div>
+        <div class="ro"><label>实测 v</label><b id="r_meas">0.000</b><span>m/s</span></div>
+        <div class="ro"><label>误差 e</label><b id="r_err">0.000</b><span>m/s</span></div>
+        <div class="ro"><label>P / I / D</label><b id="r_pid">0 / 0 / 0</b><span></span></div>
+        <div class="ro"><label>输出 u</label><b id="r_out">0.000</b><span>m/s</span></div>
+        <div class="ro"><label>位置</label><b id="r_pos">0.00, 0.00</b><span>m</span></div>
+      </div>
+      <div class="tips">
+        <p><b>课堂提示</b></p>
+        <p>蓝线＝轮式里程计，灰线＝Gazebo 真值。两条线分开就是漂移。</p>
+        <p>PID 曲线里目标与实测不重合时，P/I/D 三项会把它补回来。</p>
+        <p>右下角栅格是 slam_toolbox 实时建的图，画圈一圈后能看到回环对齐。</p>
+        <p>键盘：<kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd> / <kbd>空格</kbd> 停车</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-h"><b>① 里程计 vs 真值轨迹</b><span id="c1n">odom 蓝 / truth 灰</span></div>
+      <canvas id="c_trail"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>② PID 速度闭环曲线</b><span id="c2n">目标 / 实测 / 输出</span></div>
+      <canvas id="c_pid"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>③ 2D 激光雷达极坐标</b><span id="c3n">/scan</span></div>
+      <canvas id="c_scan"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>④ SLAM 占用栅格地图</b><span id="c4n">/map</span></div>
+      <canvas id="c_map"></canvas>
+    </div>
+  </section>
+
+  <footer>
+    <span>数据源 /tmp/w12_dashboard.json · telemetry_node.py</span>
+    <span>控制链路 /api/cmd → /tmp/w12_cmd.json → velocity_arbiter.py → /diff_drive_controller/cmd_vel</span>
+    <span>广州现代信息工程职业技术学院 · 第12周</span>
+  </footer>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<!--
+  diffbot_sensors.urdf.xacro  —  W11 传感器版差速底盘
+  ============================================================
+  在 W10 底盘上追加三件套：单目相机 / 2D 激光雷达 / IMU。
+  三者的 <sensor> 都必须写在 <gazebo reference="某个link"> 里面，
+  写在 <link> 里 Gazebo 是看不见的 —— 这是 W11 最高频的错误。
+
+  传感器 <topic> 用的是 **Gazebo 话题名**（不带前导斜杠也可），
+  ROS 侧看到什么名字，完全由 ros_gz_bridge 的映射决定，两者不是一回事。
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="diffbot_sensors">
+
+  <xacro:include filename="$(find diffbot_description)/urdf/diffbot.common.xacro"/>
+
+  <xacro:arg name="controllers_yaml"
+             default="$(find diffbot_description)/config/diffbot_controllers.yaml"/>
+
+  <!-- ============ 车体（与 W10 完全同一份） ============ -->
+  <xacro:diffbot_body/>
+  <xacro:diffbot_ros2_control/>
+  <xacro:diffbot_gz_control_plugin controllers_yaml="$(arg controllers_yaml)"/>
+
+  <!-- ============ 1. 单目相机 ============ -->
+  <!-- camera_link 原点即光心。光学坐标系（z 向前、x 向右）由 REP-103 决定，
+       这里额外挂一个 camera_optical_link，给需要标准光学坐标的算法用。 -->
+  <link name="camera_link">
+    <visual>
+      <geometry><box size="0.03 0.06 0.03"/></geometry>
+      <material name="cam_mat"><color rgba="0.1 0.1 0.1 1.0"/></material>
+    </visual>
+    <collision>
+      <geometry><box size="0.03 0.06 0.03"/></geometry>
+    </collision>
+    <xacro:inertia_box mass="0.05" x="0.03" y="0.06" z="0.03"/>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="sensor_mount_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.02 0 0.03" rpy="0 0 0"/>
+  </joint>
+
+  <link name="camera_optical_link"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_link"/>
+    <!-- 光学系：绕 x 转 -90° 再绕 z 转 -90°，是 ROS 官方推荐写法 -->
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
+  <gazebo reference="camera_link">
+    <sensor name="camera" type="camera">
+      <pose>0 0 0 0 0 0</pose>
+      <!-- 指定 ROS 侧消息的 frame_id。不写的话 Gazebo 会用
+           "diffbot/base_footprint/camera" 这种内部路径，
+           TF 树里根本没有这一帧，RViz 直接报 "No transform"。 -->
+      <gz_frame_id>camera_link</gz_frame_id>
+      <always_on>1</always_on>          <!-- 不加这行，没人订阅时不出图 -->
+      <update_rate>30</update_rate>
+      <visualize>false</visualize>       <!-- GUI 里再画一遍会明显掉帧 -->
+      <topic>camera/image</topic>
+      <camera>
+        <horizontal_fov>1.0472</horizontal_fov>   <!-- 60° -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip><near>0.05</near><far>20.0</far></clip>
+        <!-- Harmonic 支持内参话题，桥接后就能拿到 CameraInfo -->
+        <camera_info_topic>camera/camera_info</camera_info_topic>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean><stddev>0.007</stddev>
+        </noise>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <!-- ============ 2. 2D 激光雷达 ============ -->
+  <link name="lidar_link">
+    <visual>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+      <material name="lidar_mat"><color rgba="0.8 0.1 0.1 1.0"/></material>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+    </collision>
+    <xacro:inertia_cylinder mass="0.15" radius="0.035" length="0.04"/>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="sensor_mount_link"/>
+    <child link="lidar_link"/>
+    <!-- 抬高 6 cm，避开自身车体遮挡（否则 360° 扫描里会恒有一条自遮挡弧） -->
+    <origin xyz="-0.02 0 0.06" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="lidar_link">
+    <sensor name="lidar" type="gpu_lidar">
+      <pose>0 0 0 0 0 0</pose>
+      <gz_frame_id>lidar_link</gz_frame_id>
+      <always_on>1</always_on>
+      <update_rate>10</update_rate>
+      <visualize>false</visualize>
+      <topic>scan</topic>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>640</samples>        <!-- 360°/640 = 0.5625° 角分辨率 -->
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.12</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean><stddev>0.01</stddev>
+        </noise>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+  <!-- ============ 3. IMU ============ -->
+  <!-- IMU 装在车体几何中心，避免转弯时产生额外的向心加速度偏置 -->
+  <link name="imu_link">
+    <visual>
+      <geometry><box size="0.02 0.02 0.01"/></geometry>
+      <material name="imu_mat"><color rgba="0.1 0.6 0.2 1.0"/></material>
+    </visual>
+    <xacro:inertia_box mass="0.01" x="0.02" y="0.02" z="0.01"/>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <pose>0 0 0 0 0 0</pose>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <always_on>1</always_on>
+      <update_rate>100</update_rate>
+      <visualize>false</visualize>
+      <topic>imu</topic>
+      <imu>
+        <!-- 噪声量级参考 MPU-6050 数据手册，别填 0：真实数据永远有噪声，
+             训练/调参时用零噪声会严重高估滤波器效果 -->
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>0.017</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>0.017</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>0.017</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+</robot>
+

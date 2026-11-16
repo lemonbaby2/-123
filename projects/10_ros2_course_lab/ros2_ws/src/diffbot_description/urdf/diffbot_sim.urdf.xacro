@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+  diffbot_sim.urdf.xacro  —  W10 差速底盘（Gazebo + ros2_control）
+  ============================================================
+  与 common 的关系：common 只给几何，本文件负责「拼装 + 挂插件」。
+  根节点 name 必须写死字符串，不能写 name="$(arg xxx)"：
+  xacro 的 eval_all() 在注册 <xacro:arg> 之前就会求值根节点属性，
+  带 default 的 arg 也会直接抛 NameError（W08 已踩过，结论一致）。
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="diffbot">
+
+  <xacro:include filename="$(find diffbot_description)/urdf/diffbot.common.xacro"/>
+
+  <!-- 控制器参数文件路径可覆盖，便于学生拷到别的工作空间 -->
+  <xacro:arg name="controllers_yaml"
+             default="$(find diffbot_description)/config/diffbot_controllers.yaml"/>
+
+  <!-- 1) 车体 -->
+  <xacro:diffbot_body/>
+
+  <!-- 2) 把两个驱动轮暴露给 controller_manager -->
+  <xacro:diffbot_ros2_control/>
+
+  <!-- 3) Gazebo 侧：加载 gz_ros2_control 插件并读控制器 YAML -->
+  <xacro:diffbot_gz_control_plugin controllers_yaml="$(arg controllers_yaml)"/>
+
+</robot>

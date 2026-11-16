@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+<!--
+  arena.sdf  —  W10 / W11 共用教学场地（10 m × 10 m 封闭房间）
+  ============================================================
+  为什么不用 Gazebo 自带的 empty.sdf：
+    1) 空世界没有参照物 → 差速车跑起来"看着没动"，学生无法判断里程计是否可信；
+    2) W11 的相机/雷达需要"有东西可看"，否则 /scan 全是 inf、图像一片纯色，
+       根本没法讲数据质量检查。
+  本场地提供的对照物：
+    · 4 面围墙  → 激光雷达 360° 扫描应出现 4 段直线，可验证角度分辨率
+    · 3 个色块箱 → 相机 RGB 通道可验证（红/绿/蓝各一个）
+    · 1 个圆柱  → 验证雷达对曲面目标的距离连续性
+  物理：1 ms 固定步长。步长必须能被控制周期整除，
+        W10 的 controller update_rate=100 Hz → 每 10 个物理步算一次控制。
+-->
+<sdf version="1.9">
+  <world name="arena_w12">
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <!-- 基础系统插件：物理 / 命令 / 场景广播 -->
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+
+    <!-- W11 专用系统：传感器渲染 + IMU 采样。W10 不装传感器也无副作用 -->
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+
+    <scene>
+      <ambient>0.45 0.45 0.48 1</ambient>
+      <background>0.72 0.75 0.80 1</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.95 0.95 0.92 1</diffuse>
+      <specular>0.25 0.25 0.25 1</specular>
+      <direction>-0.4 0.2 -0.9</direction>
+    </light>
+
+    <!-- ================= 地面 ================= -->
+    <model name="ground">
+      <static>true</static>
+      <link name="link">
+        <collision name="c">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+          <material>
+            <ambient>0.55 0.57 0.60 1</ambient>
+            <diffuse>0.62 0.64 0.66 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= 四面围墙 ================= -->
+    <!-- 每面墙用独立颜色，便于在相机图像里一眼认出朝向（W11 讲 frame 与朝向） -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0 5 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>10.2 0.1 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>10.2 0.1 0.8</size></box></geometry>
+          <material>
+            <ambient>0.70 0.25 0.25 1</ambient>
+            <diffuse>0.80 0.30 0.30 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -5 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>10.2 0.1 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>10.2 0.1 0.8</size></box></geometry>
+          <material>
+            <ambient>0.25 0.65 0.30 1</ambient>
+            <diffuse>0.30 0.75 0.35 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_east">
+      <static>true</static>
+      <pose>5 0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.1 10.2 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.1 10.2 0.8</size></box></geometry>
+          <material>
+            <ambient>0.25 0.45 0.75 1</ambient>
+            <diffuse>0.30 0.55 0.85 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-5 0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.1 10.2 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.1 10.2 0.8</size></box></geometry>
+          <material>
+            <ambient>0.75 0.70 0.25 1</ambient>
+            <diffuse>0.85 0.80 0.30 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= 障碍物 1：红色方块 ================= -->
+    <model name="box_red">
+      <static>true</static>
+      <pose>2.0 1.5 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.5 0.5 0.5</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <material>
+            <ambient>0.80 0.10 0.10 1</ambient>
+            <diffuse>0.90 0.15 0.15 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= 障碍物 2：绿色方块 ================= -->
+    <model name="box_green">
+      <static>true</static>
+      <pose>-1.5 -2.0 0.35 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.7 0.7 0.7</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.7 0.7 0.7</size></box></geometry>
+          <material>
+            <ambient>0.10 0.70 0.20 1</ambient>
+            <diffuse>0.15 0.80 0.25 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= 障碍物 3：蓝色圆柱 ================= -->
+    <model name="cyl_blue">
+      <static>true</static>
+      <pose>3.0 -2.0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="c">
+          <geometry><cylinder><radius>0.25</radius><length>0.8</length></cylinder></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><cylinder><radius>0.25</radius><length>0.8</length></cylinder></geometry>
+          <material>
+            <ambient>0.10 0.25 0.80 1</ambient>
+            <diffuse>0.15 0.35 0.90 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= 障碍物 4：细柱（雷达角分辨率测试） ================= -->
+    <model name="pole_white">
+      <static>true</static>
+      <pose>-3.0 2.5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="c">
+          <geometry><cylinder><radius>0.06</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><cylinder><radius>0.06</radius><length>1.0</length></cylinder></geometry>
+          <material>
+            <ambient>0.90 0.90 0.90 1</ambient>
+            <diffuse>0.95 0.95 0.95 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============ W12 追加：L 形隔墙（让 SLAM 地图有可辨识结构） ============ -->
+    <!-- 直线墙 + 拐角能直观看出「回环修正」：绕一圈回来后墙会重新对齐 -->
+    <model name="wall_inner_a">
+      <static>true</static>
+      <pose>-1.2 0.8 0.35 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>2.4 0.12 0.7</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>2.4 0.12 0.7</size></box></geometry>
+          <material>
+            <ambient>0.55 0.55 0.58 1</ambient>
+            <diffuse>0.65 0.65 0.68 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_inner_b">
+      <static>true</static>
+      <pose>0.0 2.0 0.35 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.12 2.4 0.7</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.12 2.4 0.7</size></box></geometry>
+          <material>
+            <ambient>0.55 0.55 0.58 1</ambient>
+            <diffuse>0.65 0.65 0.68 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

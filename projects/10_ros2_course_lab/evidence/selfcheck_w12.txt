@@ -1,0 +1,31 @@
+============================================================
+ W12 课堂环境自检   2026-11-14 00:05:12   host=spark-a8d2
+============================================================
+  [32mPASS[0m  ROS_DISTRO 已载入                           jazzy
+  [32mPASS[0m  工作空间已构建                          install/setup.bash
+  [32mPASS[0m  Gazebo 命令可用                            8.11.0
+  [32mPASS[0m  包 slam_toolbox                               已安装
+  [32mPASS[0m  包 rviz2                                      已安装
+  [32mPASS[0m  包 ros_gz_bridge                              已安装
+  [32mPASS[0m  Gazebo 进程                                  运行中
+  [32mPASS[0m  ros_gz_bridge 进程                           运行中
+  [32mPASS[0m  velocity_arbiter 节点                        运行中
+  [32mPASS[0m  telemetry 节点                               运行中
+  [32mPASS[0m  /clock 发布者数量                         1（正确）
+  [32mPASS[0m  话题 /odom                                   存在
+  [32mPASS[0m  话题 /scan                                   存在
+  [32mPASS[0m  话题 /map                                    存在
+  [32mPASS[0m  话题 /cmd_vel_target                         存在
+  [32mPASS[0m  话题 /w12/pid_debug                          存在
+  [32mPASS[0m  话题 /world/arena_w12/dynamic_pose/info      存在
+  [32mPASS[0m  控制器 joint_state_broadcaster              active
+  [32mPASS[0m  控制器 diff_drive_controller                active
+  [32mPASS[0m  cmd_vel 消息类型                           TwistStamped（Jazzy 正确）
+  [32mPASS[0m  遥测 JSON 新鲜度                          0s
+  [32mPASS[0m  遥测 JSON 可解析                          ok=true
+  [32mPASS[0m  里程计 / 真值误差                       2.8946 m（教学可观察量）
+  [32mPASS[0m  网页看板 HTTP                              200  http://127.0.0.1:8130/
+============================================================
+ 汇总：PASS=24  FAIL=0  SKIP=0
+ 结论：环境就绪，可以开讲。
+============================================================

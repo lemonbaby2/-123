@@ -1,0 +1,50 @@
+# ============================================================
+#  bridge_w12.yaml  —— W12 Gazebo ↔ ROS 2 桥接表（唯一一个 bridge）
+# ============================================================
+# 字段三件套 ros_topic_name / ros_type_name / gz_type_name 必须齐；
+# direction 用 GZ_TO_ROS（仿真 → ROS）。
+# 注意世界名已经改成 arena_w12，所以真值话题路径也随之改变，
+# 写成 /world/arena/dynamic_pose/info 会拿到空数据，且不报错。
+# ------------------------------------------------------------
+
+# 1) 时钟：全链路 use_sim_time=true，唯一来源是 Gazebo
+- ros_topic_name: /clock
+  gz_topic_name: /clock
+  ros_type_name: rosgraph_msgs/msg/Clock
+  gz_type_name: gz.msgs.Clock
+  direction: GZ_TO_ROS
+
+# 2) 2D 激光：SLAM Toolbox 的输入，也是 RViz 的 LaserScan 显示源
+- ros_topic_name: /scan
+  gz_topic_name: /scan
+  ros_type_name: sensor_msgs/msg/LaserScan
+  gz_type_name: gz.msgs.LaserScan
+  direction: GZ_TO_ROS
+
+# 3) IMU：W13 卡尔曼融合要用，W12 先把它接出来做数据体检
+- ros_topic_name: /imu/data_raw
+  gz_topic_name: /imu
+  ros_type_name: sensor_msgs/msg/Imu
+  gz_type_name: gz.msgs.IMU
+  direction: GZ_TO_ROS
+
+# 4) 相机：RViz 的 Image 面板
+- ros_topic_name: /camera/image_raw
+  gz_topic_name: /camera/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera_info
+  gz_topic_name: /camera/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# 5) 仿真真值：odom_eval.py / telemetry 用它算「里程计到底差多少」
+#    gz.msgs.Pose_V → tf2_msgs/TFMessage，帧名形如 arena_w12/diffbot
+- ros_topic_name: /world/arena_w12/dynamic_pose/info
+  gz_topic_name: /world/arena_w12/dynamic_pose/info
+  ros_type_name: tf2_msgs/msg/TFMessage
+  gz_type_name: gz.msgs.Pose_V
+  direction: GZ_TO_ROS

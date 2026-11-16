@@ -1,0 +1,234 @@
+<?xml version="1.0"?>
+<!--
+  diffbot.common.xacro  —  W10/W11 差速底盘公共几何与惯性宏
+  ============================================================
+  设计原则（与 W08 的 demo_bot 保持一致）：
+  1) 本文件只放「几何 + 惯性 + 关节」宏，不放 <robot> 根节点、不放插件，
+     这样 W10（控制）、W11（传感器）都能 include 同一份底盘，避免改一处漏一处。
+  2) 所有尺寸集中在 <xacro:property> 里，改参数即可换车型，不用改 200 行 XML。
+  3) 惯性用解析公式算，禁止写死 0.0001 之类的假值 —— 假惯性会让
+     ros2_control 的 diff_drive_controller 速度环在 Gazebo 里抖成筛子。
+  4) 坐标系方向约定：x 向前、y 向左、z 向上（ROS REP-103）。
+     差速车左轮在 +y、右轮在 -y，左轮正转 = 车体逆时针（左转）。
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============ 1. 整车尺寸与质量参数（改这里就够了） ============ -->
+  <xacro:property name="base_length"  value="0.40"/>   <!-- 车体长 x -->
+  <xacro:property name="base_width"   value="0.30"/>   <!-- 车体宽 y -->
+  <xacro:property name="base_height"  value="0.12"/>   <!-- 车体高 z -->
+  <xacro:property name="base_mass"    value="2.00"/>   <!-- kg -->
+
+  <xacro:property name="wheel_radius" value="0.05"/>   <!-- 轮半径，决定里程计比例 -->
+  <xacro:property name="wheel_width"  value="0.03"/>   <!-- 轮胎宽 -->
+  <xacro:property name="wheel_mass"   value="0.20"/>
+  <!-- 轮距 = 两个轮心之间的横向距离，diff_drive_controller 的 yaw 全靠它 -->
+  <xacro:property name="wheel_separation" value="0.36"/>
+
+  <xacro:property name="caster_radius" value="0.025"/> <!-- 后支撑球 -->
+  <xacro:property name="caster_mass"   value="0.10"/>
+
+  <!-- 轮心相对 base_link 的高度偏移：车体中心在 0.10，轮轴在 0.05 -->
+  <xacro:property name="wheel_z" value="${wheel_radius - base_height/2}"/>
+
+  <!-- 视觉颜色（RViz / Gazebo 共用） -->
+  <xacro:property name="color_body"  value="0.15 0.35 0.70 1.0"/>
+  <xacro:property name="color_wheel" value="0.10 0.10 0.10 1.0"/>
+  <xacro:property name="color_ball"  value="0.85 0.55 0.10 1.0"/>
+
+  <!-- ============ 2. 惯性宏（解析公式，别手写） ============ -->
+  <!-- 长方体绕质心：Ixx=m(h²+d²)/12, Iyy=m(w²+d²)/12, Izz=m(w²+h²)/12 -->
+  <xacro:macro name="inertia_box" params="mass x y z">
+    <inertial>
+      <mass value="${mass}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia
+        ixx="${mass*(y*y+z*z)/12}" ixy="0" ixz="0"
+        iyy="${mass*(x*x+z*z)/12}" iyz="0"
+        izz="${mass*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- 圆柱绕自身轴（此处圆柱轴已旋到 y 轴，故 Iyy 是主转动惯量） -->
+  <xacro:macro name="inertia_cylinder" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia
+        ixx="${mass*(3*radius*radius+length*length)/12}" ixy="0" ixz="0"
+        iyy="${mass*radius*radius/2}" iyz="0"
+        izz="${mass*(3*radius*radius+length*length)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- 实心球：I = 2/5 m r² -->
+  <xacro:macro name="inertia_sphere" params="mass radius">
+    <inertial>
+      <mass value="${mass}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia
+        ixx="${2*mass*radius*radius/5}" ixy="0" ixz="0"
+        iyy="${2*mass*radius*radius/5}" iyz="0"
+        izz="${2*mass*radius*radius/5}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ============ 3. 材质宏 ============ -->
+  <xacro:macro name="mat" params="name rgba">
+    <material name="${name}">
+      <color rgba="${rgba}"/>
+    </material>
+  </xacro:macro>
+
+  <!-- ============ 4. 驱动轮宏（左右各调一次，mirror 控制 y 符号） ============ -->
+  <!--
+    params:
+      side  : "left" | "right"   —— 决定关节名与 y 符号
+      y     : 轮心横向坐标（自动由 side 取正负）
+    注意：轮子是绕自身 y 轴旋转的圆柱，所以 geometry 里要 rpy="1.5708 0 0"
+          把圆柱默认的 z 轴转到 y 轴；否则车轮会立成"呼啦圈"。
+  -->
+  <xacro:macro name="diffbot_wheel" params="side y_sign">
+    <link name="${side}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="${side}_wheel_mat"><color rgba="${color_wheel}"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <!-- Gazebo 里轮胎摩擦系数单独给，默认 1.0 会让启动瞬间打滑 -->
+      <gazebo reference="${side}_wheel_link">
+        <mu1>1.0</mu1><mu2>1.0</mu2>
+        <kp>1000000.0</kp><kd>100.0</kd>
+      </gazebo>
+      <xacro:inertia_cylinder mass="${wheel_mass}" radius="${wheel_radius}" length="${wheel_width}"/>
+    </link>
+
+    <joint name="${side}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${side}_wheel_link"/>
+      <origin xyz="0 ${y_sign*wheel_separation/2} ${wheel_z}" rpy="0 0 0"/>
+      <!-- 轮子只允许绕 y 轴转；限位给 ±1e5 防止某些求解器溢出 -->
+      <axis xyz="0 1 0"/>
+      <limit effort="20.0" velocity="20.0"/>
+      <dynamics damping="0.02" friction="0.0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ============ 5. 整车宏：一次性生成 base + 双轮 + 万向球 ============ -->
+  <xacro:macro name="diffbot_body">
+    <!-- base_footprint：贴地投影点，Nav2 / SLAM 都用它当机器人原点 -->
+    <link name="base_footprint"/>
+
+    <joint name="base_footprint_joint" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="base_link"/>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${base_length} ${base_width} ${base_height}"/></geometry>
+        <material name="body_mat"><color rgba="${color_body}"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${base_length} ${base_width} ${base_height}"/></geometry>
+      </collision>
+      <gazebo reference="base_link">
+        <mu1>0.2</mu1><mu2>0.2</mu2>
+      </gazebo>
+      <xacro:inertia_box mass="${base_mass}" x="${base_length}" y="${base_width}" z="${base_height}"/>
+    </link>
+
+    <!-- 左右轮：y_sign 就是 ±1 -->
+    <xacro:diffbot_wheel side="left"  y_sign="1"/>
+    <xacro:diffbot_wheel side="right" y_sign="-1"/>
+
+    <!-- 后万向球：只做支撑，不参与驱动。用球体是因为 Gazebo 里球＝各向同性摩擦，
+         不会像小轮子那样卡方向。 -->
+    <link name="caster_link">
+      <visual>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+        <material name="caster_mat"><color rgba="${color_ball}"/></material>
+      </visual>
+      <collision>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+      </collision>
+      <gazebo reference="caster_link">
+        <mu1>0.0</mu1><mu2>0.0</mu2>
+      </gazebo>
+      <xacro:inertia_sphere mass="${caster_mass}" radius="${caster_radius}"/>
+    </link>
+
+    <joint name="caster_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="caster_link"/>
+      <!-- 放在车尾正下方，z 使球底刚好贴地 -->
+      <origin xyz="${-base_length/2 + 0.06} 0 ${caster_radius - base_height/2}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- 传感器安装点（W10 先留着不用，W11 才挂真传感器；固定关节不占自由度） -->
+    <link name="sensor_mount_link"/>
+    <joint name="sensor_mount_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="sensor_mount_link"/>
+      <origin xyz="${base_length/2 - 0.04} 0 ${base_height/2 + 0.02}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ============ 6. ros2_control 硬件接口声明 ============ -->
+  <!--
+    这段是 W10 的核心：把「关节」暴露成 controller_manager 能读写的接口。
+      command_interface velocity  → diff_drive_controller 往这里写目标轮速
+      state_interface  position  → 编码器读数（Gazebo 直接给真值）
+      state_interface  velocity  → 轮速反馈
+    hardware plugin 指向 gz_ros2_control 的 GazeboSimSystem，
+    它会自动接管 <gazebo> 里声明的仿真关节，不需要我们写 C++。
+  -->
+  <xacro:macro name="diffbot_ros2_control">
+    <ros2_control name="DiffBotSystem" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+      <joint name="left_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-20.0</param>
+          <param name="max">20.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="right_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-20.0</param>
+          <param name="max">20.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </ros2_control>
+  </xacro:macro>
+
+  <!-- ============ 7. Gazebo 侧插件（控制器 YAML 路径 + 时钟） ============ -->
+  <xacro:macro name="diffbot_gz_control_plugin" params="controllers_yaml">
+    <gazebo>
+      <!--
+        filename 只写插件名，不带 lib 前缀和 .so 后缀 —— Harmonic 会自动补。
+        写成 libgz_ros2_control-system.so 反而加载失败，这是 W10 最常见的坑。
+      -->
+      <plugin filename="gz_ros2_control-system"
+              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>${controllers_yaml}</parameters>
+        <ros>
+          <namespace>/</namespace>
+        </ros>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
+</robot>

@@ -2,7 +2,7 @@
 
 [中文](README.md) · [Research index](docs/RESEARCH.md) · [Evidence matrix](docs/RESUME_EVIDENCE_MATRIX.md) · [Offline bundle](dist/lizipeng-embodied-ai-portfolio.zip)
 
-This public portfolio contains eight clean-room, runnable projects: six resume reconstructions, GaussPatrol, and a 3DGS scanner soft-hardware engineering archive.
+This public portfolio contains clean-room, runnable projects plus one ROS 2 teaching platform: resume reconstructions, GaussPatrol, a 3DGS scanner soft-hardware archive, and a differential-drive course lab.
 
 It is **not** production source code from any employer. It contains no customer data, credentials, proprietary maps, model weights, or unpublished patent/paper content. Resume metrics are explicitly treated as reported historical results; repository tests validate only the included synthetic demos.
 
@@ -33,6 +33,7 @@ python projects/01_quadruped_slam/tests/test_quadruped_slam.py -v
 | [BMS](projects/06_bms/README.md) | Python, tests, config, standalone C++17 demo | MCU-oriented state estimation |
 | [GaussPatrol](projects/07_gausspatrol/README.md) | patrol simulation, tests, SVG/PLY results, technical and submission docs | embodied competition system closure |
 | [3DGS scanner soft-hardware](projects/08_3dgs_scanner_soft_hardware/README.md) | PCB PDFs, SOPs, engineering report, test matrix and research references | BMS/main-controller hardware archive |
+| [ROS2 course lab](projects/10_ros2_course_lab/README.md) | differential-drive URDF/Xacro, ros2_control, Gazebo world, ros_gz bridge, odometry/PID/SLAM, web dashboard, 5-min screen recording | reproducible ROS2 system integration and fault diagnosis |
 
 See each design under [`projects/`](projects/), the research trail in [`docs/RESEARCH.md`](docs/RESEARCH.md), and the exact resume-to-artifact boundary in [`docs/RESUME_EVIDENCE_MATRIX.md`](docs/RESUME_EVIDENCE_MATRIX.md).
 

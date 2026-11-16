@@ -1,0 +1,76 @@
+# ============================================================
+# diffbot_controllers.yaml  —  W10 控制器配置（controller_manager 读取）
+# ============================================================
+# 结构分两层：
+#   controller_manager.ros__parameters  → 声明「要加载哪些控制器」及类型
+#   <控制器名>.ros__parameters          → 每个控制器自己的参数
+# 少写第一层，spawner 会报 "controller not found"；少写第二层，
+# 控制器会带着一堆默认值起来，轮径/轮距全错，odom 立刻漂成鬼。
+# ------------------------------------------------------------
+
+controller_manager:
+  ros__parameters:
+    update_rate: 100          # Hz，与 Gazebo 物理步长 1ms 匹配（100 步一次控制）
+    use_sim_time: true        # 仿真必须为 true，否则 /clock 与 TF 时间戳对不上
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+# ---------- 里程计与轮子几何 ----------
+diff_drive_controller:
+  ros__parameters:
+    # 关节名必须与 URDF 里 <ros2_control><joint name="..."> 完全一致
+    left_wheel_names:  ["left_wheel_joint"]
+    right_wheel_names: ["right_wheel_joint"]
+
+    # 这两个值直接决定里程计准确度：
+    #   wheel_radius      → 线速度比例（半径错 1%，走 10 m 就差 10 cm）
+    #   wheel_separation  → 角速度比例（轮距错 1%，转 360° 就差 3.6°）
+    # 实测值来自 URDF 的 xacro 属性，两边必须同步改。
+    wheel_separation: 0.36
+    wheel_radius: 0.05
+
+    wheel_separation_multiplier: 1.0
+    left_wheel_radius_multiplier: 1.0
+    right_wheel_radius_multiplier: 1.0
+
+    # ---------- 坐标系 ----------
+    odom_frame_id: odom
+    base_frame_id: base_footprint   # 差速车贴地投影点，Nav2/AMCL 的默认期望
+    enable_odom_tf: true            # 由控制器直接广播 odom->base_footprint
+    tf_frame_prefix_enable: false
+
+    # ---------- 速度指令：Jazzy 只认 TwistStamped ----------
+    # ros2_controllers 4.x 起，diff_drive_controller 的 cmd_vel 订阅类型固定为
+    #   geometry_msgs/msg/TwistStamped
+    # 旧教程（Humble 时代）里的 use_stamped_vel 参数**在 4.x 已经不存在**，
+    # 写了既不生效也不报错，于是"发 Twist 但车一动不动"成了最高频的课堂事故。
+    # 自检方法：ros2 topic list -t | grep cmd_vel
+    #   /diff_drive_controller/cmd_vel [geometry_msgs/msg/TwistStamped]
+    # 本课统一用 TwistStamped 发指令（见 scripts/cmd_vel_test.sh）。
+    publish_limited_velocity: false
+
+    # 限速：给车一个物理上跑不到的上限，防止误发大速度把车掀翻
+    linear.x.max_velocity: 1.0
+    linear.x.min_velocity: -1.0
+    linear.x.max_acceleration: 2.0
+    linear.x.min_acceleration: -2.0
+    angular.z.max_velocity: 2.5
+    angular.z.min_velocity: -2.5
+    angular.z.max_acceleration: 6.0
+    angular.z.min_acceleration: -6.0
+
+    # ---------- 里程计 ----------
+    publish_odom: true
+    publish_odom_tf: true
+    # 轮速做滑动平均，抑制 Gazebo 接触求解器的高频抖动
+    velocity_rolling_window_size: 10
+    # 协方差对角线：让 robot_localization / EKF 知道该多信任轮式里程计
+    pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    # 打开全向轮/麦轮时才需要，差速车保持 false
+    open_loop: false

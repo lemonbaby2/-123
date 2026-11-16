@@ -1,0 +1,7 @@
+image: w12_map_20261113_235253.pgm
+mode: trinary
+resolution: 0.050
+origin: [-4.979, -4.983, 0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

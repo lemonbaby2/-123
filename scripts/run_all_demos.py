@@ -19,6 +19,7 @@ DEMOS = {
     "06_bms": ROOT / "projects/06_bms/src/bms.py",
     "07_gausspatrol": ROOT / "projects/07_gausspatrol/run_demo.py",
     "08_3dgs_scanner_soft_hardware": ROOT / "projects/08_3dgs_scanner_soft_hardware/src/project_manifest.py",
+    "10_ros2_course_lab": ROOT / "projects/10_ros2_course_lab/src/demo.py",
 }
 
 

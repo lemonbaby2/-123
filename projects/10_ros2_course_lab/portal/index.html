@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第12–13周 · ROS2 与 Gazebo 课程资源门户 | DGX spark-a8d2</title>
+<style>
+:root{
+  --bg:#0d1420; --panel:#151f30; --panel2:#1b2839; --line:#2b3b54;
+  --txt:#e7eef7; --sub:#9db0c8; --acc:#4fd1c5; --acc2:#f6c453; --red:#ff7b72;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);
+  font-family:"Microsoft YaHei","PingFang SC",Consolas,monospace;line-height:1.65}
+a{color:var(--acc);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1400px;margin:0 auto;padding:0 26px 80px}
+header{background:linear-gradient(120deg,#13233a,#0d1420 65%);border-bottom:2px solid var(--acc);
+  padding:30px 26px 24px;margin-bottom:26px}
+header .inner{max-width:1400px;margin:auto}
+h1{margin:0 0 6px;font-size:30px;letter-spacing:1px}
+header .sub{color:var(--sub);font-size:14px}
+.badge{display:inline-block;background:#173a3a;color:var(--acc);border:1px solid #2a6b66;
+  padding:2px 10px;border-radius:20px;font-size:12px;margin-right:8px}
+.badge.y{background:#3b3217;color:var(--acc2);border-color:#6b5a2a}
+h2{font-size:22px;margin:42px 0 14px;padding-left:12px;border-left:5px solid var(--acc)}
+h3{font-size:17px;margin:22px 0 10px;color:var(--acc2)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
+.video-box{background:#000;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+video{width:100%;max-height:72vh;display:block;background:#000}
+.note{background:#1b2b3f;border-left:4px solid var(--acc);padding:10px 14px;color:var(--sub);font-size:13px;margin:12px 0}
+.warn{background:#3a241f;border-left-color:var(--red);color:#ffc9c3}
+code,pre{font-family:Consolas,"Courier New",monospace}
+pre{background:#0a1019;border:1px solid var(--line);border-radius:6px;padding:12px 14px;
+  overflow:auto;font-size:12.5px;color:#c8f7f0;margin:8px 0;white-space:pre-wrap;word-break:break-all}
+.copy{float:right;background:#243b52;color:var(--txt);border:1px solid var(--line);border-radius:4px;
+  padding:2px 9px;cursor:pointer;font-size:11px}
+.copy:hover{background:#31567a}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--acc2);position:sticky;top:0}
+tr:nth-child(even) td{background:#121c2b}
+td:first-child{white-space:nowrap;color:var(--acc)}
+.tblbox{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+input[type=search]{width:100%;background:#0a1019;color:var(--txt);border:1px solid var(--line);
+  border-radius:6px;padding:11px 14px;font-size:14px;margin-bottom:10px}
+input[type=search]:focus{outline:1px solid var(--acc)}
+ul{margin:8px 0 8px 20px;padding:0}li{margin:5px 0}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:13px}
+.kv .k{color:var(--acc2)}
+.step{display:inline-block;background:var(--acc);color:#062422;font-weight:bold;border-radius:50%;
+  width:26px;height:26px;line-height:26px;text-align:center;margin-right:8px}
+footer{border-top:1px solid var(--line);margin-top:50px;padding-top:18px;color:var(--sub);font-size:12px}
+.btn{display:inline-block;background:var(--acc);color:#062422;padding:9px 18px;border-radius:6px;
+  font-weight:bold;margin:6px 8px 6px 0}
+.btn:hover{background:#7ae8dd;text-decoration:none}
+.btn.b{background:var(--acc2);color:#2b2110}
+</style>
+</head>
+<body>
+<header><div class="inner">
+  <h1>ROS2 与 Gazebo 课程资源门户</h1>
+  <div class="sub">
+    <span class="badge">第 12 周 里程计·PID（已实测）</span>
+    <span class="badge y">第 13 周 Gazebo 世界·模型·桥接（明日课）</span>
+    <span class="badge">DGX spark-a8d2 · Ubuntu 24.04 · ROS 2 Jazzy · Gazebo 8.11</span>
+  </div>
+  <div class="sub" style="margin-top:8px">
+    本机地址 <code>http://<LAB_HOST>:8140/</code> ｜ tailnet <code>http://<TAILNET_HOST>:8140/</code> ｜
+    课堂看板 <code>http://<LAB_HOST>:8130/</code> ｜ 更新 2026-11-16
+  </div>
+</div></header>
+
+<div class="wrap">
+
+<h2>① 五分钟完整演示片</h2>
+<div class="note">连续 300 秒实拍，不剪辑：Gazebo 世界与模型（80 s）→ RViz 里程计轨迹／激光／SLAM 地图（75 s）→ 网页看板 PID 闭环（85 s）→ 回 Gazebo 收尾。画面全部来自 DGX 真实桌面 <code>DISPLAY=:1</code>，不是动画。</div>
+<div class="video-box">
+  <video id="demo" controls preload="metadata" poster="media/poster.png">
+    <source src="media/w13_demo.mp4" type="video/mp4">
+    浏览器不支持 HTML5 视频，请直接<a href="media/w13_demo.mp4">下载 MP4</a>。
+  </video>
+</div>
+<div class="card">
+  <div class="kv">
+    <div class="k">片长</div><div>5 分钟（300 s，15 fps，1920×1080，H.264）</div>
+    <div class="k">内容</div><div>差速车在 10×10 m 场地跑 A/B/C 三段；RViz 显示 odom 轨迹、LaserScan、199×199 栅格地图；看板显示 PID 目标／实测／输出曲线</div>
+    <div class="k">课堂用法</div><div>上课先播 1 分钟建立整体印象，再逐窗口实操；播放时按 <code>空格</code> 暂停，<code>← →</code> 逐帧讲解</div>
+    <div class="k">原始素材</div><div>源码 <code>~/ros2_ws_w12/</code>；录制脚本 <code>/tmp/w13_director.sh</code>；自检 <code>check_w12.sh</code> PASS=24 / FAIL=0</div>
+  </div>
+</div>
+
+<h2>② 明日课件 · Gazebo 世界、模型与 ROS2 桥接</h2>
+<div class="grid">
+  <div class="card"><h3><span class="step">1</span>世界（World）</h3>
+    <p>一个 <code>.sdf</code> 文件 = 物理参数 + 模型实例 + 插件。课堂用 <code>arena_w12.sdf</code>：10×10 m 场地、L 形内墙、1 ms 步长、RTF 1.0。</p>
+    <pre><button class="copy">复制</button>gz sdf -p worlds/arena_w12.sdf &gt; /tmp/norm.sdf
+gz model --list
+gz sim -r -v2 worlds/arena_w12.sdf</pre>
+    <div class="note">静态墙必须写 <code>&lt;static&gt;true&lt;/static&gt;</code>，否则被车撞飞。</div>
+  </div>
+  <div class="card"><h3><span class="step">2</span>模型（Model）</h3>
+    <p>URDF/Xacro 描述机器人本体：link + joint + visual + collision + inertial。<b>缺 inertial 必抖</b>，<b>轮关节必须 continuous 且 rpy=π/2</b>。</p>
+    <pre><button class="copy">复制</button>xacro diffbot_sim.urdf.xacro &gt; /tmp/r.urdf
+check_urdf /tmp/r.urdf
+ros2 launch urdf_tutorial display.launch.py model:=/tmp/r.urdf</pre>
+    <div class="note">RViz 只出 base_link？缺 <code>robot_state_publisher</code> 和 <code>joint_state_publisher</code>。</div>
+  </div>
+  <div class="card"><h3><span class="step">3</span>桥接（Bridge）</h3>
+    <p><code>ros_gz_bridge</code> 把 Gazebo 的 <code>gz.msgs.*</code> 与 ROS 2 的 <code>*.msgs::*</code> 一一映射。时钟只能有一个发布者。</p>
+    <pre><button class="copy">复制</button>ros2 run ros_gz_bridge parameter_bridge \
+  --ros-args -p config_file:=$HOME/ros2_ws_w12/src/week12_odometry/config/bridge_w12.yaml
+ros2 topic info /clock | grep -i publisher</pre>
+    <div class="note warn">Jazzy 的 <code>/cmd_vel</code> 收 <code>TwistStamped</code>；CLI 发布时多套一层 <code>twist.twist</code> 会全零且<b>不报错</b>。</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>上课完整启动（复制即跑）</h3>
+  <pre><button class="copy">复制</button># 1. 环境隔离（与机器上其他 ROS 2 演示互不干扰）
+export ROS_DOMAIN_ID=42 GZ_PARTITION=w12course
+
+# 2. 启动 Gazebo + RViz2 + ros_gz_bridge + slam_toolbox + 看板
+cd ~/ros2_ws_w12 &amp;&amp; MODE=pid AUTO_BROWSER=1 bash 01_启动课堂.sh
+
+# 3. 验收（必须 PASS=24 FAIL=0）
+bash src/week12_odometry/scripts/check_w12.sh
+
+# 4. 跑车演示：A 直行 / B 转弯 / C 复合 / all 三段
+bash src/week12_odometry/scripts/drive_demo.sh all
+
+# 5. 下课清场（只杀 W12 自己的进程，不动别人的）
+bash 02_停止全部.sh</pre>
+  <div class="note">三个可视化入口：Gazebo GUI 看物理世界；RViz2 看 TF／点云／地图；浏览器看板看 PID 曲线与实时里程计。<code>/map</code> 发布者必须 ≥1，<code>/clock</code> 发布者必须 =1。</div>
+</div>
+
+<h2>③ ROS2 命令全集（可搜索）</h2>
+<input type="search" id="q1" placeholder="输入关键字过滤，例如：topic、lifecycle、TwistStamped、slam…">
+<div class="tblbox"><table id="t1"><thead><tr><th style="width:110px">分类</th><th>命令</th><th style="width:260px">说明</th></tr></thead><tbody></tbody></table></div>
+
+<h2>④ Ubuntu 命令全集（可搜索）</h2>
+<input type="search" id="q2" placeholder="输入关键字过滤，例如：ssh、tar、systemctl、pgrep…">
+<div class="tblbox"><table id="t2"><thead><tr><th style="width:110px">分类</th><th>命令</th><th style="width:260px">说明</th></tr></thead><tbody></tbody></table></div>
+
+<h2>⑤ 学习网站（课堂收藏夹）</h2>
+<div class="card" id="links"></div>
+
+<h2>⑥ 下载与远程连接</h2>
+<div class="grid">
+  <div class="card"><h3>下载完整手册</h3>
+    <a class="btn" href="files/ROS2与Ubuntu全量命令与验证代码手册_20261116.xlsx">Excel 手册（12 表）</a>
+    <a class="btn b" href="media/w13_demo.mp4">五分钟 MP4</a>
+    <div class="note">Excel 含：环境验证矩阵（22.04 / 24.04 / 26.04 逐项标证据等级）、工作空间、URDF/Xacro、Gazebo 世界、桥接、控制里程计、SLAM、ROS2 命令 38 条、Ubuntu 命令 38 条、故障库 10 条、学习网站 14 条。</div>
+  </div>
+  <div class="card"><h3>远程 PC 连 DGX —— 账号是 nvidia</h3>
+    <p><b>结论：SSH 服务没坏。</b>你试的 7 个用户名里，只有 <code>nvidia</code> 真实存在；<code>ubuntu/lzp/spark/dgx/admin</code> 是 <code>Invalid user</code>（日志实证），<code>root</code> 被 <code>PermitRootLogin without-password</code> 设计拒绝。</p>
+    <pre><button class="copy">复制</button># 密码登录（已实测 1.3 s 通）
+ssh <USER>@<TAILNET_HOST>      # 密码：<PASSWORD>
+ssh <USER>@<LAB_HOST>     # 局域网同样通
+
+# 免密登录（推荐，已装公钥并验通）
+ssh -i <PRIVATE_KEY> <USER>@<TAILNET_HOST></pre>
+    <div class="note">对方 PC 先把 <code><PRIVATE_KEY></code> 私钥放到自己机器（权限 600），Windows 用 <code>ssh -i .\<PRIVATE_KEY> <USER>@<TAILNET_HOST></code>。若不在同一 tailnet，必须先让对方 PC 加入同一个 tailnet。</div>
+  </div>
+</div>
+
+<footer>
+  广州现代信息工程职业技术学院 · 机器学习与智能机器人应用技术 · 第 12–13 周课程资源门户<br>
+  数据全部来自 2026-11-16 DGX spark-a8d2 实测；Ubuntu 26.04 列标注为“待核”，不冒充实测。
+</footer>
+</div>
+
+<script>
+const ROS = [
+['节点','ros2 node list','列出所有节点'],
+['节点','ros2 node info /slam_toolbox','查发布/订阅/服务'],
+['话题','ros2 topic list -t','列话题并显示类型'],
+['话题','ros2 topic echo /odom --once','只收一帧'],
+['话题','ros2 topic hz /scan --window 20','实测频率'],
+['话题','ros2 topic bw /map','带宽'],
+['话题','ros2 topic info /clock','查发布者数（必须=1）'],
+['话题','ros2 topic pub -r 20 /cmd_vel_target geometry_msgs/msg/TwistStamped "{header: {frame_id: base_link}, twist: {linear: {x: 0.35}}}"','发布速度指令'],
+['话题','ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped "{header: {frame_id: map}, pose: {pose: {position: {x: 2.0, y: 0.5}}, orientation: {w: 1.0}}}"','发导航目标'],
+['服务','ros2 service list -t','列服务'],
+['服务','ros2 service call /spawn_entity gazebo_msgs/srv/SpawnEntity "{name: bot}"','Gazebo 生成实体'],
+['动作','ros2 action list -t','列动作'],
+['动作','ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose "{pose: {header: {frame_id: map}, pose: {position: {x: 2.0, y: 0.0}, orientation: {w: 1.0}}}}"','导航目标'],
+['参数','ros2 param list /diff_drive_controller','列参数'],
+['参数','ros2 param get /slam_toolbox scan_topic','读参数'],
+['参数','ros2 param set /velocity_arbiter kp 1.8','运行时改参数'],
+['参数','ros2 param dump /slam_toolbox > slam_dump.yaml','导出参数'],
+['接口','ros2 interface list | grep msgs','列消息类型'],
+['接口','ros2 interface show geometry_msgs/msg/TwistStamped','查字段（排错必用）'],
+['运行','ros2 run <pkg> <exe> --ros-args -p name:=value','单节点运行'],
+['启动','ros2 launch <pkg> <file>.launch.py arg:=value','启动'],
+['启动','ros2 launch <pkg> <file>.launch.py --show-args','看参数列表'],
+['包','ros2 pkg list | grep week','列包'],
+['包','ros2 pkg executables <pkg>','列可执行'],
+['生命周期','ros2 lifecycle list /slam_toolbox','列状态机'],
+['生命周期','ros2 lifecycle get /slam_toolbox','查当前状态'],
+['生命周期','ros2 lifecycle set /slam_toolbox activate','切换状态'],
+['控制','ros2 control list_controllers','控制器列表'],
+['控制','ros2 control list_hardware_components','硬件组件'],
+['录制','ros2 bag record -a -o /tmp/demo_bag','全录'],
+['录制','ros2 bag play /tmp/demo_bag --clock','回放并发 /clock'],
+['录制','ros2 bag info /tmp/demo_bag','查看 bag'],
+['TF','ros2 run tf2_tools view_frames','导出 TF 树 PDF'],
+['TF','ros2 run tf2_ros tf2_echo base_link lidar_link','两坐标系变换'],
+['调试','ros2 doctor --report','体检报告'],
+['调试','ros2 wtf','Humble 排错命令'],
+['守护','ros2 daemon status','查守护进程'],
+['守护','ros2 daemon stop && ros2 daemon start','重启守护'],
+['环境','printenv ROS_DOMAIN_ID ROS_DISTRO GZ_PARTITION','查隔离域'],
+['构建','colcon build --symlink-install --packages-select week13_bridge','只编一个包'],
+['构建','xacro model.urdf.xacro > /tmp/r.urdf && check_urdf /tmp/r.urdf','模型自检'],
+['Gazebo','gz sim -r -v2 worlds/arena.sdf','起世界'],
+['Gazebo','gz model --list','列模型'],
+['桥接','ros2 run ros_gz_bridge parameter_bridge --ros-args -p config_file:=bridge.yaml','起桥接'],
+['建图','ros2 launch slam_toolbox online_async_launch.py slam_params_file:=slam.yaml use_sim_time:=true','必须走官方 launch'],
+['存图','ros2 run nav2_map_server map_saver_cli -f ~/maps/w13_map','产 pgm+yaml']
+];
+const UB = [
+['文件','pwd; ls -lah; cd -; mkdir -p a/b; touch f','基础'],
+['文件','cp -r src dst; mv a b; ln -s target link','复制/移动/软链'],
+['文件','rm -f file; rm -rf dir','删除（个人目录慎用）'],
+['查文件',"find ~ -name '*.launch.py' -print",'按名查'],
+['查文件','find . -type f -mtime -1','一天内改过'],
+['查内容',"grep -rn 'pattern' src/ --include='*.py'",'递归搜'],
+['查内容','sed -n "10,30p" file','看指定行'],
+['查内容',"awk -F: '{print $1}' /etc/passwd",'列处理'],
+['查内容','head -20 file; tail -f logfile','头/跟随尾'],
+['权限','chmod +x script.sh; chmod 600 ~/.ssh/id_ed25519','执行/密钥权限'],
+['权限','chown -R <USER>:<USER> dir','改属主'],
+['磁盘','df -h; du -sh dir; du -h --max-depth=1 ~','余量/占用'],
+['内存','free -h; top; htop','内存/进程'],
+['进程','ps aux | grep ros; pgrep -af "gz sim"','查进程'],
+['进程','pkill -f pattern; kill -9 PID','杀进程（方括号防自匹配）'],
+['网络','ip a; ip route; ping -c 3 8.8.8.8','地址/路由/连通'],
+['网络','ss -ltnp; lsof -i:8130','端口占用'],
+['网络','curl -I http://127.0.0.1:8130/; wget -c URL','HTTP 探测/续传'],
+['网络','ssh -i key <USER>@<TAILNET_HOST>','密钥登录'],
+['网络','ssh-copy-id -i key.pub <USER>@<TAILNET_HOST>','装公钥'],
+['网络','scp -r local nvidia@host:~/dir; rsync -av src/ host:~/dst/','传文件'],
+['压缩','tar czf a.tgz dir/; tar xzf a.tgz -C /dest','tar'],
+['压缩','zip -r a.zip dir/; unzip -l a.zip','zip'],
+['服务','systemctl status ssh; journalctl -u ssh -n 50','服务状态/日志'],
+['服务','systemctl --user status w13rec','用户级后台任务'],
+['账号','whoami; id; sudo -n true; passwd; chage -l <USER>','身份/密码状态'],
+['账号','adduser name; usermod -aG sudo,docker name','建号/加组'],
+['软件','lsb_release -a; uname -a; nvidia-smi','系统/显卡'],
+['软件','sudo apt update && sudo apt install -y pkg','装包'],
+['软件',"dpkg -l | grep -i pkg",'查 deb'],
+['文本',"cat > f <<'EOF'\n...\nEOF",'写多行文件'],
+['后台','setsid nohup cmd > log 2>&1 < /dev/null &','脱离 SSH'],
+['后台','systemd-run --user --unit=job --collect cmd','会话结束也不断'],
+['终端','tmux new -s w13; tmux attach -t w13','会话保持'],
+['终端','history | grep ros2; alias ll="ls -lah"','历史/别名'],
+['计划','crontab -e; crontab -l','定时任务'],
+['检查','bash -n script.sh; python3 -m py_compile x.py','语法预检']
+];
+const LINKS = [
+['官方文档','ROS 2 Jazzy 文档','https://docs.ros.org/en/jazzy/','查接口/参数第一站'],
+['官方文档','ROS 2 Humble 文档','https://docs.ros.org/en/humble/','学生端 22.04 对应'],
+['官方教程','ROS 2 Tutorials','https://docs.ros.org/en/jazzy/Tutorials.html','节点话题到 Launch'],
+['官方教程','rviz2 用户指南','https://github.com/ros2/rviz','配置文件格式'],
+['官方教程','Gazebo Sim 文档','https://gazebosim.org/docs','SDF / 世界 / 模型'],
+['官方教程','ros_gz 桥接','https://github.com/gazebosim/ros_gz','桥接 YAML 字段'],
+['官方教程','Navigation2 文档','https://navigation.ros.org/','导航与调参'],
+['官方教程','slam_toolbox','https://github.com/SteveMacenski/slam_toolbox','Lifecycle 状态机'],
+['官方教程','ros2_control 文档','https://control.ros.org/','硬件接口与控制器'],
+['中文教程','古月居 ROS2 入门教程','https://www.guyuehome.com/','课程主参考'],
+['中文教程','ros2_21_tutorials','https://github.com/guyuehome/ros2_21_tutorials','离线包源码'],
+['中文教程','ROS 中文网','https://www.ros.org.cn/','中文社区'],
+['代码参考','ROS2 官方示例','https://github.com/ros2/examples','直接跑'],
+['工具','Gitee 镜像','https://gitee.com/mirrors','GitHub 拉不动时替代']
+];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fill(id, data){
+  const tb = document.querySelector('#'+id+' tbody');
+  tb.innerHTML = data.map(r => '<tr><td>'+esc(r[0])+'</td><td><code>'+esc(r[1])+'</code></td><td>'+esc(r[2])+'</td></tr>').join('');
+}
+function hook(id, data){
+  const i = document.getElementById(id);
+  i.addEventListener('input', () => {
+    const q = i.value.trim().toLowerCase();
+    fill(id.replace('q','t'), q ? data.filter(r => r.join(' ').toLowerCase().includes(q)) : data);
+  });
+}
+fill('t1', ROS); fill('t2', UB); hook('q1', ROS); hook('q2', UB);
+document.getElementById('links').innerHTML =
+  '<table><thead><tr><th style="width:100px">类别</th><th style="width:280px">名称</th><th>链接</th><th style="width:240px">用法</th></tr></thead><tbody>'
+  + LINKS.map(r => '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td><a href="'+r[2]+'" target="_blank" rel="noopener">'+esc(r[2])+'</a></td><td>'+esc(r[3])+'</td></tr>').join('')
+  + '</tbody></table>';
+document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => {
+  const pre = b.parentElement;
+  const txt = Array.from(pre.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
+  navigator.clipboard.writeText(txt).then(() => { b.textContent='已复制'; setTimeout(()=>b.textContent='复制',1200); });
+}));
+</script>
+</body>
+</html>
