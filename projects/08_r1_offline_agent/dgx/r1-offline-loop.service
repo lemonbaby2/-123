@@ -1,0 +1,17 @@
+[Unit]
+Description=R1-VLA 离线自学习 Agent 内测循环 (每日 20h Action 试错)
+# 纯离线 agent: 不依赖网络, 故不挂 network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/nvidia/r1-vla-offline
+Environment=PYTHONUNBUFFERED=1
+# 纯标准库实现, 无需 venv; 复用系统 python3
+ExecStart=/usr/bin/python3 /home/nvidia/r1-vla-offline/start.py --offline --loop --budget 72000
+# 每日窗口跑满 20h 后正常退出, 由 timer 次日重新触发; 不在失败时无限重启
+Restart=no
+StandardOutput=append:/home/nvidia/r1-vla-offline/memory/loop.log
+StandardError=append:/home/nvidia/r1-vla-offline/memory/loop.log
+
+[Install]
+WantedBy=default.target

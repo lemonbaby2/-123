@@ -1,0 +1,10 @@
+[Unit]
+Description=每日触发 R1-VLA 离线自学习内测 (错峰: 02:10 启动, 与 R1 Forge 夜窗错开)
+
+[Timer]
+OnCalendar=*-*-* 02:10:00 Asia/Shanghai
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
