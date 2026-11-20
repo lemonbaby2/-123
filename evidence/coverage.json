@@ -1,0 +1,142 @@
+{
+  "resume_pdf": "D:/xwechat_files/wxid_zmxb0wapngqm22_00d0/temp/RWTemp/2026-11/9e20f478899dc29eb19741386f9343c8/2026李梓鹏机器人简历(27)(1).pdf",
+  "audit_date": "2026-11-20",
+  "github_account": "lemonbaby2 (38 public repos)",
+  "gitee_account": "li-zipeng123 (28 public repos)",
+  "legend": {
+    "0": "none / not published",
+    "1": "demo, mock or dry-run only (no real-device data)",
+    "2": "real code + real measured data or figures published"
+  },
+  "columns": ["GitHub code", "Gitee code", "Real perf figures", "Metric reproducible"],
+  "rows": [
+    {
+      "id": "R1", "label": "LingBot-VLA 2.0 / R2 / RoboTwin",
+      "values": [1, 1, 1, 0],
+      "github": "-123/projects/09_robotwin_hackathon, vla-pazhou, pazhou-a-track-showcase",
+      "gitee": "pazhou-a-vla-bridge, VLA北理工大学, pazhou-a-beverage-service",
+      "missing": "R2 real-robot training logs, 50k+10k step checkpoints, 55-D adapter evidence, LeRobot dataset",
+      "note": "Local repo E:/研究生学习/研究生学习/黑客松/lingbot-vla-v2 exists but is NOT pushed to any remote."
+    },
+    {
+      "id": "R2", "label": "Zebra / YOLO11-P2 + AIFI/CCFM",
+      "values": [1, 0, 0, 0],
+      "github": "-123/projects/04_industrial_vision (synthetic demo), ai-fastener-inspection (DIFFERENT project: YOLOv8n fasteners)",
+      "gitee": "none",
+      "missing": "ZT421T nozzle images/labels, YOLO11-P2+AIFI/CCFM weights, ONNX/TensorRT engine, 42ms->18ms latency log",
+      "note": "ai-fastener-inspection reports 59.2 FPS / mAP 0.926 on screws and nuts - it is NOT the Zebra project."
+    },
+    {
+      "id": "R3", "label": "Cloud Ginger / CCU / OpenVLA",
+      "values": [1, 0, 0, 0],
+      "github": "-123/projects/02_ginger_robot (mock rosbridge), windows-app- (empty)",
+      "gitee": "none",
+      "missing": "CCU API, Jetson Orin NX AWQ quantization log, LoadMap nav traces, action latency measurements",
+      "note": "README explicitly says mock protocol only."
+    },
+    {
+      "id": "R4", "label": "GeoScan Pro / LIO-SAM + RTK",
+      "values": [2, 2, 1, 0],
+      "github": "-123/projects/03_geoscan_pro, 08_3dgs_scanner_soft_hardware, rtk-lidar-fusion-demo (KITTI real GPU bench 87.7%)",
+      "gitee": "rtk-navstack-v2, ROS2与机器人",
+      "missing": "real RTK baseline, dual-antenna heading <0.2deg log, USB-CDC 94% bandwidth test, patent claims",
+      "note": "Best-covered hardware project, but resume metrics still unverified."
+    },
+    {
+      "id": "R5", "label": "World model / action-conditioned pred",
+      "values": [0, 0, 0, 0],
+      "github": "NONE",
+      "gitee": "none",
+      "missing": "20+ frame prediction outputs, MSE -32%, PSNR 28.5dB, collision +25%",
+      "note": "RESUME_2026_PROJECT_INDEX.md literally states: 暂无对应的原创公开工程."
+    },
+    {
+      "id": "R6", "label": "OpenVLA language-driven manipulation",
+      "values": [1, 0, 0, 0],
+      "github": "-123/vla_vlm_projects (2 dry-run projects)",
+      "gitee": "none",
+      "missing": "1000+ teleop trajectories, 92.5% unseen-part success log, <60ms end-to-end latency",
+      "note": "Repository index explicitly labels these as dry-run."
+    },
+    {
+      "id": "R7", "label": "Qwen2.5-VL industrial VQA / SOP",
+      "values": [2, 2, 1, 0],
+      "github": "nantai-sop-threehost (904 files, 58 images, 73 csv/json), sop-threehost-build",
+      "gitee": "SOP宁波 (incl. 60_验证与评测)",
+      "missing": "98.2% recall / <3.5% hallucination with same evaluation protocol; production videos and labels",
+      "note": "Code is published; the resume's two headline metrics are not reproduced in any README."
+    },
+    {
+      "id": "R8", "label": "ROS2 + 3DGS Lego visualization",
+      "values": [2, 1, 2, 1],
+      "github": "-123/projects/05_ros2_3dgs, dy3dgs-thesis-repro (verified figures), 3dgs-gaussian-splatting-pipeline",
+      "gitee": "ROS2与机器人, ROS2 开源课程精选",
+      "missing": "original Lego assets, 12s H.264 video, Isaac Sim integration",
+      "note": "Verified RViz/Gazebo frames published in dy3dgs-thesis-repro/official/figures."
+    },
+    {
+      "id": "R9", "label": "Quadruped SLAM / CUDA / Vicon",
+      "values": [1, 0, 0, 0],
+      "github": "-123/projects/01_quadruped_slam, slam, fusionvio-open",
+      "gitee": "none",
+      "missing": "CUDA kernels, Vicon ground truth, 100h stability log, loop-closure -63% measurement",
+      "note": "Evidence matrix says Vicon / 100h logs not public."
+    },
+    {
+      "id": "R10", "label": "STM32-FreeRTOS BMS",
+      "values": [1, 0, 0, 0],
+      "github": "-123/projects/06_bms, 08_3dgs_scanner_soft_hardware",
+      "gitee": "none",
+      "missing": "cell test data, Bi-LSTM teacher, QAT model, MCU firmware, SOC<2% HIL result, ISO 26262 case",
+      "note": "Only Thevenin+AEKF simulation."
+    },
+    {
+      "id": "P1", "label": "Paper: Dy3DGS-SLAM",
+      "values": [2, 0, 2, 2],
+      "github": "dy3dgs-thesis-repro, SourceAware-Dynamic-Gaussian-Mapping, vlm-3dgs-nav-thesis-midterm-2026-11",
+      "gitee": "none",
+      "missing": "manuscript and review status (submission policy)",
+      "note": "Repro assets, ablation figures and mid-term materials published."
+    },
+    {
+      "id": "P2", "label": "Paper: TAC-R2S2R",
+      "values": [2, 2, 2, 2],
+      "github": "tac-r2s2r-pub, tac-r2s2r-verified-runs (160 seeded runs)",
+      "gitee": "tac-r2s2r-verified-runs",
+      "missing": "none for the published subset",
+      "note": "Best-verified item: CSV metrics + figures + verification notes."
+    },
+    {
+      "id": "P3", "label": "Patents (4) / awards",
+      "values": [1, 0, 0, 0],
+      "github": "-123/docs/PUBLICATIONS_AND_IP.md (names only)",
+      "gitee": "GZ033大数据应用开发竞赛备赛库 (course/contest material)",
+      "missing": "application numbers, claims, certificates, award scans",
+      "note": "Only titles and status are public."
+    },
+    {
+      "id": "A1", "label": "Agent: R1 offline self-learning",
+      "values": [2, 0, 1, 1],
+      "github": "-123/projects/11_r1_offline_agent, r1-agent-studio",
+      "gitee": "none",
+      "missing": "20h self-reinforcement raw logs",
+      "note": "Published with offline self-check 4/4 PASS."
+    },
+    {
+      "id": "A2", "label": "Agent: Hermes fix + all-agent setup",
+      "values": [0, 0, 0, 0],
+      "github": "NONE (2026-11-07 / 11-15 work)",
+      "gitee": "none",
+      "missing": "patch_approval_parse.py, setup_local_models.py, BENCH_20261115.md, config diff",
+      "note": "Real work done on this machine, but only local files under <WORKDIR>/."
+    },
+    {
+      "id": "A3", "label": "Agent: Metatron coding-agent repro",
+      "values": [0, 0, 0, 0],
+      "github": "NONE (2026-11-19 work)",
+      "gitee": "none",
+      "missing": "metatron_trial.py, 4 results_*.json, RESULT.md, DGX.md, run_on_dgx.sh",
+      "note": "Real MuJoCo repro with real iteration metrics; not published."
+    }
+  ]
+}

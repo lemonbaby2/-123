@@ -1,0 +1,241 @@
+{
+  "paper": "arXiv:2610.38027 METATRON (NVIDIA Research, 2026-10-27)",
+  "task": "hurdle",
+  "coder_model": "qwen2.5-coder:7b",
+  "endpoint": "http://127.0.0.1:11434/v1",
+  "history": [
+    {
+      "round": 0,
+      "source": "baseline",
+      "code": "def skill(state, t, dt):\n    \"\"\"基线：固定步态 prompt，不使用任何状态反馈。\"\"\"\n    return {\"vx\": 0.6, \"stride\": 0.5, \"lift\": 0.35, \"phase_bias\": 0.0,\n            \"torso_pitch\": 0.0}\n",
+      "metrics": {
+        "score": -0.704,
+        "distance": 1.296,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          }
+        ]
+      }
+    },
+    {
+      "round": 1,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    return {\"vx\": 0.8, \"stride\": 0.6, \"lift\": 0.4, \"phase_bias\": -0.1,\n            \"torso_pitch\": -0.1}",
+      "metrics": {
+        "score": -1.908,
+        "distance": 0.092,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.092,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.586,
+            "fail_x": -2.477,
+            "fail_dist_to_hurdle": 3.777
+          },
+          {
+            "distance": 0.092,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.586,
+            "fail_x": -2.477,
+            "fail_dist_to_hurdle": 3.777
+          },
+          {
+            "distance": 0.092,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.586,
+            "fail_x": -2.477,
+            "fail_dist_to_hurdle": 3.777
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=1.296m, 距栏 0.004m, 最低躯干高度 0.541m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    },
+    {
+      "round": 2,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    return {\"vx\": 0.8, \"stride\": 0.6, \"lift\": 0.4, \"phase_bias\": -0.1,\n            \"torso_pitch\": -0.2}",
+      "metrics": {
+        "score": -2.0,
+        "distance": 0.0,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.671,
+            "fail_x": -0.721,
+            "fail_dist_to_hurdle": 2.021
+          },
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.671,
+            "fail_x": -0.721,
+            "fail_dist_to_hurdle": 2.021
+          },
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.671,
+            "fail_x": -0.721,
+            "fail_dist_to_hurdle": 2.021
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=1.296m, 距栏 0.004m, 最低躯干高度 0.541m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    },
+    {
+      "round": 3,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    return {\"vx\": 0.8, \"stride\": 0.4, \"lift\": 0.45, \"phase_bias\": -0.1,\n            \"torso_pitch\": -0.1}",
+      "metrics": {
+        "score": -2.0,
+        "distance": 0.0,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.588,
+            "fail_x": -1.058,
+            "fail_dist_to_hurdle": 2.358
+          },
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.588,
+            "fail_x": -1.058,
+            "fail_dist_to_hurdle": 2.358
+          },
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.588,
+            "fail_x": -1.058,
+            "fail_dist_to_hurdle": 2.358
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=1.296m, 距栏 0.004m, 最低躯干高度 0.541m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    },
+    {
+      "round": 4,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    return {\"vx\": 0.8, \"stride\": 0.6, \"lift\": 0.45, \"phase_bias\": -0.1,\n            \"torso_pitch\": -0.1}",
+      "metrics": {
+        "score": 0.197,
+        "distance": 0.197,
+        "fall_rate": 0.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.197,
+            "fell": false,
+            "cleared": false,
+            "min_z": 1.001,
+            "fail_x": -0.416,
+            "fail_dist_to_hurdle": 1.716
+          },
+          {
+            "distance": 0.197,
+            "fell": false,
+            "cleared": false,
+            "min_z": 1.001,
+            "fail_x": -0.416,
+            "fail_dist_to_hurdle": 1.716
+          },
+          {
+            "distance": 0.197,
+            "fell": false,
+            "cleared": false,
+            "min_z": 1.001,
+            "fail_x": -0.416,
+            "fail_dist_to_hurdle": 1.716
+          }
+        ]
+      },
+      "verdict": "ACCEPT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=1.296m, 距栏 0.004m, 最低躯干高度 0.541m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    },
+    {
+      "round": 5,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    return {\"vx\": 1.0, \"stride\": 0.8, \"lift\": 0.6, \"phase_bias\": -0.2,\n            \"torso_pitch\": -0.2}",
+      "metrics": {
+        "score": -2.0,
+        "distance": 0.0,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.684,
+            "fail_x": -0.679,
+            "fail_dist_to_hurdle": 1.979
+          },
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.684,
+            "fail_x": -0.679,
+            "fail_dist_to_hurdle": 1.979
+          },
+          {
+            "distance": 0.0,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.684,
+            "fail_x": -0.679,
+            "fail_dist_to_hurdle": 1.979
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=0.197, 前进 0.197m, 跌倒率 0.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=-0.416m, 距栏 1.716m, 最低躯干高度 1.001m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    }
+  ],
+  "best_score": 0.197
+}

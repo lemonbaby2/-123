@@ -6,6 +6,32 @@ This public portfolio contains clean-room, runnable projects plus one ROS 2 teac
 
 It is **not** production source code from any employer. It contains no customer data, credentials, proprietary maps, model weights, or unpublished patent/paper content. Resume metrics are explicitly treated as reported historical results; repository tests validate only the included synthetic demos.
 
+## 2026-11-21 full local run
+
+Hardware: RTX 4060 8GB (a second GPU reports `GPU is lost`), system Python 3.13 without
+torch, remote DGX unreachable. **The 16 resume projects cannot all be executed here** —
+VLA 50k+10k-step training, 3DGS, TensorRT engines, Vicon ground truth and 100 h stability
+logs need a multi-GPU DGX and original datasets. Everything that *can* run was run,
+and the rest is listed as NOT_RUNNABLE rather than faked.
+
+| Stage | Real result |
+|---|---|
+| Ollama GPU inference | 24 real calls, 3 models; steady 163.2 / 94.3 / 14.1 tok/s (2B / 7B / 9B); 588 nvidia-smi samples, peak VRAM 7388 MiB, peak util 100% |
+| MuJoCo hurdle grid | 48 real episodes, best score 2.879, 3 cleared, 41 zero-fall |
+| METATRON coding-agent | 5 rounds with trajectory feedback, local 7B: -0.704 -> -0.704 |
+| Repository self-check | 61 tests, 58 PASS, 3 FAIL (missing `evidence/course_demo_5min.mp4`) |
+| Runnability ledger | 3 runnable / 6 partial / 6 not runnable / 1 verified upstream |
+
+Eight real figures are in [`docs/figures/`](docs/figures/), each with a provenance entry
+in `evidence/FIGURE_PROVENANCE.json`. No number is synthesized.
+
+## New projects
+
+| Project | Content | Boundary |
+|---|---|---|
+| [12 Agent runtime](projects/12_agent_runtime_2026-11/README.md) | Idempotent local-model wiring script, Hermes approval verdict-parser fix, measured agent-runtime benchmark | Sanitised; no config/.env/keys; small local models are unfit for primary tool orchestration |
+| [13 METATRON coding-agent](projects/13_metatron_coding_agent/README.md) | MuJoCo physics + frozen PD stand-in + AST sandbox + evaluation + iteration loop, 5 real result logs | NVIDIA base-policy weights/MoCap are unpublished — this is a workflow reproduction, not a full paper reproduction |
+
 ## Run
 
 ```bash

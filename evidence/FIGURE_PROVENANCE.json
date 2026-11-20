@@ -1,0 +1,10 @@
+{
+  "fig1_coverage_matrix.png": "coverage.json; manual audit of 38 GitHub + 28 Gitee repos",
+  "fig2_ollama_gpu.png": "benchmarks.json ollama_warm (15 real steady-state calls across 3 models; cold-load reps in benchmarks.json ollama excluded from the bar chart)",
+  "fig3_metatron_convergence.png": "metatron_trial/results_*.json (5 real experiment logs, including round2_local which did NOT converge)",
+  "fig4_hurdle_grid.png": "benchmarks.json metatron_grid (48 real MuJoCo episodes, this run)",
+  "fig5_repo_selfcheck.png": "repo_tests_full.log (ran=61, ok_suites=9, broken_cases=3, missing=['evidence/course_demo_5min.mp4'])",
+  "fig6_agent_latency.png": "agent_model_setup/BENCH_20261115.md (measured 2026-11-15)",
+  "fig7_gpu_trace.png": "round2_gpu_samples.json (real nvidia-smi -i 0 sampling every 0.6s during Ollama /api/chat inference)",
+  "fig8_runnability_ledger.png": "round2_full_report.json runnability_ledger (16 resume items, status assigned from real environment probes)"
+}

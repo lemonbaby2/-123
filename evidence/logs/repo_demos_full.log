@@ -1,0 +1,314 @@
+{
+  "01_quadruped_slam": {
+    "decision": {
+      "action": "stop",
+      "speed": 0.0,
+      "yaw_rate": 0.0
+    },
+    "icp_pose": [
+      0.4,
+      -0.2,
+      0.08
+    ],
+    "icp_residual": 0.0,
+    "imu_delta": [
+      0.0005,
+      0.0,
+      0.002
+    ],
+    "loop_accepted": true,
+    "voxel_points": 2
+  },
+  "02_ginger_robot": {
+    "map_request": {
+      "args": {
+        "map_url": "/maps/demo.yaml"
+      },
+      "id": "load-map-001",
+      "op": "call_service",
+      "service": "/map_server/load_map"
+    },
+    "navigation": {
+      "msg": {
+        "header": {
+          "frame_id": "map"
+        },
+        "pose": {
+          "x": 1.2,
+          "y": -0.3,
+          "yaw": 0.0
+        }
+      },
+      "op": "publish",
+      "topic": "/goal_pose"
+    },
+    "note": "mock protocol only; no physical robot is contacted",
+    "recovery_stage": "map"
+  },
+  "03_geoscan_pro": {
+    "optimized_poses": [
+      [
+        0.0,
+        -0.0
+      ],
+      [
+        1.0083,
+        -0.0033
+      ],
+      [
+        2.0167,
+        -0.0067
+      ]
+    ],
+    "sensor_gates": {
+      "imu": "accepted",
+      "rtk": "accepted"
+    },
+    "static_points": 1,
+    "usb_frame_bytes": 15,
+    "usb_round_trip": {
+      "payload": "imu:ok",
+      "sequence": 42,
+      "type": 3
+    }
+  },
+  "04_industrial_vision": {
+    "detection": {
+      "fn": 0,
+      "fp": 1,
+      "miss_rate": 0.0,
+      "precision": 0.6666666666666666,
+      "recall": 1.0,
+      "tp": 2
+    },
+    "int8": {
+      "codes": [
+        -127,
+        -11,
+        0,
+        74,
+        106
+      ],
+      "max_abs_error": 0.003937,
+      "scale": 0.0094488
+    },
+    "motor_fault_score": 55.337,
+    "pyramid": {
+      "adequate_sampling": true,
+      "cells_on_finest_level": 3.0,
+      "has_p2": true
+    }
+  },
+  "05_ros2_3dgs": {
+    "frame": "map",
+    "gaussians": 5,
+    "markers": 5,
+    "stream": "valid"
+  },
+  "06_bms": {
+    "balancing_mask": [
+      false,
+      false,
+      true,
+      false
+    ],
+    "estimated_soc": 0.774821,
+    "final_abs_error": 6e-06,
+    "plant_soc": 0.774815,
+    "scheduler": {
+      "utilization": 0.044,
+      "within_budget": true
+    }
+  },
+  "07_gausspatrol": {
+    "disclaimer": "shifted is a deterministic stress simulation, not measured real-robot performance",
+    "nominal": {
+      "avoidance_attempts": 4,
+      "avoidance_success_rate": 1.0,
+      "avoidance_successes": 4,
+      "checkpoints_reached": 5,
+      "checkpoints_total": 5,
+      "collisions": 0,
+      "completed": true,
+      "gait_switches": 8,
+      "gaussian_count": 56,
+      "map_completeness": 0.8947368421052632,
+      "modelled_mission_time_s": 74.35194352013606,
+      "perception": {
+        "ap50_11point": 1.0,
+        "detections": 3,
+        "false_negative": 0,
+        "false_positive": 0,
+        "ground_truth_defects": 3,
+        "miss_rate": 0.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "true_positive": 3
+      },
+      "perception_latency_ms": {
+        "max": 0.0265,
+        "mean": 0.01918,
+        "p95": 0.0265,
+        "samples": 5
+      },
+      "planning_latency_ms": {
+        "max": 7.0642,
+        "mean": 4.409377777777777,
+        "p95": 7.0642,
+        "samples": 9
+      },
+      "replans": 4,
+      "route_completion_rate": 1.0,
+      "route_distance_m": 56.72869786449113,
+      "scenario": "nominal",
+      "steps": 111,
+      "terrain_distance_m": {
+        "gravel": 5.1441228056353685,
+        "paved": 33.03088629839002,
+        "ramp": 4.288245611270737,
+        "rubble": 7.058336368008465,
+        "wet": 7.207106781186548
+      },
+      "trajectory": {
+        "ate_rmse_m": 0.01867838755285636,
+        "max_position_error_m": 0.04556705988074584,
+        "rpe_rmse_m": 0.0072562630300927414
+      },
+      "wall_runtime_s": 0.097768799867481
+    },
+    "shifted": {
+      "avoidance_attempts": 4,
+      "avoidance_success_rate": 1.0,
+      "avoidance_successes": 4,
+      "checkpoints_reached": 5,
+      "checkpoints_total": 5,
+      "collisions": 0,
+      "completed": true,
+      "gait_switches": 8,
+      "gaussian_count": 56,
+      "map_completeness": 0.8947368421052632,
+      "modelled_mission_time_s": 90.45358965870257,
+      "perception": {
+        "ap50_11point": 0.6363636363636365,
+        "detections": 3,
+        "false_negative": 1,
+        "false_positive": 1,
+        "ground_truth_defects": 3,
+        "miss_rate": 0.3333333333333333,
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "true_positive": 2
+      },
+      "perception_latency_ms": {
+        "max": 0.0285,
+        "mean": 0.021359999999999997,
+        "p95": 0.0285,
+        "samples": 5
+      },
+      "planning_latency_ms": {
+        "max": 7.73,
+        "mean": 4.701588888888889,
+        "p95": 7.73,
+        "samples": 9
+      },
+      "replans": 4,
+      "route_completion_rate": 1.0,
+      "route_distance_m": 56.72869786449113,
+      "scenario": "shifted",
+      "steps": 111,
+      "terrain_distance_m": {
+        "gravel": 5.1441228056353685,
+        "paved": 33.03088629839002,
+        "ramp": 4.288245611270737,
+        "rubble": 7.058336368008465,
+        "wet": 7.207106781186548
+      },
+      "trajectory": {
+        "ate_rmse_m": 0.11251389863506692,
+        "max_position_error_m": 0.1918064453390473,
+        "rpe_rmse_m": 0.026665492425473582
+      },
+      "wall_runtime_s": 0.10690430016256869
+    },
+    "sim_to_real_proxy": {
+      "ap50_change": -0.36363636363636354,
+      "ate_relative_change_percent": 502.3747944873375,
+      "ate_rmse_change_m": 0.09383551108221055,
+      "map_completeness_change_pp": 0.0,
+      "modelled_time_change_s": 16.101646138566508,
+      "route_completion_change_pp": 0.0
+    }
+  },
+  "08_3dgs_scanner_soft_hardware": {
+    "file_count": 36,
+    "file_types": {
+      ".csv": 2,
+      ".docx": 3,
+      ".json": 1,
+      ".md": 17,
+      ".pdf": 5,
+      ".ps1": 2,
+      ".py": 2,
+      ".xlsx": 1,
+      "<none>": 3
+    },
+    "key_outputs": [
+      "README.md",
+      "docs/hardware_overview.md",
+      "docs/engineering_report/BMS_SLAM_Bringup_Analysis_Report_V1.0_2026-08-03.pdf",
+      "docs/engineering_report/BMS_SLAM_Bringup_Test_Matrix_V1.0_2026-08-03.xlsx",
+      "docs/references/research_repositories.md"
+    ],
+    "project": "08_3dgs_scanner_soft_hardware",
+    "root": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\upstream_-123\\projects\\08_3dgs_scanner_soft_hardware",
+    "safety_gate": "Do not connect a real 3S2P pack until the BQ76920 VC mapping and true BMS PCB package are corrected.",
+    "title": "3DGS Scanner Soft-Hardware Project",
+    "total_bytes": 9280875
+  },
+  "10_ros2_course_lab": {
+    "final_measured_mps": 0.339,
+    "final_relative_error_pct": -3.157,
+    "note": "load_factor is a teaching disturbance, not a real robot model",
+    "release_output": -0.6044,
+    "samples": [
+      {
+        "measured": 0.156,
+        "output": 0.8,
+        "step": 0,
+        "target": 0.35
+      },
+      {
+        "measured": 0.3089,
+        "output": 0.476,
+        "step": 50,
+        "target": 0.35
+      },
+      {
+        "measured": 0.3184,
+        "output": 0.4905,
+        "step": 100,
+        "target": 0.35
+      },
+      {
+        "measured": 0.3258,
+        "output": 0.5016,
+        "step": 150,
+        "target": 0.35
+      },
+      {
+        "measured": 0.3314,
+        "output": 0.5102,
+        "step": 200,
+        "target": 0.35
+      },
+      {
+        "measured": 0.3357,
+        "output": 0.5167,
+        "step": 250,
+        "target": 0.35
+      }
+    ],
+    "scenario": "velocity PID with injected 0.65 load",
+    "target_mps": 0.35
+  }
+}

@@ -1,0 +1,657 @@
+{
+  "generated_at": "2026-11-21 00:42:06",
+  "machine": "Windows / RTX 4060 8GB (GPU1 lost) / Ollama 127.0.0.1:11434 / MuJoCo 4.0.1",
+  "sources": [
+    "local Ollama /api/chat (real GPU inference)",
+    "MuJoCo FrozenExecutionLayer from metatron_trial.py (real simulation)"
+  ],
+  "ollama": [
+    {
+      "wall_s": 48.76,
+      "eval_tokens": 2,
+      "tok_per_s": 34.11,
+      "load_s": 48.2,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen2.5-coder:7b",
+      "rep": 1
+    },
+    {
+      "wall_s": 0.07,
+      "eval_tokens": 2,
+      "tok_per_s": 95.93,
+      "load_s": 0.01,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen2.5-coder:7b",
+      "rep": 2
+    },
+    {
+      "wall_s": 0.05,
+      "eval_tokens": 2,
+      "tok_per_s": 101.01,
+      "load_s": 0.01,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen2.5-coder:7b",
+      "rep": 3
+    },
+    {
+      "wall_s": 41.63,
+      "eval_tokens": 2,
+      "tok_per_s": 133.59,
+      "load_s": 41.54,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 1
+    },
+    {
+      "wall_s": 0.08,
+      "eval_tokens": 2,
+      "tok_per_s": 154.07,
+      "load_s": 0.02,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 2
+    },
+    {
+      "wall_s": 0.08,
+      "eval_tokens": 2,
+      "tok_per_s": 165.18,
+      "load_s": 0.02,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 3
+    },
+    {
+      "wall_s": 127.51,
+      "eval_tokens": 2,
+      "tok_per_s": 12.55,
+      "load_s": 126.95,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 1
+    },
+    {
+      "wall_s": 0.34,
+      "eval_tokens": 2,
+      "tok_per_s": 13.04,
+      "load_s": 0.01,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 2
+    },
+    {
+      "wall_s": 0.36,
+      "eval_tokens": 2,
+      "tok_per_s": 12.69,
+      "load_s": 0.01,
+      "content": "OK",
+      "ok": true,
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 3
+    }
+  ],
+  "ollama_warm": [
+    {
+      "model": "qwen2.5-coder:7b",
+      "rep": 2,
+      "wall_s": 0.07,
+      "eval_tokens": 2,
+      "tok_per_s": 95.93,
+      "ok": true
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "rep": 3,
+      "wall_s": 0.05,
+      "eval_tokens": 2,
+      "tok_per_s": 101.01,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 2,
+      "wall_s": 0.08,
+      "eval_tokens": 2,
+      "tok_per_s": 154.07,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 3,
+      "wall_s": 0.08,
+      "eval_tokens": 2,
+      "tok_per_s": 165.18,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 2,
+      "wall_s": 0.34,
+      "eval_tokens": 2,
+      "tok_per_s": 13.04,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 3,
+      "wall_s": 0.36,
+      "eval_tokens": 2,
+      "tok_per_s": 12.69,
+      "ok": true
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "rep": 1,
+      "wall_s": 48.53,
+      "eval_tokens": 2,
+      "tok_per_s": 83.4,
+      "ok": true
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "rep": 2,
+      "wall_s": 0.05,
+      "eval_tokens": 2,
+      "tok_per_s": 93.87,
+      "ok": true
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "rep": 3,
+      "wall_s": 0.05,
+      "eval_tokens": 2,
+      "tok_per_s": 97.46,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 1,
+      "wall_s": 16.94,
+      "eval_tokens": 2,
+      "tok_per_s": 147.7,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 2,
+      "wall_s": 0.07,
+      "eval_tokens": 2,
+      "tok_per_s": 161.68,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:2b-q4_K_M",
+      "rep": 3,
+      "wall_s": 0.05,
+      "eval_tokens": 2,
+      "tok_per_s": 187.28,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 1,
+      "wall_s": 49.92,
+      "eval_tokens": 2,
+      "tok_per_s": 13.04,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 2,
+      "wall_s": 0.29,
+      "eval_tokens": 2,
+      "tok_per_s": 15.93,
+      "ok": true
+    },
+    {
+      "model": "qwen3.5:9b-q4_K_M",
+      "rep": 3,
+      "wall_s": 0.3,
+      "eval_tokens": 2,
+      "tok_per_s": 15.62,
+      "ok": true
+    }
+  ],
+  "metatron_grid": [
+    {
+      "stride": 0.2,
+      "lift": 0.2,
+      "vx": 0.3,
+      "score": 0.043,
+      "distance": 0.043,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.2,
+      "vx": 0.5,
+      "score": 0.034,
+      "distance": 0.034,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.2,
+      "vx": 0.8,
+      "score": 0.094,
+      "distance": 0.094,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.5,
+      "vx": 0.3,
+      "score": 0.043,
+      "distance": 0.043,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.5,
+      "vx": 0.5,
+      "score": 0.034,
+      "distance": 0.034,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.5,
+      "vx": 0.8,
+      "score": 0.094,
+      "distance": 0.094,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.9,
+      "vx": 0.3,
+      "score": 0.043,
+      "distance": 0.043,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.9,
+      "vx": 0.5,
+      "score": 0.034,
+      "distance": 0.034,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 0.9,
+      "vx": 0.8,
+      "score": 0.094,
+      "distance": 0.094,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 1.2,
+      "vx": 0.3,
+      "score": 0.043,
+      "distance": 0.043,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 1.2,
+      "vx": 0.5,
+      "score": 0.034,
+      "distance": 0.034,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.2,
+      "lift": 1.2,
+      "vx": 0.8,
+      "score": 0.094,
+      "distance": 0.094,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.2,
+      "vx": 0.3,
+      "score": 0.304,
+      "distance": 0.304,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.2,
+      "vx": 0.5,
+      "score": 0.364,
+      "distance": 0.364,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.2,
+      "vx": 0.8,
+      "score": 0.306,
+      "distance": 0.306,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.5,
+      "vx": 0.3,
+      "score": 0.304,
+      "distance": 0.304,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.5,
+      "vx": 0.5,
+      "score": 0.364,
+      "distance": 0.364,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.5,
+      "vx": 0.8,
+      "score": 0.306,
+      "distance": 0.306,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.9,
+      "vx": 0.3,
+      "score": 0.304,
+      "distance": 0.304,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.9,
+      "vx": 0.5,
+      "score": 0.364,
+      "distance": 0.364,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 0.9,
+      "vx": 0.8,
+      "score": 0.306,
+      "distance": 0.306,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 1.2,
+      "vx": 0.3,
+      "score": 0.304,
+      "distance": 0.304,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 1.2,
+      "vx": 0.5,
+      "score": 0.364,
+      "distance": 0.364,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.4,
+      "lift": 1.2,
+      "vx": 0.8,
+      "score": 0.306,
+      "distance": 0.306,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.2,
+      "vx": 0.3,
+      "score": 0.532,
+      "distance": 0.532,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.2,
+      "vx": 0.5,
+      "score": 0.604,
+      "distance": 0.604,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.2,
+      "vx": 0.8,
+      "score": 0.539,
+      "distance": 0.539,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.5,
+      "vx": 0.3,
+      "score": 0.532,
+      "distance": 0.532,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.5,
+      "vx": 0.5,
+      "score": 0.604,
+      "distance": 0.604,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.5,
+      "vx": 0.8,
+      "score": 0.539,
+      "distance": 0.539,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.9,
+      "vx": 0.3,
+      "score": 0.532,
+      "distance": 0.532,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.9,
+      "vx": 0.5,
+      "score": 0.604,
+      "distance": 0.604,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 0.9,
+      "vx": 0.8,
+      "score": 0.539,
+      "distance": 0.539,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 1.2,
+      "vx": 0.3,
+      "score": 0.532,
+      "distance": 0.532,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 1.2,
+      "vx": 0.5,
+      "score": 0.604,
+      "distance": 0.604,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.6,
+      "lift": 1.2,
+      "vx": 0.8,
+      "score": 0.539,
+      "distance": 0.539,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.2,
+      "vx": 0.3,
+      "score": 0.666,
+      "distance": 0.666,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.2,
+      "vx": 0.5,
+      "score": 1.042,
+      "distance": 1.042,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.2,
+      "vx": 0.8,
+      "score": -0.502,
+      "distance": 1.498,
+      "fall_rate": 1.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.5,
+      "vx": 0.3,
+      "score": 0.666,
+      "distance": 0.666,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.5,
+      "vx": 0.5,
+      "score": 2.879,
+      "distance": 1.879,
+      "fall_rate": 1.0,
+      "clear_rate": 1.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.5,
+      "vx": 0.8,
+      "score": -0.53,
+      "distance": 1.47,
+      "fall_rate": 1.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.9,
+      "vx": 0.3,
+      "score": 0.666,
+      "distance": 0.666,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.9,
+      "vx": 0.5,
+      "score": 2.841,
+      "distance": 1.841,
+      "fall_rate": 1.0,
+      "clear_rate": 1.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 0.9,
+      "vx": 0.8,
+      "score": -0.575,
+      "distance": 1.425,
+      "fall_rate": 1.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 1.2,
+      "vx": 0.3,
+      "score": 0.666,
+      "distance": 0.666,
+      "fall_rate": 0.0,
+      "clear_rate": 0.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 1.2,
+      "vx": 0.5,
+      "score": 2.821,
+      "distance": 1.821,
+      "fall_rate": 1.0,
+      "clear_rate": 1.0
+    },
+    {
+      "stride": 0.8,
+      "lift": 1.2,
+      "vx": 0.8,
+      "score": -0.522,
+      "distance": 1.478,
+      "fall_rate": 1.0,
+      "clear_rate": 0.0
+    }
+  ],
+  "warm_note": "Round-2: 3 cold-load reps + 3 steady-state reps per model on the same RTX 4060 8GB; steady-state values exclude cold load. GPU utilisation sampled in round2_gpu_samples.json."
+}

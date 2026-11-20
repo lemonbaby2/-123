@@ -1,0 +1,207 @@
+{
+  "run_at": "2026-11-21 00:42:05",
+  "machine": "Windows / RTX 4060 8GB (GPU1 lost) / Ollama 127.0.0.1:11434 / MuJoCo 4.0.1",
+  "stages": {
+    "0_environment": {
+      "started": "00:42:05",
+      "gpu_query": "NVIDIA GeForce RTX 4060, 581.57, 8188, 3248, 6",
+      "ollama_models": [
+        "llama3.1:8b",
+        "gpt-oss:20b",
+        "qwen2.5-coder:7b",
+        "deepseek-r1:70b",
+        "deepseek-r1:14b",
+        "qwen3.5:2b-q4_K_M",
+        "qwen3.5:9b-q4_K_M",
+        "nomic-embed-text-v2-moe:latest",
+        "qwen2.5vl:7b"
+      ],
+      "mujoco": "4.0.1",
+      "python": "3.13.14",
+      "cmake": "C:\\Users\\Administrator\\.workbuddy\\binaries\\python\\envs\\default\\Scripts\\cmake.EXE",
+      "gxx": "ABSENT",
+      "finished": "00:42:06"
+    },
+    "1_ollama_gpu_benchmark": {
+      "started": "00:42:06",
+      "cold_calls": 9,
+      "warm_calls": 15,
+      "models": [
+        "qwen2.5-coder:7b",
+        "qwen3.5:2b-q4_K_M",
+        "qwen3.5:9b-q4_K_M"
+      ],
+      "steady_tps": {
+        "qwen2.5-coder:7b": [
+          95.93,
+          101.01,
+          83.4,
+          93.87,
+          97.46
+        ],
+        "qwen3.5:2b-q4_K_M": [
+          154.07,
+          165.18,
+          147.7,
+          161.68,
+          187.28
+        ],
+        "qwen3.5:9b-q4_K_M": [
+          13.04,
+          12.69,
+          13.04,
+          15.93,
+          15.62
+        ]
+      },
+      "finished": "00:47:41"
+    },
+    "2_mujoco_grid": {
+      "started": "00:47:41",
+      "episodes": 48,
+      "best_score": 2.879,
+      "cleared": 3,
+      "zero_fall": 41,
+      "finished": "00:47:43"
+    },
+    "3_metatron_coding_agent": {
+      "started": "00:47:43",
+      "rounds": 5,
+      "baseline": -0.704,
+      "best": -0.704,
+      "result_file": "results_round2_local.json",
+      "finished": "00:48:58"
+    },
+    "4_repo_selfcheck": {
+      "started": "00:48:58",
+      "run_tests.py": {
+        "exit_code": 1,
+        "log": "repo_tests_full.log"
+      },
+      "run_all_demos.py": {
+        "exit_code": 0,
+        "log": "round2_demos_full.log"
+      },
+      "verify_layout.py": {
+        "exit_code": 1,
+        "log": "round2_verify_layout_full.log"
+      },
+      "tests_total": 61,
+      "tests_failed": 3,
+      "broken_link": [
+        "evidence/course_demo_5min.mp4"
+      ],
+      "finished": "00:49:04"
+    },
+    "5_runnability_ledger": {
+      "started": "00:49:04",
+      "total_items": 16,
+      "by_status": {
+        "NOT_RUNNABLE": 6,
+        "PARTIAL": 6,
+        "VERIFIED_UPSTREAM": 1,
+        "RUNNABLE": 3
+      },
+      "finished": "00:49:04"
+    }
+  },
+  "principle": "Only real execution is recorded. Items requiring DGX / original datasets / proprietary weights are marked NOT_RUNNABLE, never faked.",
+  "runnability_ledger": [
+    {
+      "id": "R1",
+      "label": "LingBot-VLA 2.0 / R2 / RoboTwin",
+      "status": "NOT_RUNNABLE",
+      "reason": "needs DGX multi-GPU 50k+10k-step training, 50k/10k checkpoints, LeRobot dataset"
+    },
+    {
+      "id": "R2",
+      "label": "Zebra / YOLO11-P2 + AIFI/CCFM",
+      "status": "NOT_RUNNABLE",
+      "reason": "needs ZT421T nozzle images/labels, trained weights, TensorRT engine"
+    },
+    {
+      "id": "R3",
+      "label": "Cloud Ginger / CCU / OpenVLA",
+      "status": "NOT_RUNNABLE",
+      "reason": "needs vendor CCU API, Jetson Orin NX, AWQ quantisation log"
+    },
+    {
+      "id": "R4",
+      "label": "GeoScan Pro / LIO-SAM + RTK",
+      "status": "PARTIAL",
+      "reason": "CRC / factor-graph unit tests run locally; real dual-antenna RTK needs hardware"
+    },
+    {
+      "id": "R5",
+      "label": "World model / action-conditioned pred",
+      "status": "NOT_RUNNABLE",
+      "reason": "no original engineering project exists; 20+ frame / PSNR metrics have no source"
+    },
+    {
+      "id": "R6",
+      "label": "OpenVLA language-driven manipulation",
+      "status": "NOT_RUNNABLE",
+      "reason": "needs 1000+ teleop trajectories and real-arm logs"
+    },
+    {
+      "id": "R7",
+      "label": "Qwen2.5-VL industrial VQA / SOP",
+      "status": "PARTIAL",
+      "reason": "local Ollama VL inference benchmark runnable; 98.2% recall needs production video+labels"
+    },
+    {
+      "id": "R8",
+      "label": "ROS2 + 3DGS Lego visualization",
+      "status": "PARTIAL",
+      "reason": "PLY/MarkerArray unit tests run locally; original Lego assets and Isaac Sim absent"
+    },
+    {
+      "id": "R9",
+      "label": "Quadruped SLAM / CUDA / Vicon",
+      "status": "PARTIAL",
+      "reason": "voxel/ICP unit tests + C++17 build locally; Vicon ground truth and 100h log absent"
+    },
+    {
+      "id": "R10",
+      "label": "STM32-FreeRTOS BMS",
+      "status": "PARTIAL",
+      "reason": "Thevenin/AEKF unit tests locally; MCU firmware and HIL rig absent"
+    },
+    {
+      "id": "P1",
+      "label": "Paper: Dy3DGS-SLAM",
+      "status": "PARTIAL",
+      "reason": "repro assets published upstream; full 3DGS training needs DGX"
+    },
+    {
+      "id": "P2",
+      "label": "Paper: TAC-R2S2R",
+      "status": "VERIFIED_UPSTREAM",
+      "reason": "160 seeded runs + CSV + figures already public"
+    },
+    {
+      "id": "P3",
+      "label": "Patents (4) / awards",
+      "status": "NOT_RUNNABLE",
+      "reason": "documents only; no application numbers / scans"
+    },
+    {
+      "id": "A1",
+      "label": "Agent: R1 offline self-learning",
+      "status": "RUNNABLE",
+      "reason": "pure stdlib; 4/4 offline self-check PASS in repo tests"
+    },
+    {
+      "id": "A2",
+      "label": "Agent: Hermes fix + all-agent setup",
+      "status": "RUNNABLE",
+      "reason": "setup_local_models.py --verify runs locally; config contains secrets -> must sanitise"
+    },
+    {
+      "id": "A3",
+      "label": "Agent: Metatron coding-agent repro",
+      "status": "RUNNABLE",
+      "reason": "fully executed this run: Ollama 7B + MuJoCo 48-grid + 5-round loop"
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "generated_at": "2026-11-21 00:52:37",
+  "mode": "ADDITIVE_ONLY",
+  "target_repo": "lemonbaby2/-123",
+  "files": [
+    {
+      "action": "ADD",
+      "path": "evidence/AUDIT.md",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\AUDIT.md",
+      "bytes": 9739
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/coverage.json",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\coverage.json",
+      "bytes": 7076
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/benchmarks.json",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\benchmarks.json",
+      "bytes": 13227
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/FIGURE_PROVENANCE.json",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\FIGURE_PROVENANCE.json",
+      "bytes": 1001
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/round2_full_report.json",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_full_report.json",
+      "bytes": 6103
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/round2_gpu_samples.json",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_gpu_samples.json",
+      "bytes": 53533
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/logs/repo_tests_full.log",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\repo_tests_full.log",
+      "bytes": 11024
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/logs/round2_demos_full.log",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_demos_full.log",
+      "bytes": 7954
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/logs/round2_verify_layout_full.log",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_verify_layout_full.log",
+      "bytes": 435
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/logs/round2_runner.log",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_runner.log",
+      "bytes": 4824
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/logs/round2_tests_full.log",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_tests_full.log",
+      "bytes": 11038
+    },
+    {
+      "action": "ADD",
+      "path": "evidence/logs/repo_demos_full.log",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\repo_demos_full.log",
+      "bytes": 7968
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig1_coverage_matrix.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig1_coverage_matrix.png",
+      "bytes": 137403
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig2_ollama_gpu.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig2_ollama_gpu.png",
+      "bytes": 90798
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig3_metatron_convergence.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig3_metatron_convergence.png",
+      "bytes": 111499
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig4_hurdle_grid.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig4_hurdle_grid.png",
+      "bytes": 82613
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig5_repo_selfcheck.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig5_repo_selfcheck.png",
+      "bytes": 35008
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig6_agent_latency.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig6_agent_latency.png",
+      "bytes": 63369
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig7_gpu_trace.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig7_gpu_trace.png",
+      "bytes": 122151
+    },
+    {
+      "action": "ADD",
+      "path": "docs/figures/fig8_runnability_ledger.png",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\figures\\fig8_runnability_ledger.png",
+      "bytes": 127858
+    },
+    {
+      "action": "ADD",
+      "path": "scripts/run_benchmarks.py",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\run_benchmarks.py",
+      "bytes": 3932
+    },
+    {
+      "action": "ADD",
+      "path": "scripts/make_figures.py",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\make_figures.py",
+      "bytes": 12644
+    },
+    {
+      "action": "ADD",
+      "path": "scripts/round2_full_run.py",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\round2_full_run.py",
+      "bytes": 16134
+    },
+    {
+      "action": "ADD",
+      "path": "scripts/make_figures_round2.py",
+      "source": "E:\\毕业之后的社招投递\\work\\resume_repo_audit\\make_figures_round2.py",
+      "bytes": 6258
+    },
+    {
+      "action": "ADD",
+      "path": "projects/12_agent_runtime_2026-11/setup_local_models.py",
+      "source": "E:\\毕业之后的社招投递\\work\\agent_model_setup\\setup_local_models.py",
+      "bytes": 5840
+    },
+    {
+      "action": "ADD",
+      "path": "projects/12_agent_runtime_2026-11/BENCH.md",
+      "source": "E:\\毕业之后的社招投递\\work\\agent_model_setup\\BENCH_20261115.md",
+      "bytes": 5319
+    },
+    {
+      "action": "ADD",
+      "path": "projects/12_agent_runtime_2026-11/Hermes_approval_patch.md",
+      "source": "authored summary (no secrets)",
+      "bytes": 0
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/metatron_trial.py",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\metatron_trial.py",
+      "bytes": 16944
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/RESULT.md",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\RESULT.md",
+      "bytes": 3992
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/DGX.md",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\DGX.md",
+      "bytes": 2960
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/run_on_dgx.sh",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\run_on_dgx.sh",
+      "bytes": 1318
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/results_cloud.json",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\results_cloud.json",
+      "bytes": 2899
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/results_cloud2.json",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\results_cloud2.json",
+      "bytes": 5567
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/results_local.json",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\results_local.json",
+      "bytes": 5129
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/results_local_trace.json",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\results_local_trace.json",
+      "bytes": 8990
+    },
+    {
+      "action": "ADD",
+      "path": "projects/13_metatron_coding_agent/results_round2_local.json",
+      "source": "E:\\毕业之后的社招投递\\work\\metatron_trial\\results_round2_local.json",
+      "bytes": 9126
+    }
+  ],
+  "issues": []
+}

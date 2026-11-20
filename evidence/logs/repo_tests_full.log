@@ -1,0 +1,181 @@
+
+=== projects\01_quadruped_slam\tests\test_quadruped_slam.py ===
+
+=== projects\02_ginger_robot\tests\test_ginger_control.py ===
+
+=== projects\03_geoscan_pro\tests\test_geoscan.py ===
+
+=== projects\04_industrial_vision\tests\test_industrial_vision.py ===
+
+=== projects\05_ros2_3dgs\tests\test_gaussian_ros_viz.py ===
+
+=== projects\06_bms\tests\test_bms.py ===
+
+=== projects\07_gausspatrol\tests\test_gausspatrol.py ===
+
+=== projects\08_3dgs_scanner_soft_hardware\tests\test_project_manifest.py ===
+
+=== projects\10_ros2_course_lab\tests\test_course_algorithms.py ===
+
+=== projects\10_ros2_course_lab\tests\test_package_layout.py ===
+test_bad_imu_dt_is_rejected (__main__.QuadrupedSlamTests.test_bad_imu_dt_is_rejected) ... ok
+test_icp_recovers_pose (__main__.QuadrupedSlamTests.test_icp_recovers_pose) ... ok
+test_voxel_filter (__main__.QuadrupedSlamTests.test_voxel_filter) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+test_map_traversal_is_rejected (__main__.GingerControlTests.test_map_traversal_is_rejected) ... ok
+test_navigation_gate (__main__.GingerControlTests.test_navigation_gate) ... ok
+test_recovery_order (__main__.GingerControlTests.test_recovery_order) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+test_crc_failure (__main__.GeoScanTests.test_crc_failure) ... ok
+test_frame_round_trip (__main__.GeoScanTests.test_frame_round_trip) ... ok
+test_pose_graph (__main__.GeoScanTests.test_pose_graph) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK
+test_metrics (__main__.IndustrialVisionTests.test_metrics) ... ok
+test_p2_sampling (__main__.IndustrialVisionTests.test_p2_sampling) ... ok
+test_quantization_error_is_bounded (__main__.IndustrialVisionTests.test_quantization_error_is_bounded) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+test_parse_and_marker (__main__.GaussianRosVizTests.test_parse_and_marker) ... ok
+test_time_reversal (__main__.GaussianRosVizTests.test_time_reversal) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+test_balancing_respects_temperature (__main__.BmsTests.test_balancing_respects_temperature) ... ok
+test_ekf_converges (__main__.BmsTests.test_ekf_converges) ... ok
+test_scheduler_budget (__main__.BmsTests.test_scheduler_budget) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.003s
+
+OK
+test_detection_metrics_count_duplicate_as_false_positive (__main__.EstimationAndPerceptionTests.test_detection_metrics_count_duplicate_as_false_positive) ... ok
+test_landmark_correction_reduces_error (__main__.EstimationAndPerceptionTests.test_landmark_correction_reduces_error) ... ok
+test_safety_controller_blocks_unhealthy_localization (__main__.EstimationAndPerceptionTests.test_safety_controller_blocks_unhealthy_localization) ... ok
+test_trajectory_metrics_are_zero_for_identical_paths (__main__.EstimationAndPerceptionTests.test_trajectory_metrics_are_zero_for_identical_paths) ... ok
+test_artifact_writer_produces_parseable_metrics_and_manifest (__main__.MappingMissionAndReportingTests.test_artifact_writer_produces_parseable_metrics_and_manifest) ... ok
+test_gaussian_ply_schema_and_count (__main__.MappingMissionAndReportingTests.test_gaussian_ply_schema_and_count) ... ok
+test_nominal_mission_completes_without_collision (__main__.MappingMissionAndReportingTests.test_nominal_mission_completes_without_collision) ... ok
+test_shifted_scenario_degrades_localization_and_detection (__main__.MappingMissionAndReportingTests.test_shifted_scenario_degrades_localization_and_detection) ... ok
+test_astar_path_is_collision_free (__main__.WorldAndPlanningTests.test_astar_path_is_collision_free) ... ok
+test_occupied_goal_is_rejected (__main__.WorldAndPlanningTests.test_occupied_goal_is_rejected) ... ok
+test_raycast_hits_static_geometry (__main__.WorldAndPlanningTests.test_raycast_hits_static_geometry) ... ok
+test_round_trip_cell_has_bounded_error (__main__.WorldAndPlanningTests.test_round_trip_cell_has_bounded_error) ... ok
+test_static_obstacle_is_occupied (__main__.WorldAndPlanningTests.test_static_obstacle_is_occupied) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.611s
+
+OK
+test_manifest_counts_archive_files (__main__.ProjectManifestTests.test_manifest_counts_archive_files) ... ok
+test_safety_gate_is_visible (__main__.ProjectManifestTests.test_safety_gate_is_visible) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.038s
+
+OK
+test_map_index_out_of_range (__main__.TestContracts.test_map_index_out_of_range) ... ok
+test_reject_double_nested_twist (__main__.TestContracts.test_reject_double_nested_twist) ... ok
+test_scan_to_cartesian (__main__.TestContracts.test_scan_to_cartesian) ... ok
+test_twist_stamped_shape (__main__.TestContracts.test_twist_stamped_shape) ... ok
+test_watchdog (__main__.TestContracts.test_watchdog) ... ok
+test_inverse_roundtrip (__main__.TestDifferentialDrive.test_inverse_roundtrip) ... ok
+test_straight (__main__.TestDifferentialDrive.test_straight) ... ok
+test_turn_in_place (__main__.TestDifferentialDrive.test_turn_in_place) ... ok
+test_constant_angular_integration (__main__.TestOdometry.test_constant_angular_integration) ... ok
+test_measured_A_segment_error (__main__.TestOdometry.test_measured_A_segment_error) ... ok
+test_straight_one_metre (__main__.TestOdometry.test_straight_one_metre) ... ok
+test_yaw_from_quaternion (__main__.TestOdometry.test_yaw_from_quaternion) ... ok
+test_clamp (__main__.TestPID.test_clamp) ... ok
+test_feedforward_reaches_load_compensated_speed (__main__.TestPID.test_feedforward_reaches_load_compensated_speed) ... ok
+test_integral_anti_windup (__main__.TestPID.test_integral_anti_windup) ... ok
+test_release_brakes (__main__.TestPID.test_release_brakes) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.001s
+
+OK
+test_no_private_key_material (__main__.TestLayout.test_no_private_key_material) ... ok
+test_no_secrets_in_office_files (__main__.TestLayout.test_no_secrets_in_office_files) ... ok
+test_no_secrets_in_text (__main__.TestLayout.test_no_secrets_in_text) ... ok
+test_readme_local_links (__main__.TestLayout.test_readme_local_links) ... FAIL
+test_required_files (__main__.TestLayout.test_required_files) ... FAIL
+test_all_python_parses (__main__.TestSyntaxAndContracts.test_all_python_parses) ... ok
+test_isolation_contract (__main__.TestSyntaxAndContracts.test_isolation_contract) ... ok
+test_selfcheck_evidence (__main__.TestSyntaxAndContracts.test_selfcheck_evidence) ... ok
+test_slam_lifecycle_contract (__main__.TestSyntaxAndContracts.test_slam_lifecycle_contract) ... ok
+test_twist_stamped_contract (__main__.TestSyntaxAndContracts.test_twist_stamped_contract) ... ok
+test_video_is_not_empty (__main__.TestSyntaxAndContracts.test_video_is_not_empty) ... ERROR
+test_xml_files_parse (__main__.TestSyntaxAndContracts.test_xml_files_parse) ... ok
+test_yaml_files_parse (__main__.TestSyntaxAndContracts.test_yaml_files_parse) ... ok
+
+======================================================================
+ERROR: test_video_is_not_empty (__main__.TestSyntaxAndContracts.test_video_is_not_empty)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\projects\10_ros2_course_lab\tests\test_package_layout.py", line 138, in test_video_is_not_empty
+    self.assertGreater((ROOT / "evidence/course_demo_5min.mp4").stat().st_size, 1_000_000)
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Administrator\.workbuddy\binaries\python\versions\3.13.12.old.11036\Lib\pathlib\_local.py", line 515, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [WinError 2] 系统找不到指定的文件。: 'E:\\毕业之后的社招投递\\work\\resume_repo_audit\\upstream_-123\\projects\\10_ros2_course_lab\\evidence\\course_demo_5min.mp4'
+
+======================================================================
+FAIL: test_readme_local_links (__main__.TestLayout.test_readme_local_links)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\projects\10_ros2_course_lab\tests\test_package_layout.py", line 55, in test_readme_local_links
+    self.assertTrue((doc.parent / clean).exists(),
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    f"broken link in {doc.name}: {target}")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : broken link in README.md: evidence/course_demo_5min.mp4
+
+======================================================================
+FAIL: test_required_files (__main__.TestLayout.test_required_files)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\projects\10_ros2_course_lab\tests\test_package_layout.py", line 47, in test_required_files
+    self.assertEqual(missing, [], f"missing files: {missing}")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['evidence/course_demo_5min.mp4'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'evidence/course_demo_5min.mp4'
+
+- ['evidence/course_demo_5min.mp4']
++ [] : missing files: ['evidence/course_demo_5min.mp4']
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.168s
+
+FAILED (failures=2, errors=1)
+Traceback (most recent call last):
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\scripts\run_tests.py", line 26, in <module>
+    main()
+    ~~~~^^
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\scripts\run_tests.py", line 22, in main
+    subprocess.run([sys.executable, str(test_file), "-v"], cwd=test_file.parents[1], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\.workbuddy\binaries\python\versions\3.13.12.old.11036\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['E:\\毕业之后的社招投递\\work\\metatron_trial\\.venv\\Scripts\\python.exe', 'E:\\毕业之后的社招投递\\work\\resume_repo_audit\\upstream_-123\\projects\\10_ros2_course_lab\\tests\\test_package_layout.py', '-v']' returned non-zero exit status 1.

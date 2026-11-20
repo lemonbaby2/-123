@@ -1,0 +1,132 @@
+{
+  "paper": "arXiv:2610.38027 METATRON (NVIDIA Research, 2026-10-27)",
+  "task": "hurdle",
+  "coder_model": "gpt-5.5",
+  "endpoint": "http://127.0.0.1:8642/v1",
+  "history": [
+    {
+      "round": 0,
+      "source": "baseline",
+      "code": "def skill(state, t, dt):\n    \"\"\"基线：固定步态 prompt，不使用任何状态反馈。\"\"\"\n    return {\"vx\": 0.6, \"stride\": 0.5, \"lift\": 0.35, \"phase_bias\": 0.0,\n            \"torso_pitch\": 0.0}\n",
+      "metrics": {
+        "score": -0.704,
+        "distance": 1.296,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          }
+        ]
+      }
+    },
+    {
+      "round": 1,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt):\n    dist = state[\"dist_to_hurdle\"]           # 到栏架的剩余距离\n    lift_base = 0.45                         # 基线抬腿：比默认值大，留出抬离地面缓冲\n    lift_ramp = (dist - 0.3) / 0.3 * 0.15     # 在 0m-0.3m 内平滑降至基值\n    target_lift = lift_base + lift_ramp      # 插值：越近越高，过栏时回弹到正常\n    vx_target = 0.75                         # 中等速度避免过快冲撞\n    stride_base = 0.55                       # 基线步幅略小，为抬腿控速留出裕量\n    stride_ramp = ((dist - 0.15) / 0.35 * -0.2) if dist > 0.15 else 0.0              # 在 15cm 处将步幅压到最小值\n    torso_bias_base = 0.",
+      "metrics": {
+        "score": -0.704,
+        "distance": 1.296,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541,
+            "fail_x": 1.296,
+            "fail_dist_to_hurdle": 0.004
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=1.296m, 距栏 0.004m, 最低躯干高度 0.541m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    },
+    {
+      "round": 2,
+      "error": "SyntaxError: invalid syntax (<unknown>, line 1)"
+    },
+    {
+      "round": 3,
+      "error": "SyntaxError: invalid character '：' (U+FF1A) (<unknown>, line 1)"
+    },
+    {
+      "round": 4,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt):\n    d = state['hurdle_x'] - state['x']\n    if 0.8 < d <= 2.0:\n        return {\"vx\": 0.9, \"stride\": 0.35, \"lift\": 0.8, \"phase_bias\": 1.5,\n                \"torso_pitch\": 0.05}\n    elif d <= 0.8:\n        return {\"vx\": 0.4, \"stride\": 0.32, \"lift\": 1.1, \"phase_bias\": 2.0,\n                \"torso_pitch\": 1e-3}\n    else:\n        return {\"vx\": 0.65, \"stride\": 0.55, \"lift\": 0.45, \"phase_bias\": 0.0,\n                \"torso_pitch\": -0.2}",
+      "metrics": {
+        "score": 0.133,
+        "distance": 0.133,
+        "fall_rate": 0.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.133,
+            "fell": false,
+            "cleared": false,
+            "min_z": 1.028,
+            "fail_x": -0.451,
+            "fail_dist_to_hurdle": 1.751
+          },
+          {
+            "distance": 0.133,
+            "fell": false,
+            "cleared": false,
+            "min_z": 1.028,
+            "fail_x": -0.451,
+            "fail_dist_to_hurdle": 1.751
+          },
+          {
+            "distance": 0.133,
+            "fell": false,
+            "cleared": false,
+            "min_z": 1.028,
+            "fail_x": -0.451,
+            "fail_dist_to_hurdle": 1.751
+          }
+        ]
+      },
+      "verdict": "ACCEPT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride；运动轨迹: 跌倒/终止于 x=1.296m, 距栏 0.004m, 最低躯干高度 0.541m; 注意 lift 只影响屈膝幅度，stride 影响摆腿幅度，vx 影响步频"
+    }
+  ],
+  "best_score": 0.133
+}

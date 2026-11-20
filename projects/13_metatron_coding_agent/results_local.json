@@ -1,0 +1,139 @@
+{
+  "paper": "arXiv:2610.38027 METATRON (NVIDIA Research, 2026-10-27)",
+  "task": "hurdle",
+  "coder_model": "qwen2.5-coder:7b",
+  "endpoint": "http://127.0.0.1:11434/v1",
+  "history": [
+    {
+      "round": 0,
+      "source": "baseline",
+      "code": "def skill(state, t, dt):\n    \"\"\"基线：固定步态 prompt，不使用任何状态反馈。\"\"\"\n    return {\"vx\": 0.6, \"stride\": 0.5, \"lift\": 0.35, \"phase_bias\": 0.0,\n            \"torso_pitch\": 0.0}\n",
+      "metrics": {
+        "score": -0.704,
+        "distance": 1.296,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541
+          },
+          {
+            "distance": 1.296,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.541
+          }
+        ]
+      }
+    },
+    {
+      "round": 1,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    \"\"\"改进：根据状态反馈调整步态参数。\"\"\"\n    if state['dist_to_hurdle'] < 0.5:\n        return {\"vx\": 0.8, \"stride\": 0.6, \"lift\": 0.45, \"phase_bias\": -0.1,\n                \"torso_pitch\": -0.1}\n    else:\n        return {\"vx\": 0.6, \"stride\": 0.5, \"lift\": 0.35, \"phase_bias\": 0.0,\n                \"torso_pitch\": 0.0}",
+      "metrics": {
+        "score": -0.713,
+        "distance": 1.287,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 1.287,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.542
+          },
+          {
+            "distance": 1.287,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.542
+          },
+          {
+            "distance": 1.287,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.542
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride"
+    },
+    {
+      "round": 2,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    \"\"\"改进：根据状态调整步态参数以越过栏架。\"\"\"\n    if state['dist_to_hurdle'] < 0.5:\n        return {\"vx\": 0.8, \"stride\": 0.6, \"lift\": 0.4, \"phase_bias\": -0.1,\n                \"torso_pitch\": -0.1}\n    else:\n        return {\"vx\": 0.6, \"stride\": 0.5, \"lift\": 0.35, \"phase_bias\": 0.0,\n                \"torso_pitch\": 0.0}",
+      "metrics": {
+        "score": -0.713,
+        "distance": 1.287,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 1.287,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.543
+          },
+          {
+            "distance": 1.287,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.543
+          },
+          {
+            "distance": 1.287,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.543
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride"
+    },
+    {
+      "round": 3,
+      "source": "coding-agent",
+      "code": "def skill(state, t, dt) -> dict:\n    return {\"vx\": 0.8, \"stride\": 0.6, \"lift\": 0.4, \"phase_bias\": -0.1,\n            \"torso_pitch\": -0.1}",
+      "metrics": {
+        "score": -1.908,
+        "distance": 0.092,
+        "fall_rate": 1.0,
+        "clear_rate": 0.0,
+        "runs": [
+          {
+            "distance": 0.092,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.586
+          },
+          {
+            "distance": 0.092,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.586
+          },
+          {
+            "distance": 0.092,
+            "fell": true,
+            "cleared": false,
+            "min_z": 0.586
+          }
+        ]
+      },
+      "verdict": "REJECT",
+      "feedback": "score=-0.704, 前进 1.296m, 跌倒率 1.0；未能越过 x=1.3m 的 0.15m 栏架；需在接近栏架时提高 lift 并调整相位；躯干倾角超 0.7rad 或高度掉到 0.35m 以下，需减小 stride / 调整 torso_pitch；前进距离不足，可提高 vx 或增大 stride"
+    }
+  ],
+  "best_score": -0.704
+}
