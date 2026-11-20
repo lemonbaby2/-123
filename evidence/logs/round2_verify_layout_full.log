@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\scripts\verify_layout.py", line 48, in <module>
+    main()
+    ~~~~^^
+  File "<WORKDIR>\resume_repo_audit\upstream_-123\scripts\verify_layout.py", line 43, in main
+    raise RuntimeError(f"broken link in {document.relative_to(ROOT)}: {target}")
+RuntimeError: broken link in projects\10_ros2_course_lab\README.md: evidence/course_demo_5min.mp4

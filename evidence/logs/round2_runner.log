@@ -1,0 +1,150 @@
+
+==============================================================================
+STAGE 0_environment
+==============================================================================
+{
+  "gpu_query": "NVIDIA GeForce RTX 4060, 581.57, 8188, 3248, 6",
+  "ollama_models": [
+    "llama3.1:8b",
+    "gpt-oss:20b",
+    "qwen2.5-coder:7b",
+    "deepseek-r1:70b",
+    "deepseek-r1:14b",
+    "qwen3.5:2b-q4_K_M",
+    "qwen3.5:9b-q4_K_M",
+    "nomic-embed-text-v2-moe:latest",
+    "qwen2.5vl:7b"
+  ],
+  "mujoco": "4.0.1",
+  "python": "3.13.14",
+  "cmake": "C:\\Users\\Administrator\\.workbuddy\\binaries\\python\\envs\\default\\Scripts\\cmake.EXE",
+  "gxx": "ABSENT"
+}
+
+==============================================================================
+STAGE 1_ollama_gpu_benchmark
+==============================================================================
+[backup] benchmarks.json -> benchmarks_20261120.json
+  qwen2.5-coder:7b         rep1  tps=34.11 wall=48.76s load=48.2s
+  qwen2.5-coder:7b         rep2  tps=95.93 wall=0.07s load=0.01s
+  qwen2.5-coder:7b         rep3  tps=101.01 wall=0.05s load=0.01s
+  qwen3.5:2b-q4_K_M        rep1  tps=133.59 wall=41.63s load=41.54s
+  qwen3.5:2b-q4_K_M        rep2  tps=154.07 wall=0.08s load=0.02s
+  qwen3.5:2b-q4_K_M        rep3  tps=165.18 wall=0.08s load=0.02s
+  qwen3.5:9b-q4_K_M        rep1  tps=12.55 wall=127.51s load=126.95s
+  qwen3.5:9b-q4_K_M        rep2  tps=13.04 wall=0.34s load=0.01s
+  qwen3.5:9b-q4_K_M        rep3  tps=12.69 wall=0.36s load=0.01s
+  [warm] qwen2.5-coder:7b         rep1 tps=83.4
+  [warm] qwen2.5-coder:7b         rep2 tps=93.87
+  [warm] qwen2.5-coder:7b         rep3 tps=97.46
+  [warm] qwen3.5:2b-q4_K_M        rep1 tps=147.7
+  [warm] qwen3.5:2b-q4_K_M        rep2 tps=161.68
+  [warm] qwen3.5:2b-q4_K_M        rep3 tps=187.28
+  [warm] qwen3.5:9b-q4_K_M        rep1 tps=13.04
+  [warm] qwen3.5:9b-q4_K_M        rep2 tps=15.93
+  [warm] qwen3.5:9b-q4_K_M        rep3 tps=15.62
+{
+  "cold_calls": 9,
+  "warm_calls": 15,
+  "models": [
+    "qwen2.5-coder:7b",
+    "qwen3.5:2b-q4_K_M",
+    "qwen3.5:9b-q4_K_M"
+  ],
+  "steady_tps": {
+    "qwen2.5-coder:7b": [
+      95.93,
+      101.01,
+      83.4,
+      93.87,
+      97.46
+    ],
+    "qwen3.5:2b-q4_K_M": [
+      154.07,
+      165.18,
+      147.7,
+      161.68,
+      187.28
+    ],
+    "qwen3.5:9b-q4_K_M": [
+      13.04,
+      12.69,
+      13.04,
+      15.93,
+      15.62
+    ]
+  }
+}
+
+==============================================================================
+STAGE 2_mujoco_grid
+==============================================================================
+{
+  "episodes": 48,
+  "best_score": 2.879,
+  "cleared": 3,
+  "zero_fall": 41
+}
+
+==============================================================================
+STAGE 3_metatron_coding_agent
+==============================================================================
+  R0 baseline score=-0.704 fall=1.0 clear=0.0
+  R1 REJECT score=-2.0    fall=1.0   clear=0.0 (69s)
+  R2 REJECT score=-1.908  fall=1.0   clear=0.0 (2s)
+  R3 REJECT score=-1.908  fall=1.0   clear=0.0 (2s)
+  R4 REJECT score=-1.908  fall=1.0   clear=0.0 (2s)
+  R5 REJECT score=-0.704  fall=1.0   clear=0.0 (2s)
+{
+  "rounds": 5,
+  "baseline": -0.704,
+  "best": -0.704,
+  "result_file": "results_round2_local.json"
+}
+
+[GPU sampler] 588 samples, peak mem=7388 MiB, peak util=100%
+
+==============================================================================
+STAGE 4_repo_selfcheck
+==============================================================================
+[backup] repo_tests_full.log -> repo_tests_full_20261120.log
+[backup] repo_demos_full.log -> repo_demos_full_20261120.log
+  run_tests.py           exit=1  log=repo_tests_full.log
+  run_all_demos.py       exit=0  log=round2_demos_full.log
+  verify_layout.py       exit=1  log=round2_verify_layout_full.log
+{
+  "run_tests.py": {
+    "exit_code": 1,
+    "log": "repo_tests_full.log"
+  },
+  "run_all_demos.py": {
+    "exit_code": 0,
+    "log": "round2_demos_full.log"
+  },
+  "verify_layout.py": {
+    "exit_code": 1,
+    "log": "round2_verify_layout_full.log"
+  },
+  "tests_total": 61,
+  "tests_failed": 3,
+  "broken_link": [
+    "evidence/course_demo_5min.mp4"
+  ]
+}
+
+==============================================================================
+STAGE 5_runnability_ledger
+==============================================================================
+{
+  "total_items": 16,
+  "by_status": {
+    "NOT_RUNNABLE": 6,
+    "PARTIAL": 6,
+    "VERIFIED_UPSTREAM": 1,
+    "RUNNABLE": 3
+  }
+}
+
+==============================================================================
+ALL STAGES DONE -> round2_full_report.json
+==============================================================================

@@ -5,7 +5,7 @@
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)](https://isocpp.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[English](README_EN.md) · [具身智能工程档案](embodied-ai/README.md) · [研究与开源资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [复现清单](docs/REPRODUCTION_CHECKLIST.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
+[English](README_EN.md) · [具身智能工程档案](embodied-ai/README.md) · [研究与开源资料](docs/RESEARCH.md) · [简历证据映射](docs/RESUME_EVIDENCE_MATRIX.md) · [复现清单](docs/REPRODUCTION_CHECKLIST.md) · [本轮全量实跑报告](docs/ROUND2_FULL_RUN.md) · [可跑性账本](docs/RUNNABILITY_LEDGER.md) · [离线压缩包](dist/lizipeng-embodied-ai-portfolio.zip)
 
 **2026 简历项目总索引：**[源码、演示与结果状态](docs/RESUME_2026_PROJECT_INDEX.md)。该索引逐项标明已公开的代码、可重复的演示，以及尚未找到原始代码或评测证据的项目；宁波 SOP 的公开源码保存在本仓库的独立分支。
 
@@ -37,6 +37,77 @@ MicroDuck 那组实验的两条结论值得单列：
 
 > 该实验**没有**达到社区公开的 2.07 m/s（当前 250 迭代、GB10 统一内存、口径不同），倍数是 v1↔v2 内部对照，不对外部成绩作比较。
 
+## 2026-11-21 本机全量实跑（本轮新增，全部真实）
+
+### 为什么先说边界：本机跑不全 16 个项目
+
+本机硬件是 **1 张 RTX 4060 8GB**（GPU1 报 `GPU is lost`），系统 Python 3.13 无 torch，远端 DGX 全部服务端口不可达。
+因此简历中需要多卡 DGX、LeRobot 数据集、50k+10k 步 VLA 训练权重、TensorRT engine、Vicon 真值、100h 长稳日志的项目，**在本机物理上无法执行**。
+本轮的做法是：**把本机真能跑的全部跑全，把跑不了的逐条写清楚，绝不把演示数据包装成实机成绩。**
+
+| 项 | 实测值 |
+|---|---|
+| GPU | `NVIDIA GeForce RTX 4060, 581.57, 8188, 3248, 6` |
+| 本地模型 | 9 个 Ollama 模型在线（本轮实际推理 3 个） |
+| 物理引擎 | MuJoCo `4.0.1` |
+| 远端 DGX | 22 / 11434 / 8300 / 8085 / 18501 端口全部 `000`，不可达 |
+
+### 实跑清单（串行执行，避免 8GB 显存争抢污染测量）
+
+| 阶段 | 内容 | 真实结果 |
+|---|---|---|
+| 0 | 环境快照 | GPU / Ollama / MuJoCo / 工具链探测落盘 |
+| 1 | Ollama GPU 推理基准 | 3 模型 × 冷加载 + 稳态共 24 次真实调用；GPU 采样 588 点 |
+| 2 | MuJoCo 跨栏网格 | 48 组真实仿真 episode，最高分 **2.879**，越障 3 组，零跌倒 41 组 |
+| 3 | Metatron coding-agent 闭环 | 本地 7B，5 轮带轨迹反馈；基线 **-0.704**，本轮最佳 **-0.704**（**未收敛，见下**） |
+| 4 | 线上仓库自检 | `61` tests，PASS `58`，FAIL `3` |
+| 5 | 16 条简历项目可跑性账本 | 本机可跑全 3 / 线上已验证 1 / 部分可跑 6 / 本机不可跑 6 |
+
+> **⚠️ 本轮 Metatron 未复现收敛（如实记录，不用旧数据顶替）**
+> 本轮 5 轮迭代的候选 skill **全部 REJECT**，分数始终 ≤ 基线 -0.704，跌倒率保持 1.0，最佳仍为 **-0.704**。
+> 2026-11-19 那轮曾达到 +0.197 / 跌倒率 0.0，属于**独立实验日志**（`results_local_trace.json`），其随机生成结果、模型加载状态与提示词都不同，**不能算作本轮结果，也不能写成本轮性能提升**。
+> 图形上 `fig3` 同时画出各组真实曲线，本轮那条是平的——这正是真实实验该有的样子：可复现的工作流 ≠ 可复现的好结果。网格搜索仍证明解存在（最高 2.879，3 组越障），只是窄可行域难以靠几次采样命中。
+
+### 本机 GPU 推理实测（真显卡，非 CPU 空转）
+
+| 模型 | 稳态解码吞吐（tok/s，冷加载已排除） | 冷加载耗时 | 说明 |
+|---|---|---|---|
+| `qwen2.5-coder:7b` | **94.3** | 48.2s | 本轮 Metatron coding-agent 用的就是它 |
+| `qwen3.5:2b-q4_K_M` | **163.2** | 41.5s | 2B 最快 |
+| `qwen3.5:9b-q4_K_M` | **14.1** | 127.0s | 9B 明显受 8GB 显存带宽限制 |
+
+实跑期间 `nvidia-smi` 采样：峰值显存 **7388 MiB / 8188 MiB**，峰值利用率 **100%**，均值 **8.3%**（原始逐点数据见 `evidence/round2_gpu_samples.json`）。
+8GB 显存装不下多个模型，**本轮每次切换的冷加载实测 41.5–127.0s**，这是本机做 agent 工具编排慢的直接原因。
+
+### 8 张真实性能图（零合成数据）
+
+| [`docs/figures/fig1_coverage_matrix.png`](docs/figures/fig1_coverage_matrix.png) | 发布覆盖矩阵：16 条简历项目 × GitHub/Gitee/真实图/指标可复现 | `coverage.json; manual audit of 38 GitHub + 28 Gitee repos` |
+| [`docs/figures/fig2_ollama_gpu.png`](docs/figures/fig2_ollama_gpu.png) | 本机 Ollama GPU 推理：稳态吞吐与模型冷加载 | `benchmarks.json ollama_warm (15 real steady-state calls across 3 models; cold-load reps in benchmarks.json ollama excluded from the bar chart)` |
+| [`docs/figures/fig3_metatron_convergence.png`](docs/figures/fig3_metatron_convergence.png) | Metatron coding-agent 各组真实迭代曲线与跌倒率（含本轮未收敛组） | `metatron_trial/results_*.json (5 real experiment logs, including round2_local which did NOT converge)` |
+| [`docs/figures/fig4_hurdle_grid.png`](docs/figures/fig4_hurdle_grid.png) | MuJoCo 跨栏 48 组参数网格得分热力图 | `benchmarks.json metatron_grid (48 real MuJoCo episodes, this run)` |
+| [`docs/figures/fig5_repo_selfcheck.png`](docs/figures/fig5_repo_selfcheck.png) | 线上仓库全量自检 PASS/FAIL 分布 | `repo_tests_full.log (ran=61, ok_suites=9, broken_cases=3, missing=['evidence/course_demo_5min.mp4'])` |
+| [`docs/figures/fig6_agent_latency.png`](docs/figures/fig6_agent_latency.png) | Agent 运行时单轮延迟与工具编排可用性 | `agent_model_setup/BENCH_20261115.md (measured 2026-11-15)` |
+| [`docs/figures/fig7_gpu_trace.png`](docs/figures/fig7_gpu_trace.png) | 本轮实跑期间 nvidia-smi 真实显存/利用率采样曲线 | `round2_gpu_samples.json (real nvidia-smi -i 0 sampling every 0.6s during Ollama /api/chat inference)` |
+| [`docs/figures/fig8_runnability_ledger.png`](docs/figures/fig8_runnability_ledger.png) | 16 条简历项目在本机的真实可跑性账本 | `round2_full_report.json runnability_ledger (16 resume items, status assigned from real environment probes)` |
+
+数值溯源集中保存在 `evidence/FIGURE_PROVENANCE.json`；原始数据见 `evidence/benchmarks.json`、`coverage.json`、`round2_full_report.json` 与 `evidence/logs/`。
+
+### ❌ 这些指标本轮依然**没有**补图（铁律：不伪造）
+
+以下简历指标在本机全盘检索后没有任何原始日志 / CSV / 权重 / engine，远端 DGX 又未授权，因此不生成任何曲线、不把简历值画成「实测」：
+
+- Zebra：AP +12%、漏检 15%→9%、编码丢失 0.3%、Orin 42→18ms
+- OpenVLA：92.5% 未见零件抓放、<60ms 端到端
+- Qwen2.5-VL SOP：召回 98.2%、幻觉 <3.5%
+- 世界模型：MSE -32%、PSNR 28.5dB、避碰 +25%
+- 四足：回环 -63%、±3cm Vicon、100h 长稳
+- BMS：SOC 误差 <2%
+- LingBot-VLA：50k+10k steps、全局 batch 384、55 维适配
+
+要补只能走两条路：① 回原设备导出 `results.csv` / TensorRT profile / Vicon bag / HIL log；② 在公开 clean-room 代码上重新评测，并明确标注「本机复测值（非简历历史值）」。
+
+---
+
 ## 项目导航
 
 | 项目 | 独立交付内容 | 可直接验证 | 生产/实机部分的边界 |
@@ -52,6 +123,29 @@ MicroDuck 那组实验的两条结论值得单列：
 | [09 具身智能仿真与真机链路](projects/09_robotwin_hackathon/README.md) | Isaac Sim 4.5 适配脚本、真机采集流水线、SmolVLA/ACT 双卡训练脚本、双卡算力基准 | Isaac Sim 段错误复现与规避、SmolVLA LoRA 参数报错链、显存/算力/功耗实测、相机链路诊断方法 | 上游第三方仓库、模型权重、采集数据集、录屏未入库；网络地址与凭据已替换为占位符 |
 | [10 ROS2 课程实验平台](projects/10_ros2_course_lab/README.md) | 差速车 URDF/Xacro、ros2_control、Gazebo 世界、ros_gz 桥接、里程计/前馈 PID/slam_toolbox、网页看板、5 分钟实拍录屏 | 24 项自检 PASS=24、A 段里程计误差 0.0082 %、PID 负载补偿、`/clock` 单发布者、16+13 项离线测试 | 26.04 无实测样本；录屏来自 Gazebo 仿真而非真机；私钥与内网地址已脱敏 |
 | [11 R1-VLA 离线自学习 Agent](projects/11_r1_offline_agent/README.md) | 纯标准库离线 Agent：BM25 知识库问答、动作分发、依据性证书门控、20h 自强化闭环 | 断网自检 4/4 PASS、RAG 问答命中、零外部依赖 | 不含 VLA 模型权重；语料中密钥已脱敏 |
+| **[12 全机 Agent 本地模型接入（本轮新增）**](projects/12_agent_runtime_2026-11/README.md) | `setup_local_models.py` 幂等接入脚本、Hermes 审批裁决容错修复说明、真实内测报告 | `--verify` 只读核验、config 语法校验、守卫裁决、单轮延迟实测 | 已脱敏；不含 `config.yaml` / `.env` / 网关 key；本地小模型不适合做主力工具编排 |
+| **[13 Metatron coding-agent 复现（本轮新增）**](projects/13_metatron_coding_agent/README.md) | 物理 + 冻结执行层替身 + AST 白名单沙箱 + MuJoCo 评估 + 迭代闭环、5 组真实结果日志 | `--smoke`、48 组网格、5 轮本地 7B 迭代、云端对照 | NVIDIA 未发布 base policy 权重/MoCap，**不是论文全量复现**；DGX 链路说明已脱敏 |
+
+## 16 条简历项目的本机可跑性账本
+
+| R1 | LingBot-VLA 2.0 / R2 / RoboTwin | ❌ 本机不可跑 | needs DGX multi-GPU 50k+10k-step training, 50k/10k checkpoints, LeRobot dataset |
+| R2 | Zebra / YOLO11-P2 + AIFI/CCFM | ❌ 本机不可跑 | needs ZT421T nozzle images/labels, trained weights, TensorRT engine |
+| R3 | Cloud Ginger / CCU / OpenVLA | ❌ 本机不可跑 | needs vendor CCU API, Jetson Orin NX, AWQ quantisation log |
+| R4 | GeoScan Pro / LIO-SAM + RTK | 🟡 部分可跑 | CRC / factor-graph unit tests run locally; real dual-antenna RTK needs hardware |
+| R5 | World model / action-conditioned pred | ❌ 本机不可跑 | no original engineering project exists; 20+ frame / PSNR metrics have no source |
+| R6 | OpenVLA language-driven manipulation | ❌ 本机不可跑 | needs 1000+ teleop trajectories and real-arm logs |
+| R7 | Qwen2.5-VL industrial VQA / SOP | 🟡 部分可跑 | local Ollama VL inference benchmark runnable; 98.2% recall needs production video+labels |
+| R8 | ROS2 + 3DGS Lego visualization | 🟡 部分可跑 | PLY/MarkerArray unit tests run locally; original Lego assets and Isaac Sim absent |
+| R9 | Quadruped SLAM / CUDA / Vicon | 🟡 部分可跑 | voxel/ICP unit tests + C++17 build locally; Vicon ground truth and 100h log absent |
+| R10 | STM32-FreeRTOS BMS | 🟡 部分可跑 | Thevenin/AEKF unit tests locally; MCU firmware and HIL rig absent |
+| P1 | Paper: Dy3DGS-SLAM | 🟡 部分可跑 | repro assets published upstream; full 3DGS training needs DGX |
+| P2 | Paper: TAC-R2S2R | ✅ 线上已验证 | 160 seeded runs + CSV + figures already public |
+| P3 | Patents (4) / awards | ❌ 本机不可跑 | documents only; no application numbers / scans |
+| A1 | Agent: R1 offline self-learning | ✅ 本机可跑全 | pure stdlib; 4/4 offline self-check PASS in repo tests |
+| A2 | Agent: Hermes fix + all-agent setup | ✅ 本机可跑全 | setup_local_models.py --verify runs locally; config contains secrets -> must sanitise |
+| A3 | Agent: Metatron coding-agent repro | ✅ 本机可跑全 | fully executed this run: Ollama 7B + MuJoCo 48-grid + 5-round loop |
+
+完整字段与判定依据见 [可跑性账本](docs/RUNNABILITY_LEDGER.md) 与 `evidence/round2_full_report.json`。
 
 ## 一分钟验证
 
@@ -109,21 +203,29 @@ ctest --test-dir build/bms --output-on-failure
 │   ├── 07_gausspatrol/          # src + tests + artifacts + docs + submission
 │   ├── 08_3dgs_scanner_soft_hardware/ # hardware docs + engineering archive + references
 │   ├── 09_robotwin_hackathon/   # isaac-sim-arm + lingbot-real-pipeline + vla-slam-stack + bench
-│   └── 10_ros2_course_lab/     # src + tests + ros2_ws + portal + teaching + evidence
+│   ├── 10_ros2_course_lab/     # src + tests + ros2_ws + portal + teaching + evidence
+│   ├── 12_agent_runtime_2026-11/  # 本轮新增：全机 Agent 本地模型接入（已脱敏）
+│   └── 13_metatron_coding_agent/  # 本轮新增：Metatron coding-agent 复现（已脱敏）
 ├── scripts/
 │   ├── run_all_demos.py         # 逐进程运行九个独立入口
 │   ├── run_tests.py             # 验证每个项目自己的测试
 │   ├── verify_layout.py         # 检查目录完整性与 README 本地链接
-│   └── build_bundle.py          # 生成确定性离线源码包和 SHA-256
+│   ├── build_bundle.py          # 生成确定性离线源码包和 SHA-256
+│   ├── round2_full_run.py         # 本轮新增：全量实跑 runner
+│   └── make_figures_round2.py     # 本轮新增：真实性能图生成器
 ├── embodied-ai/                 # 简历全文、实验数据、对话档案、投稿稿
 │   ├── RESUME_2026_FULL.md
 │   ├── experiments/microduck_sprint/   # JSON + 图 + 生成脚本
 │   ├── dialogues/               # 33 个已脱敏会话
 │   └── papers/
+├── evidence/                      # 本轮新增：审计 + 原始 JSON / 日志 / 溯源
 ├── tools/
 │   └── extract_dialogues.py     # 会话记录 → 脱敏档案（可重跑）
 ├── docs/                        # 证据边界、研究索引、复现协议、引用、简历（脱敏）
-│   └── embodied_ai_dialogues/   # 具身智能技术对话摘录（已脱敏）
+│   ├── embodied_ai_dialogues/   # 具身智能技术对话摘录（已脱敏）
+│   ├── figures/                   # 本轮新增：8 张真实性能图
+│   ├── ROUND2_FULL_RUN.md         # 本轮新增：完整执行报告
+│   └── RUNNABILITY_LEDGER.md      # 本轮新增：16 条可跑性账本
 ├── dist/                        # GitHub 可直接下载的离线包
 └── .github/workflows/ci.yml     # Python 3.10/3.12 + 两套 C++ 构建
 ```
