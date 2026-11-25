@@ -34,3 +34,7 @@
 4. 桥接字段全零，对照 ros_gz 的 YAML 四字段：`ros_topic_name` / `ros_type_name` / `gz_type_name` / `direction`。
 
 完整的逐条命令与注释在 [命令与代码手册](../teaching/ROS2与Ubuntu全量命令与验证代码手册_20261116.xlsx)，其中 Ubuntu 26.04 一列标为「待核」，首次使用前请先在本机验证。
+
+## 学完之后往哪走
+
+本页是**入门查接口**用的；[NEXT_STEPS_ROADMAP.md](NEXT_STEPS_ROADMAP.md) 是**进阶路线**，覆盖状态估计、3DGS 语义建图、MoveIt2、VLA 与边缘部署，含 90 天排期和 2026-11-25 实测的 11 个仓库活跃度数据。

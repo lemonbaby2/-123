@@ -34,6 +34,7 @@ python src/demo.py                             # 输出可解析 JSON 的演示
 | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) | 实测数字与口径，含误差计算式 |
 | [docs/SECURITY.md](docs/SECURITY.md) | 隔离域、清场脚本、公开仓库脱敏原则 |
 | [docs/LEARNING_LINKS.md](docs/LEARNING_LINKS.md) | 14 条 ROS 2 / Gazebo / Nav2 / SLAM 学习入口 |
+| [docs/NEXT_STEPS_ROADMAP.md](docs/NEXT_STEPS_ROADMAP.md) | **学完 MuJoCo / ROS 2 / SLAM / Nav2 之后的 6 阶段路线**：状态估计 → 3DGS 语义建图 → MoveIt2 → VLA → 边缘部署，附 90 天排期与 11 个已 API 核实的资源 |
 
 ## 用一台 Ubuntu 机器跑起来
 
@@ -68,6 +69,10 @@ bash 02_停止全部.sh                                   # 下课只清自己�
 3. Jazzy 的 `diff_drive_controller` 只收 `TwistStamped`；CLI YAML 必须是 `twist: {linear, angular}`，多套一层 `twist.twist` 会静默全零——两个坑都表现为「发了车不动」。
 4. 生产机上不能 `pkill -f 'gz sim'`；本项目用 `ROS_DOMAIN_ID=42` + `GZ_PARTITION=w12course` 双隔离，清场脚本按项目独有文件名精确匹配。
 5. SSH 远程命令里出现 `server.py --port 8130` 字面串会被自己的 `pkill` 命中导致断连，改用变量间接引用与方括号正则。
+
+## 下一站：学完这套之后学什么
+
+[完整学习路线手册](docs/NEXT_STEPS_ROADMAP.md)按优先级给出六阶段：**状态估计（P0）→ 3D 语义建图（P0，论文主线）→ MoveIt2 → VLA → 边缘部署 → 多机器人/科研输出**。每个阶段都附动手实验、量化验收标准和经过 GitHub API 核实的上游资源。结论一句话：SLAM/Nav2 的漂移与定位抖动，根因在状态估计层，不在调参；先补这一层，再做三维语义。
 
 ## 与仓库其他项目的关系
 
