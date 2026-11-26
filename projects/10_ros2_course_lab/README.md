@@ -35,6 +35,7 @@ python src/demo.py                             # 输出可解析 JSON 的演示
 | [docs/SECURITY.md](docs/SECURITY.md) | 隔离域、清场脚本、公开仓库脱敏原则 |
 | [docs/LEARNING_LINKS.md](docs/LEARNING_LINKS.md) | 14 条 ROS 2 / Gazebo / Nav2 / SLAM 学习入口 |
 | [docs/NEXT_STEPS_ROADMAP.md](docs/NEXT_STEPS_ROADMAP.md) | **学完 MuJoCo / ROS 2 / SLAM / Nav2 之后的 6 阶段路线**：状态估计 → 3DGS 语义建图 → MoveIt2 → VLA → 边缘部署，附 90 天排期与 11 个已 API 核实的资源 |
+| [docs/ROBOTICS_ROADMAP_20261127.xlsx](docs/ROBOTICS_ROADMAP_20261127.xlsx) | **同一路线的 Excel 版**：8 个工作表（路线总览 / 31 条知识点 / 24 项动手实验 / 90 天排期 / 11 个核实资源 / 算力路由 / 铁律与边界 / 说明），掌握状态可下拉并自动汇总到总览 |
 
 ## 用一台 Ubuntu 机器跑起来
 
